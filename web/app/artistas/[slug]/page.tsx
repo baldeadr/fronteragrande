@@ -1,0 +1,350 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { api } from "@/lib/api";
+import EstadoBadge from "@/components/EstadoBadge";
+import Avatar from "@/components/Avatar";
+import FeedCard from "@/components/FeedCard";
+import { infoPlataforma } from "@/components/Plataformas";
+import IconoRed from "@/components/IconoRed";
+import IconoVerificado from "@/components/IconoVerificado";
+import ConexionMeta from "@/components/ConexionMeta";
+import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
+
+function emojiMencion(mencion: string): string {
+  if (mencion.includes("género")) return "🎸";
+  if (mencion.includes("categoría")) return "🏷️";
+  return "📍";
+}
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const artist = await api.artist(slug);
+    return {
+      title: artist.nombre,
+      description: `${artist.nombre} — ${artist.segmento} · ${artist.ciudad}. Escúchalo y síguelo en sus redes.`,
+      openGraph: {
+        title: `${artist.nombre} · Frontera Grande`,
+        description: `${artist.segmento} de ${artist.ciudad} en la escena de la frontera grande.`,
+        type: "profile",
+      },
+    };
+  } catch {
+    return { title: "Artista" };
+  }
+}
+
+export default async function PerfilPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ igfb?: string }>;
+}) {
+  const { slug } = await params;
+  const { igfb } = await searchParams;
+  let artist;
+  try {
+    artist = await api.artist(slug);
+  } catch {
+    notFound();
+  }
+
+  const redes = artist.links.filter((l) => l.url);
+  const bio = artist.bio?.trim();
+
+  const stats = Object.entries(artist.stats).flatMap(([plataforma, metricas]) =>
+    Object.entries(metricas)
+      .filter(([, v]) => typeof v === "number" && v !== null)
+      .map(([tipo, valor]) => ({
+        plataforma,
+        tipo,
+        valor: valor as number,
+      })),
+  );
+
+  const infoActividad = [
+    artist.metodo_actividad &&
+      `Método de actividad: ${artist.metodo_actividad}`,
+    artist.ultimo_lanzamiento &&
+      `Último lanzamiento: ${fechaCorta(artist.ultimo_lanzamiento)}`,
+    artist.ultimo_evento && `Último evento: ${fechaCorta(artist.ultimo_evento)}`,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <header className="rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-6">
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-8">
+          <div className="flex flex-col gap-6 lg:col-span-2">
+          <div className="flex gap-4 sm:gap-5">
+          <Avatar
+              src={artist.imagen_perfil}
+              nombre={artist.nombre}
+              size={160}
+              className="h-28 w-28 shrink-0 sm:h-44 sm:w-44"
+            />
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-bold">
+                {artist.nombre}
+                {artist.verificado && (
+                  <span
+                    className="ml-2 inline-flex items-center gap-1 align-middle text-sm font-semibold text-muted"
+                    title="Perfil reclamado por el artista: conectó su página de Facebook/Instagram"
+                  >
+                    <IconoVerificado className="h-4 w-4 text-accent" />
+                    Verificado
+                  </span>
+                )}
+                {artist.es_propio && (
+                  <span
+                    className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-bg align-middle"
+                    title="Proyecto del propio universo"
+                  >
+                    Propio
+                  </span>
+                )}
+              </h1>
+              <p className="mt-1 text-muted">
+                {artist.segmento}
+                {artist.ciudad ? ` · ${artist.ciudad}` : ""}
+              </p>
+            </div>
+            <EstadoBadge estado={artist.estado_activo} size="lg" />
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {artist.generos.length === 0 && (
+              <span className="text-xs text-muted">Géneros por definir</span>
+            )}
+            {artist.generos.map((g) => (
+              <span
+                key={g}
+                className="rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent"
+              >
+                #{g.replace(/\s+/g, "")}
+              </span>
+            ))}
+          </div>
+
+          <p className="whitespace-pre-line text-sm text-muted">
+            {bio || "[PENDIENTE] — pendiente de redactar."}
+          </p>
+
+          {infoActividad.length > 0 && (
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
+              {infoActividad.map((linea) => (
+                <span key={linea}>{linea}</span>
+              ))}
+            </div>
+          )}
+
+          {redes.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {redes.map((l) => {
+                const p = infoPlataforma(l.plataforma);
+                return (
+                  <a
+                    key={l.url}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={p.nombre}
+                    className="group relative grid h-11 w-11 place-items-center rounded-full border border-line bg-surface/80 transition-colors hover:border-accent"
+                  >
+                    <IconoRed src={p.icono} alt={p.nombre} size={20} />
+                    <span className="pointer-events-none absolute -top-9 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-surface-2 px-2 py-1 text-xs opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                      {p.nombre}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+          </div>
+          </div>
+
+          {artist.menciones.length > 0 && (
+            <div className="border-t border-line/50 pt-6">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+                Menciones especiales
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {artist.menciones.map((m) => (
+                  <li
+                    key={m}
+                    className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft/40 px-3 py-1.5 text-sm"
+                  >
+                    <span aria-hidden="true" className="shrink-0 text-base">
+                      {emojiMencion(m)}
+                    </span>
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {stats.length > 0 && (
+          <div className="flex flex-col border-t border-line/50 pt-6 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+              Estadísticas en redes
+            </h2>
+            {artist.ranking.indice !== null && artist.ranking.rank !== null && (
+              <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Ranking de alcance
+                  </p>
+                  <p className="text-xl font-bold">
+                    #{artist.ranking.rank}
+                    <span className="text-sm font-medium text-muted">
+                      {" "}
+                      de {artist.ranking.total}
+                    </span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted">Índice</p>
+                  <p className="text-lg font-bold tabular-nums">
+                    {artist.ranking.indice}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {stats.map((s) => {
+                const p = infoPlataforma(s.plataforma);
+                return (
+                  <div
+                    key={`${s.plataforma}-${s.tipo}`}
+                    className="flex flex-col gap-1.5 rounded-2xl border border-line bg-surface p-4"
+                  >
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      <IconoRed src={p.icono} alt={p.nombre} size={18} />
+                      <span className="truncate font-medium">{p.nombre}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <p
+                        className="text-2xl font-bold tabular-nums sm:text-3xl"
+                        title={`${s.valor.toLocaleString("es-MX")} ${tipoStat(
+                          s.tipo,
+                        )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
+                      >
+                        {numeroGrande(s.valor)}
+                      </p>
+                      <div className="flex flex-col pt-0.5 text-[11px] leading-tight text-muted">
+                        <span className="font-medium">{tipoStat(s.tipo)}</span>
+                        {artist.fecha_captura && (
+                          <span>{fechaCaptura(artist.fecha_captura)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        </div>
+      </header>
+
+      {igfb === "ok" && (
+        <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">
+          Perfil verificado. Tus posts de Facebook/Instagram se sincronizarán
+          automáticamente.
+        </p>
+      )}
+      {igfb === "error" && (
+        <p className="rounded-lg border border-inactivo/40 bg-surface px-3 py-2 text-sm text-inactivo">
+          No se pudo conectar la cuenta. Asegúrate de autorizar con la cuenta
+          que administra la página de Facebook registrada e intenta de nuevo.
+        </p>
+      )}
+
+      {artist.igfb.configurado && !artist.verificado && (
+        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+          <h2 className="text-lg font-bold">
+            ¿Eres {artist.nombre}? Reclama tu perfil
+          </h2>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              Si este proyecto es tuyo, conéctalo para verificar que eres el
+              artista. La conexión requiere autorizar con la cuenta que
+              administra la página de Facebook del proyecto.
+            </p>
+            <ConexionMeta slug={artist.slug} conectado={false} />
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 text-lg font-bold">
+          Contenido en redes de {artist.nombre}
+        </h2>
+        {artist.feed.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {artist.feed.map((item, i) => (
+              <FeedCard key={i} item={item} enPerfil />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">
+            El artista no ha conectado sus redes todavía. El contenido aparece
+            cuando el propio artista conecta su cuenta y se sincroniza.
+          </p>
+        )}
+      </section>
+
+      {artist.logros && (
+        <section>
+          <h2 className="mb-3 text-lg font-bold">En su camino</h2>
+          <p className="whitespace-pre-line text-sm text-muted">
+            {artist.logros}
+          </p>
+        </section>
+      )}
+
+      {artist.eventos.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-bold">Eventos</h2>
+          <div className="flex flex-col gap-2">
+            {artist.eventos.map((e, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-line bg-surface px-4 py-3"
+              >
+                <p className="font-medium">{e.nombre}</p>
+                <p className="text-xs text-muted">
+                  {fechaCorta(e.fecha)}
+                  {e.lugar ? ` · ${e.lugar}` : ""}
+                  {e.ciudad ? ` · ${e.ciudad}` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {artist.igfb.conectado && (
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+          <span>
+            Perfil conectado a redes
+            {artist.igfb.pagina_fb
+              ? ` · página ${artist.igfb.pagina_fb}`
+              : ""}
+          </span>
+          <ConexionMeta slug={artist.slug} conectado={true} />
+        </div>
+      )}
+    </div>
+  );
+}

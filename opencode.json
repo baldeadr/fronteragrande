@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "spotify": {
+      "type": "local",
+      "command": [".venv/bin/python", "scripts/spotify_mcp_server.py"],
+      "cwd": ".",
+      "enabled": true,
+      "environment": {}
+    }
+  }
+}

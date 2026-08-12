@@ -1,0 +1,27 @@
+# Entorno
+.env
+__pycache__/
+*.pyc
+
+# Tokens de servicios (Spotify OAuth)
+.spotify_cache.json
+.spotify_cache*
+.cache
+
+# Base de datos local
+instance/
+*.db
+*.bak
+
+# Python
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / editores
+.DS_Store
+.obsidian/

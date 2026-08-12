@@ -1,0 +1,190 @@
+export interface LinkPrincipal {
+  plataforma: string;
+  url: string;
+}
+
+export interface Followers {
+  ig: number | null;
+  fb: number | null;
+  yt: number | null;
+  spotify: number | null;
+  tt: number | null;
+}
+
+export interface StatsPlataforma {
+  seguidores?: number | null;
+  vistas?: number | null;
+  reproducciones?: number | null;
+}
+
+export type StatsPerfil = Record<string, StatsPlataforma>;
+
+export interface Ranking {
+  indice: number | null;
+  rank: number | null;
+  total: number;
+}
+
+export interface ArtistCard {
+  slug: string;
+  nombre: string;
+  segmento: string;
+  ciudad: string;
+  generos: string[];
+  estado_activo: string;
+  color_estado: string;
+  metodo_actividad: string;
+  verificado: boolean;
+  ultimo_lanzamiento: string | null;
+  ultimo_evento: string | null;
+  followers: Followers;
+  ranking: Ranking;
+  menciones: string[];
+  imagen_perfil: string | null;
+  imagen_origen: string | null;
+  link_principal: LinkPrincipal | null;
+  links: LinkPrincipal[];
+}
+
+export interface Preview {
+  tipo: "youtube" | "tiktok" | "instagram" | "facebook" | "imagen" | "texto";
+  video_id?: string;
+  embed_url?: string;
+  thumbnail?: string;
+  title?: string;
+  author?: string;
+}
+
+export interface FeedItem {
+  fecha: string | null;
+  tipo: string;
+  fuente: string;
+  titulo: string;
+  url: string | null;
+  detalle: string;
+  artista: string;
+  artista_slug: string | null;
+  imagen_artista: string | null;
+  preview: Preview;
+}
+
+export interface Evento {
+  id: number;
+  nombre: string;
+  fecha: string | null;
+  lugar: string;
+  ciudad: string;
+  artistas: string;
+  que_demuestra: string;
+  fuente: string;
+}
+
+export interface SerieMes {
+  mes: string;
+  año: number;
+  conteo: number;
+}
+
+export interface CiudadActividad {
+  nombre: string;
+  total: number;
+  activo: number;
+  en_duda: number;
+  inactivo: number;
+}
+
+export interface EventoProximo {
+  nombre: string;
+  ciudad: string | null;
+  fecha: string | null;
+}
+
+export interface Stats {
+  total: number;
+  verificados: number;
+  generos: Record<string, number>;
+  estados: Record<string, number>;
+  estados_registro: Record<string, number>;
+  ciudades: Record<string, number>;
+  segmentos: Record<string, number>;
+  feed_serie: SerieMes[];
+  altas_por_mes: SerieMes[];
+  seguidores: Record<string, number>;
+  reproducciones: Record<string, number>;
+  cobertura: Record<string, number>;
+  posts_90dias: number;
+  por_ciudad: CiudadActividad[];
+  eventos_proximos: { total: number; ciudad: string | null; proximos: EventoProximo[] };
+}
+
+export interface LinkRed {
+  plataforma: string;
+  url: string;
+  es_busqueda: boolean;
+  nota: string;
+  canal?: boolean;
+  embebible?: boolean;
+}
+
+export interface EventoArtista {
+  fecha: string | null;
+  nombre: string;
+  lugar: string;
+  ciudad: string;
+  artistas: string;
+  que_demuestra: string;
+}
+
+export interface EstadoIgfb {
+  configurado: boolean;
+  conectado: boolean;
+  pagina_fb: string | null;
+  ig: string | null;
+}
+
+export interface ArtistDetail {
+  slug: string;
+  nombre: string;
+  segmento: string;
+  ciudad: string;
+  generos: string[];
+  es_propio: boolean;
+  estado_activo: string;
+  color_estado: string;
+  metodo_actividad: string;
+  estado_registro: string;
+  verificado: boolean;
+  ultimo_lanzamiento: string | null;
+  ultimo_evento: string | null;
+  followers: Record<string, number | null>;
+  stats: StatsPerfil;
+  fecha_captura: string | null;
+  ranking: Ranking;
+  menciones: string[];
+  igfb: EstadoIgfb;
+  imagen_perfil: string | null;
+  imagen_origen: string | null;
+  logros: string;
+  bio: string;
+  notas: string;
+  links: LinkRed[];
+  eventos: EventoArtista[];
+  feed: FeedItem[];
+}
+
+export interface RedForm {
+  plataforma: string;
+  url: string;
+}
+
+export interface OnboardingResult {
+  imagen: string | null;
+  videos: number;
+  estado: string;
+}
+
+export interface ResultadoAlta {
+  slug: string;
+  nombre: string;
+  onboarding: OnboardingResult;
+}

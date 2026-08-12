@@ -1,0 +1,109 @@
+# AGENTS.md — Instrucciones para asistentes de IA
+
+> **Este archivo es la puerta de entrada para cualquier LLM que trabaje en este proyecto.** Léelo completo antes de hacer cualquier cosa. Está escrito en Markdown plano para funcionar con cualquier herramienta (opencode, Claude Code, Cursor, etc.). Es el equivalente técnico de `architecting-a-band/AGENTS.md`, adaptado a este proyecto de aplicación web.
+
+---
+
+## 1. Qué es este proyecto
+
+- Es una **aplicación web tipo base de datos** para registrar la **escena musical de la frontera grande de Tamaulipas** (bandas, DJs, solistas, colectivos, covers y tributos): ciudad, géneros, enlaces de redes, dónde escucharlos/verlos, y **actividad** detectada desde internet.
+- La visión actual: **base de datos interactiva y feed públicos de artistas**, donde cada proyecto tiene **previews de su contenido** (miniaturas/videos) y **enlaces directos a sus redes** (el puente). Diseño **mobile-first** y con SEO básico, pensando en **monetización futura** (AdSense/patrocinios) como medio, no como fin.
+- Para el **alcance y los límites** exactos (qué es y qué no es, y cómo crece), ver **docs/vision.md** (referencia única).
+- Es la **versión ejecutable** de la base de datos documental [ESCENA_LOCAL.md](https://github.com/anomalyco/architecting-a-band) del proyecto **architecting-a-band** (universo artístico del artista). El objetivo es tener **stats de la escena y posicionar el proyecto propio frente a la competencia**.
+- **Propietario:** ingeniero en mecatrónica con maestría en IA; **no escribe código**: es **arquitecto y director** de sistemas de IA. Él decide, el asistente propone y ejecuta lo técnico/documental.
+- **Idioma de trabajo:** español.
+- El proyecto debe ser **escalable**: si funciona a nivel local, crecer a nivel nacional/internacional (el modelo de datos ya lo permite; el mapa de artistas por origen es la siguiente etapa).
+
+## 2. Rol del asistente de IA
+
+- Eres **apoyo técnico**: implementas, corriges, documentas y verificas. No tomas decisiones creativas ni definitivas.
+- **SÍ puedes:** modificar el código, la base de datos, añadir adaptadores de scraping, crear/actualizar documentación, proponer mejoras.
+- **NO puedes:** inventar datos de artistas ni cifras sin fuente; tomar decisiones definitivas de producto; cambiar la arquitectura sin proponerlo primero.
+- **Regla de oro:** si una petición contradice la arquitectura o las bases documentadas, señálalo y explica el porqué.
+
+## 3. Cómo correr y verificar (comandos clave)
+
+```bash
+# instalar dependencias Python (primera vez)
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# instalar Node (primera vez, sin sudo)
+conda install -c conda-forge nodejs -y
+cd web && npm install
+
+# (re)construir la base de datos desde los CSV semilla
+.venv/bin/python scripts/seed_db.py
+
+# correr todo (API :8000 + web :3000)
+./scripts/dev.sh
+
+# tests del backend (red de seguridad; usa BD temporal aislada)
+.venv/bin/pytest
+
+# verificación de la web (build de producción + lint)
+cd web && npm run lint && npm run build
+
+# verificación de la API (debe devolver {"estado":"ok"})
+curl -s http://127.0.0.1:8000/api/health
+```
+
+**Antes de dar una tarea por terminada, ejecutar siempre:**
+0. `.venv/bin/pytest` (la suite debe quedar en verde; vivo en `tests/`).
+1. `curl -s http://127.0.0.1:8000/api/health` y un muestreo de `/api/artists`, `/api/feed`, `/api/artists/{slug}`.
+2. `npm run lint` y `npm run build` dentro de `web/`.
+
+**Cuidado con el dev server de Next (lección aprendida 2026-08):** no correr
+`npm run build` (producción) mientras el `npm run dev` está en marcha: el build
+pisa el `.next/` del dev y este queda sirviendo bundles rotos (la página carga
+pero no responde ningún control: filtros, chips, búsqueda). Además Next 16 exige
+declarar el origen en `web/next.config.ts` → `allowedDevOrigins: ["127.0.0.1",
+"localhost"]`; sin eso el dev **bloquea el JS del cliente** (cross-origin por
+seguridad) y React no hidrata. Si algo no hidrata, revisar el log del dev
+(`~/.next/dev/logs/next-development.log` o el stdout) buscando "Blocked
+cross-origin".
+
+## 4. Arquitectura
+
+```
+Next.js (web/)  →  FastAPI (backend/main.py)   →  lib/servicios.py (read-models, ranking)
+                                                →  lib/plataformas.py (previews, OCP)
+                                                →  lib/repository.py  (acceso a datos)
+                                                →  db/ (SQLAlchemy)   →  SQLite/PostgreSQL
+                                                →  scraper/ (monitoreo de actividad)
+```
+
+- **Capa de datos desacoplada:** la web (Next.js) nunca toca SQL; consume la **API REST** (`backend/main.py`). El backend está dividido en capas (SRP): los **routers** de `backend/main.py` solo rutean (sesiones/repos vía `Depends` de `backend/dependencies.py`); `lib/repository.py` concentra **toda** la SQL en repositorios (`ArtistRepository`, `EventRepository`, `FeedRepository`, `LinkRepository`, `ChecksRepository`); `lib/servicios.py` arma los **read-models** (`artistas_df`, `feed_df`, `metricas_artista`, `ranking_global`, `stats_escena`) y `lib/helpers.py` queda como utilidades puras sin SQL (URLs, géneros, `indice_alcance`). Los scripts reusan los repositorios en vez de SQL suelto. Todo es framework-agnóstico, sin Streamlit.
+- **BD por defecto SQLite** (`instance/local_scene.db`); para crecimiento, `DATABASE_URL` de PostgreSQL en `.env` (ver `.env.example`).
+- **Modelos:** `artists`, `artist_links`, `events`, `activity_checks` (snapshots del scraper), `feed_items` (contenido reciente del feed). `artists` incluye `bio` y foto de perfil como URL (`imagen_perfil`/`imagen_origen`/`imagen_actualizada`). La **categoría de proyecto** (campo interno `segmento`, etiqueta de UI "Categoría") tiene taxonomía **Banda / Solista / DJ / Colectivo / Covers / Tributo** (MC y Productor se registran como Solista por ahora); `es_propio` (proyecto del propio universo) es un flag booleano con columna semilla propia. `ciudad` es **ciudad base única** (si un artista opera en otra plaza, va en `notas`).
+- **Scraper:** `scraper/core.py` implementa la regla de actividad; `scraper/adapters/` tiene un adaptador por fuente (`http.py` y `youtube.py` funcionales sin API key, `tiktok.py` vía oEmbed público sin API key, `instagram.py`/`facebook.py` oEmbed de posts públicos, `spotify.py` funcional si hay credenciales en `.env`) y `imagenes.py` (foto de perfil como URL sin API key; IG/FB/TikTok suelen bloquear). Los adaptadores lanzan excepciones de la familia `scraper/errors.py` (`ScraperError`) para que callers no acoplen a excepciones concretas; los oEmbeds IG/FB/TikTok comparten caché y lógica en `scraper/adapters/oembed.py`. La conversión de enlaces a previews y la detección de plataforma están centralizadas en `lib/plataformas.py` (registro `PREVIEWS`, patrón Open/Closed: añadir una fuente = añadir su adaptador y su entrada en el registro, sin tocar `backend/main.py`). Las **jerarquías de plataformas** (foto de perfil y enlace puente) están centralizadas en `scraper/jerarquias.py` y documentadas en `docs/scraping.md` — cambiar una jerarquía se hace solo ahí. La **sincronización automática de posts FB/IG** (artistas que administran su página) vive en `backend/feed_meta.py` (OAuth + Graph API, requiere `META_APP_ID`/`META_APP_SECRET` en `.env`) y `scripts/sync_feed_igfb.py`; los tokens de página nunca se exponen en la API.
+- **Spotify (MCP + snapshot, clonado de architecting-a-band):** `scripts/spotify_mcp_server.py` expone tools MCP configuradas en `opencode.json` (en vivo: lo que suena, recientes, top, búsquedas, stats de artistas; autorización única `--auth`, token en `scripts/.spotify_cache.json`, no versionado) y `scripts/escena_local_snapshot.py` toma snapshots de la escena a `data/escena_local_stats.csv` (serie temporal, una fila por artista/fecha). Requieren `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/`SPOTIFY_REDIRECT_URI` en `.env`. **Límite 2026:** apps en modo desarrollo ya no reciben followers/popularity/géneros/top-tracks (top-tracks = 403); el snapshot registra solo **presencia** con 0/0 hasta solicitar **Extended Quota** en el dashboard. Dependencias: `mcp>=1.9,<2` y `spotipy` (la v2 de mcp cambia la API de FastMCP).
+- **Datos semilla:** `data/escena_local.csv` y `data/eventos.csv` son la fuente de verdad, sincronizados con `architecting-a-band`. El seed hace **upsert por `slug`**: los campos editados en la app no se pierden al re-correrlo. `es_propio` se lee de la columna CSV homónima (devuelve `TRUE` solo para el proyecto propio).
+- **Previews y feed como señal de actividad:** el feed y los perfiles muestran previews estilo YouTube (YouTube y TikTok con miniatura y play; Instagram y Facebook embebidos; ver `docs/scraping.md`). El **feed es la bitácora de actividad** del proyecto: un elemento reciente (≤ 6 meses) alimenta `estado_activo` vía `scripts/recalcular_actividad.py` (actualiza BD y CSV). Regla: activo ≤ 6 meses · en_duda 6–18 meses o sin señal · inactivo > 18 meses o pausa confirmada (`scraper/core.py`). **La ingesta es solo automática y la hace el propio artista:** al conectar su página FB/IG vía Meta Graph API (`scripts/sync_feed_igfb.py` + cron `scripts/sync_igfb.sh`; guía: `docs/meta_setup.md`) o vía el feed de YouTube del onboarding (`lib/servicios.onboarding_artista`). No existe ingesta manual (el botón "+ Añadir post" y `POST /api/artists/{slug}/feed` se eliminaron: **no reintroducirlos**).
+- **Ranking de alcance:** `lib/helpers.py` (`indice_alcance`) calcula un índice 0-100 por artista = suma ponderada por plataforma (pesos: IG 30 · FB 25 · Spotify 20 · YT 10 · TT 10 · Bandcamp 2.5 · SoundCloud 2.5); cada métrica de alcance se transforma con `log10(v+1)` y se normaliza 0-100 entre todos los artistas (sin la plataforma cuenta 0). La API expone `ranking: {indice, rank, total}` y `menciones` (Nº 1 por género/ciudad/categoría) en listado y detalle; `scripts/recalcular_actividad.py` no afecta el ranking. No inventar métricas: el ranking solo usa datos con fuente.
+
+## 5. Convenciones del proyecto (crítico)
+
+- **Idioma:** todo en español (código, mensajes de UI, documentación, commits).
+- **`[PENDIENTE]`** = información que falta por definir; no inventar contenido donde aparece.
+- **`[PROPUESTA]`** = propuesta del asistente para que el artista confirme o ajuste.
+- **No inventar datos:** cifras de seguidores, reproducciones/vistas, fechas, lanzamientos y logros deben venir de los CSV semilla o de investigación con fuente.
+- **Una sola verdad:** si un dato cambia, actualizar las referencias cruzadas (CSV semilla, documentación, código).
+- **No escribir código con comentarios innecesarios:** seguir el estilo existente (docstrings de módulos/funciones en español, sin comentarios de relleno).
+- **Bitácora (opcional, patrón del proyecto padre):** si se decide llevar historial de decisiones, seguir el formato de `architecting-a-band/BITACORA.md` (entradas en `bitacora/YYYY-MM.md`, no se reescriben).
+
+## 6. Estado actual
+
+- **Fase:** web pública en local: Next.js + FastAPI sobre la capa de datos (ver [README.md](README.md) → Estado).
+- **Decidido:** Next.js + FastAPI + SQLAlchemy + SQLite (→ PostgreSQL cuando escale). Sin mapa por ahora (siguiente etapa: PostGIS).
+- **Hecho:** API REST · web mobile-first con directorio, perfiles, feed con previews de YouTube/IG/FB, eventos, **panel de stats interactivo** (gráficas SVG caseras en `web/components/stats/`: actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas, dona por categoría; `GET /api/stats` ampliado con `feed_serie`, `altas_por_mes`, `seguidores`/`reproducciones`, `cobertura`, `posts_90dias`, `por_ciudad`, `eventos_proximos`), **identidad Frontera Grande** (renombrado; `docs/vision.md` es la fuente única de alcance y límites) y **página Acerca de** (historia, "cómo explorar la plataforma", regla de actividad y fórmula del ranking con KaTeX), fotos de perfil de los artistas desde sus redes (URLs), SEO básico (sitemap/robots/metadatos), **registro voluntario de artistas + verificación por OAuth**: el botón "Suma tu proyecto" crea el perfil (`POST /api/artists`), y al conectar su página FB/IG (`backend/feed_meta.py`, valida que la cuenta autorizada administre la página registrada) el perfil queda **verificado** (badge público "Verificado", `estado_registro` → `confirmado (artista, fecha)`) y sus posts se sincronizan automáticamente; **ingesta manual eliminada** (`POST /api/artists/{slug}/feed`, `FormAgregarFeed` y `scripts/registrar_feed.py` ya no existen: **no reintroducirlos**), backend por **capas** (routers → `lib/servicios.py`/`lib/plataformas.py` → `lib/repository.py`), **suite de tests** (`.venv/bin/pytest`, red de seguridad en `tests/`), **directorio pulido**: taxonomía de categoría (Banda/Solista/DJ/Colectivo/Covers/Tributo, MC y Productor como Solista), ciudades normalizadas a base única con dropdown, filtros con etiqueta visible y opción "Todas", géneros en chips de selección múltiple y leyenda de actividad bajo los filtros. Valores huérfanos sin fuente marcados `[PENDIENTE]` en `notas` (ej. seguidores IG de isquemia/vaale).
+- **Pendiente:** **activar el despliegue** (ruta free tier lista y documentada en `docs/despliegue.md`; paso del artista: GitHub → Vercel + Render + Neon), panel de administración completo en la web (CRUD + scraper), auth y **permisos** para el registro de artistas (el formulario hoy es público, en modo desarrollo), feeds de Bandcamp/SoundCloud y Spotify API, YouTube `vistas_yt` (requiere API key), y el **dominio** (decisión tomada: **`fronteragrande.mx`**, 2026-08; metadatos/sitemap/robots ya usan `https://fronteragrande.mx`; falta registro y apuntar al despliegue).
+- **Despliegue (preparado, no activado):** en la raíz hay repo git (sin remoto aún), `render.yaml` (blueprint API), `vercel.json` (rootDirectory `web`), `requirements-prod.txt` (deps mínimas de la API, sin matplotlib/wordcloud/mcp/spotipy), CORS configurable por env (`CORS_ORIGINS` en `backend/main.py`), driver PostgreSQL `psycopg` con normalización de URL en `db/database.py`, rutas del seed independientes del directorio (`db/seed.py`), `NEXT_PUBLIC_SITE_URL` (metadatos/sitemap/robots) y `remotePatterns` ampliados (`web/next.config.ts`). Guía paso a paso: `docs/despliegue.md`. En el deploy de la web, `NEXT_PUBLIC_API_URL` debe apuntar a la API de Render; en la API, `CORS_ORIGINS` debe incluir el dominio de Vercel.
+- El artista **no escribe código**: las tareas se deben proponer y, si son técnicas, implementarse directamente con verificación.
+
+## 7. Cómo actualizar la documentación
+
+1. Al cambiar arquitectura o modelo de datos, actualizar **README.md** (índice y modelo), **docs/roadmap.md** (si afecta a una etapa del roadmap) y este archivo (si afecta a instrucciones de trabajo).
+2. Mantener consistencia entre documentos y código.
+3. Preferir editar archivos existentes; crear nuevos solo si aportan valor real.
+4. Si una instrucción es ambigua o requiere una decisión de producto, **preguntar al artista antes de actuar**.

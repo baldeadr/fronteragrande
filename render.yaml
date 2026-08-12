@@ -1,0 +1,27 @@
+# Blueprint de Render para la API de Frontera Grande.
+# Al importar este repo en Render (New → Blueprint), crea el servicio web
+# con estas variables. Los valores se configuran en el dashboard.
+services:
+  - type: web
+    name: fronteragrande-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: META_REDIRECT_URI
+        sync: false
+      - key: WEB_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
