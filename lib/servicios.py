@@ -53,6 +53,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "logros": a.logros,
             "notas": a.notas,
             "fecha_registro": a.fecha_registro,
+            "fecha_creacion": a.created_at,
             "imagen_perfil": a.imagen_perfil,
             "imagen_origen": a.imagen_origen,
         }
@@ -235,17 +236,20 @@ def _agregar_grupo_mencion(
         key=lambda x: x[0],
         reverse=True,
     )
-    mejor, mejor_slug = ordenados[0]
-    if mejor <= 0:
-        return
-    menciones.setdefault(mejor_slug, []).append(formato.format(grupo=nombre, n=len(slugs)))
+    for puesto, (indice, slug) in enumerate(ordenados[:3], start=1):
+        if indice <= 0:
+            break
+        menciones.setdefault(slug, []).append(
+            formato.format(puesto=puesto, grupo=nombre, n=len(slugs))
+        )
 
 
 def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, list[str]]:
-    """Menciones especiales de ranking por grupo (género/ciudad/segmento).
+    """Menciones especiales de ranking.
 
-    Devuelve {slug: [texto, ...]} para el Nº 1 de cada grupo con al menos 3
-    artistas y puntaje real. Solo algunos artistas tienen menciones.
+    Devuelve {slug: [texto, ...]} con el Top 3 de la escena (ranking global)
+    y el Top 3 de cada grupo (género/ciudad/segmento) con al menos 3 artistas
+    y puntaje real. Solo algunos artistas tienen menciones.
     """
     menciones: dict[str, list[str]] = {}
 
@@ -264,12 +268,20 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
         if fila["segmento"] and "PENDIENTE" not in str(fila["segmento"]).upper():
             por_segmento.setdefault(fila["segmento"], []).append(fila["slug"])
 
+    globales = sorted(indices.items(), key=lambda x: x[1], reverse=True)
+    for puesto, (slug, indice) in enumerate(globales[:3], start=1):
+        if indice <= 0:
+            break
+        menciones.setdefault(slug, []).append(
+            f"Nº {puesto} de la escena (de {len(globales)})"
+        )
+
     for genero, slugs in por_genero.items():
-        _agregar_grupo_mencion(menciones, indices, genero, slugs, "Nº 1 del género {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, genero, slugs, "Nº {puesto} del género {grupo} (de {n})")
     for ciudad, slugs in por_ciudad.items():
-        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº 1 en {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº {puesto} en {grupo} (de {n})")
     for segmento, slugs in por_segmento.items():
-        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº 1 en la categoría {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº {puesto} en la categoría {grupo} (de {n})")
 
     return menciones
 
@@ -364,7 +376,7 @@ def stats_escena(session: Session) -> dict:
         "fb": ("followers_fb", "seguidores"),
         "yt": ("followers_yt", "seguidores"),
         "tt": ("followers_tt", "seguidores"),
-        "spotify": ("followers_spotify", "seguidores"),
+        "spotify": ("reproducciones_spotify", "reproducciones"),
         "bandcamp": ("reproducciones_bandcamp", "reproducciones"),
         "soundcloud": ("reproducciones_soundcloud", "reproducciones"),
     }
@@ -385,9 +397,10 @@ def stats_escena(session: Session) -> dict:
         feed_serie: list[dict] = []
         posts_90dias = 0
     else:
-        publicaciones = feed[feed["fuente"] != "scraper"]
+        sin_chequeos = feed[feed["fuente"] != "scraper"]
+        publicaciones = feed[~feed["fuente"].isin(["scraper", "escena", "registro"])]
         feed_serie = (
-            _serie_mensual(publicaciones["fecha"]) if not publicaciones.empty else []
+            _serie_mensual(sin_chequeos["fecha"]) if not sin_chequeos.empty else []
         )
         posts_90dias = int(
             (
@@ -396,7 +409,8 @@ def stats_escena(session: Session) -> dict:
             ).sum()
         )
 
-    altas_por_mes = _serie_mensual(df["fecha_registro"])
+    altas = df["fecha_registro"].fillna(df["fecha_creacion"])
+    altas_por_mes = _serie_mensual(altas)
 
     por_ciudad: list[dict] = []
     for ciudad, grupo in df.groupby("ciudad"):

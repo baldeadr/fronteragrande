@@ -8,12 +8,16 @@ import { infoPlataforma } from "@/components/Plataformas";
 import IconoRed from "@/components/IconoRed";
 import IconoVerificado from "@/components/IconoVerificado";
 import ConexionMeta from "@/components/ConexionMeta";
+import IconoMencion from "@/components/IconoMencion";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
 
-function emojiMencion(mencion: string): string {
-  if (mencion.includes("género")) return "🎸";
-  if (mencion.includes("categoría")) return "🏷️";
-  return "📍";
+function tipoMencion(
+  mencion: string,
+): "genero" | "categoria" | "ciudad" | "escena" {
+  if (mencion.includes("de la escena")) return "escena";
+  if (mencion.includes("género")) return "genero";
+  if (mencion.includes("categoría")) return "categoria";
+  return "ciudad";
 }
 
 export const dynamic = "force-dynamic";
@@ -177,17 +181,29 @@ export default async function PerfilPage({
                 Menciones especiales
               </h2>
               <ul className="flex flex-col gap-2">
-                {artist.menciones.map((m) => (
-                  <li
-                    key={m}
-                    className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent-soft/40 px-3 py-1.5 text-sm"
-                  >
-                    <span aria-hidden="true" className="shrink-0 text-base">
-                      {emojiMencion(m)}
-                    </span>
-                    {m}
-                  </li>
-                ))}
+                {artist.menciones.map((m) => {
+                  const esEscena = tipoMencion(m) === "escena";
+                  return (
+                    <li
+                      key={m}
+                      className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${
+                        esEscena
+                          ? "border-en-duda/50 bg-en-duda/10 font-medium"
+                          : "border-accent/40 bg-accent-soft/40"
+                      }`}
+                    >
+                      <IconoMencion
+                        tipo={tipoMencion(m)}
+                        className={
+                          esEscena
+                            ? "shrink-0 text-en-duda"
+                            : "shrink-0 text-accent"
+                        }
+                      />
+                      {m}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

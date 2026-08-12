@@ -44,6 +44,7 @@ class ArtistRepository:
         estado_activo: str = "en_duda",
         metodo_actividad: str = "sin datos",
         es_propio: bool = False,
+        fecha_registro: date | None = None,
     ) -> Artist:
         """Crea (sin commit) un artista nuevo en la base de datos."""
         artista = Artist(
@@ -56,6 +57,7 @@ class ArtistRepository:
             estado_activo=estado_activo,
             metodo_actividad=metodo_actividad,
             es_propio=es_propio,
+            fecha_registro=fecha_registro or date.today(),
         )
         self.session.add(artista)
         return artista
