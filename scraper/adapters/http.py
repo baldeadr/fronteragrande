@@ -7,7 +7,7 @@ confirma que la URL sigue viva/responde, no el contenido.
 import requests
 
 DEFAULT_TIMEOUT = 10
-USER_AGENT = "LocalSceneDatabase/0.1 (monitoreo de escena local)"
+USER_AGENT = "FronteraGrande/0.1 (monitoreo de escena local)"
 
 
 def check_url(url: str, timeout: int | None = None) -> dict:

@@ -1,4 +1,4 @@
-# Local Scene Database
+# Frontera Grande
 
 Base de datos interactiva de los **proyectos musicales de la frontera grande de Tamaulipas** (abierta a crecer a otras regiones y disciplinas artísticas). Registra bandas, DJs, solistas, colectivos, covers y tributos, sus ciudades, enlaces de redes, dónde escucharlos/verlos, y monitorea si están **activos** a partir de su huella en internet.
 

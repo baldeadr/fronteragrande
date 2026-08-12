@@ -47,7 +47,7 @@ export default function FeedCard({
                 {item.artista}
               </Link>
             ) : (
-              <span className="truncate font-semibold">Escena local</span>
+              <span className="truncate font-semibold">Frontera Grande</span>
             )}
             <span title={fuente.nombre}>
               <IconoRed src={fuente.icono} alt={fuente.nombre} size={16} />
