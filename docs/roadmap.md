@@ -9,9 +9,10 @@ propuesta de la IA pendiente de confirmación.
 **Web pública en local (Next.js + FastAPI)**: directorio, perfiles, feed de
 actividad interactivo, eventos, **panel de stats interactivo**, **registro
 voluntario de artistas** (verificación por OAuth de Meta) y puente a redes,
-con página **Acerca de**. La siguiente activación depende de **datos
-externos** (cron de Meta, Extended Quota de Spotify) que el artista debe
-conseguir.
+con página **Acerca de**. **Desplegado en línea (agosto 2026)** con Vercel +
+Render + Neon (ver estado completo en `docs/despliegue.md`). Queda pendiente
+de **datos externos** (cron de Meta, Extended Quota de Spotify) que el artista
+debe conseguir.
 
 ## Hecho
 
@@ -43,13 +44,13 @@ conseguir.
 | 14 | Panel de administración en la web | CRUD de artistas + disparador de scraper, con auth simple. |
 | 15 | Feeds de Bandcamp/SoundCloud y Spotify API | Completar cobertura de plataformas de la escena. |
 | 16 | Mapa de artistas por origen | PostGIS: la geografía de la escena (Reynosa/Matamoros/frontera). |
-| 17 | **Producción y monetización** | En curso: ruta **free tier** preparada y documentada en `docs/despliegue.md` (Vercel web + Render API + Neon Postgres + ping UptimeRobot). Pendiente para activarla: subir a GitHub, crear los proyectos en las 3 plataformas y cargar el seed a Neon. Después: dominio, AdSense/patrocinios. |
+| 17 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon (29 artistas · 11 eventos · 20 con foto · 64 videos). Deploy automático desde GitHub. Pendiente: `CORS_ORIGINS` en Render, monitor UptimeRobot, conexión Meta (app de Meta), **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
 
 ## En curso `[PROPUESTA]`
 
 | # | Etapa | Estado |
 |---|-------|--------|
-| 17 | **Despliegue free tier (prueba con artistas)** | ✔ Código listo: CORS configurable (`CORS_ORIGINS`), driver PostgreSQL (`psycopg`, `requirements-prod.txt`), `render.yaml` + `vercel.json`, rutas del seed independientes del directorio, `NEXT_PUBLIC_SITE_URL`, hosts de imágenes y `remotePatterns` ampliados. Verificado: tests en verde y build Next de producción. **Paso del artista:** seguir `docs/despliegue.md` (GitHub → Neon → Render → seed → Vercel). |
+| 17 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon. Pendientes menores: definir `CORS_ORIGINS` en Render, crear monitor UptimeRobot, y conectar la app de Meta para el botón "Verificado" (`docs/despliegue.md` secciones 3, 6 y 7). |
 
 ## Pendiente de producto
 

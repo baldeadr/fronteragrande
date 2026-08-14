@@ -16,13 +16,22 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
 ## Estado
 
 - **Pivote a web pública:** ✔ API REST (FastAPI) sobre la capa de datos existente · ✔ frontend Next.js responsive (móvil + desktop) · ✔ feed con miniaturas y previews (YouTube, TikTok, IG, FB) · ✔ directorio con filtros (categoría/ciudad/actividad con etiqueta y opción "Todas", géneros en chips multi-selección y leyenda de actividad) · ✔ eventos · ✔ **panel de stats interactivo** (gráficas SVG caseras: actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas, dona por categoría) · ✔ **página Acerca de** (historia, qué es/no es, actividad y regla del ranking) · ✔ **identidad Frontera Grande** · ✔ sitemap/robots · ✔ **registro voluntario de artistas** (botón "Suma tu proyecto": crea el perfil; el artista lo **verifica** conectando su página de Facebook/Instagram vía OAuth, y entonces sus posts se sincronizan automáticamente; badge "Verificado" público) · ✔ **ingesta manual eliminada** (el contenido solo llega por el propio artista) · ✔ 28 proyectos + 11 eventos cargados de `architecting-a-band`.
-- **Pendiente:** activar el despliegue (seguir [docs/despliegue.md](docs/despliegue.md): GitHub → Vercel + Render + Neon), panel de administración completo en la web (CRUD + scraper), auth y permisos para el registro de artistas (por ahora es público en modo desarrollo), y **dominio** (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan `https://fronteragrande.mx`; falta registrar/comprar y apuntar al despliegue).
+- **Despliegue:** ✔ **EN LÍNEA (agosto 2026)** — API en Render
+  (`https://fronteragrande-api.onrender.com`, `{"estado":"ok"}`) + web en Vercel
+  (`https://fronteragrande.vercel.app`) + PostgreSQL en Neon (29 artistas,
+  11 eventos, 20 con foto, 64 videos de YouTube). Deploy automático desde
+  GitHub (`baldeadr/fronteragrande`).
+- **Pendiente:** conexión Meta (verificado) — requiere crear la app de Meta
+  (hoy el botón no aparece porque falta `META_APP_ID`/`META_APP_SECRET`);
+  monitor UptimeRobot para mantener la API despierta; panel de administración
+  completo en la web (CRUD + scraper); auth y permisos para el registro de
+  artistas (por ahora es público en modo desarrollo); y **dominio**
+  (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan
+  `https://fronteragrande.mx`; falta registrar/comprar y apuntar).
 
-El sitio puede salir en línea **gratis** con Vercel (web) + Render (API) +
-Neon (PostgreSQL), ya preparado y documentado en
-[docs/despliegue.md](docs/despliegue.md). Pendiente del artista: subir a
-GitHub y dar de alta los proyectos. Después del **registro/deploy** de 2026-08,
-el **dominio** quedó decidido como **`fronteragrande.mx`** (metadatos, sitemap
+Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
+paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
+El **dominio** quedó decidido como **`fronteragrande.mx`** (metadatos, sitemap
 y robots ya lo usan por defecto).
 
 ## Stack
@@ -158,7 +167,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 9. ◐ **Sincronización automática con Meta Graph API** (artistas que administran su página): código listo y **en pruebas** (OAuth en `backend/feed_meta.py`, validación de que la cuenta administre la página del artista, token de página de larga duración, `scripts/sync_feed_igfb.py` + cron `scripts/sync_igfb.sh`). Al conectar, el perfil queda **verificado**. Cron pendiente de programar.
 10. **Panel de administración** en la web (CRUD + scraper) con auth simple.
 11. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
-12. ◐ **Producción y monetización:** ruta **free tier** preparada y documentada en [docs/despliegue.md](docs/despliegue.md) (Vercel web + Render API + Neon Postgres + ping UptimeRobot). Pendiente: activarla (subir a GitHub y dar de alta los proyectos) y después el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
+12. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: app de Meta para el "Verificado" en producción, UptimeRobot, y el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
 
 Detalle con estado por etapa y dependencias: [docs/roadmap.md](docs/roadmap.md).
 
