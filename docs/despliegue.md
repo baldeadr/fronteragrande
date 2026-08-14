@@ -41,7 +41,7 @@ git push -u origin main
 
 ## 2. Neon (base de datos PostgreSQL)
 
-1. Entra a [neon.tech](https://neon.tech) → "Create a project" (gratis).
+1. Entra a [neon.com](https://neon.com) (antes neon.tech) → "Create a project" (gratis).
 2. Elige región cercana (p. ej. `us-east`).
 3. Copia la **connection string** de la rama principal (usa `postgresql://…`
    con password). Guárdala: es `DATABASE_URL`.
