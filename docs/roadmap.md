@@ -33,7 +33,7 @@ debe conseguir.
 
 | # | Etapa | Estado | Depende de |
 |---|-------|--------|-----------|
-| 11 | **Sincronización automática FB/IG (Meta)** | ✔ Código listo y **en pruebas**: `backend/feed_meta.py` (OAuth, valida que la cuenta administre la página del artista), `scripts/sync_feed_igfb.py`, `scripts/sync_igfb.sh` (cron), UI de conexión en el perfil; al conectar el perfil queda **verificado**. Funciona con la app de Meta del artista (Apex Ultra conectado). **`[PENDIENTE]`** dar de alta el cron y conectar al resto de artistas que administran su página. | Credenciales de la app de Meta (guía: `docs/meta_setup.md`) |
+| 11 | **Sincronización automática FB/IG (Meta)** | ◐ OAuth de producción activo y probado: Apex Ultra quedó **verificado**. El código valida que la cuenta administre la página del artista; faltan la sincronización inicial de publicaciones, el cron `scripts/sync_igfb.sh` y conectar al resto de artistas que administran su página. | Cron de sincronización y artistas participantes |
 | 12 | YouTube `vistas_yt` | `[PENDIENTE]` no se extraen sin API key o ejecución de JS. | `YOUTUBE_API_KEY` opcional |
 | 13 | Spotify: números del API | ✔ MCP (`scripts/spotify_mcp_server.py`) + snapshot (`scripts/escena_local_snapshot.py` → `data/escena_local_stats.csv`) clonados de architecting-a-band y probados. **Verificado 2026-08:** con las credenciales de desarrollo el API resuelve nombre/imagen/URI, pero **no entrega followers/popularity/géneros** (los campos ni siquiera aparecen) y `top-tracks` da **403**; el snapshot ya tolera esa respuesta (registra 0/0) y queda listo para re-ejecutarse sin cambios. **`[PENDIENTE]`** el API 2026 entrega esos números solo con **Extended Quota** (revisión de la app en el dashboard: developer.spotify.com/dashboard → app → solicitar quota). | **Extended Quota** de Spotify |
 
@@ -44,13 +44,13 @@ debe conseguir.
 | 14 | Panel de administración en la web | CRUD de artistas + disparador de scraper, con auth simple. |
 | 15 | Feeds de Bandcamp/SoundCloud y Spotify API | Completar cobertura de plataformas de la escena. |
 | 16 | Mapa de artistas por origen | PostGIS: la geografía de la escena (Reynosa/Matamoros/frontera). |
-| 17 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon (29 artistas · 11 eventos · 20 con foto · 64 videos). Deploy automático desde GitHub. Pendiente: `CORS_ORIGINS` en Render, monitor UptimeRobot, conexión Meta (app de Meta), **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
+| 17 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon (29 artistas · 11 eventos · 20 con foto · 64 videos). Deploy automático desde GitHub. Pendiente: monitor UptimeRobot, primera sincronización y cron de Meta, **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
 
 ## En curso `[PROPUESTA]`
 
 | # | Etapa | Estado |
 |---|-------|--------|
-| 17 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon. Pendientes menores: definir `CORS_ORIGINS` en Render, crear monitor UptimeRobot, y conectar la app de Meta para el botón "Verificado" (`docs/despliegue.md` secciones 3, 6 y 7). |
+| 17 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon y Meta configurado en producción. Apex Ultra ya está verificado. Pendientes menores: crear monitor UptimeRobot y programar la sincronización Meta (`docs/despliegue.md` secciones 3, 6 y 7). |
 
 ## Pendiente de producto
 

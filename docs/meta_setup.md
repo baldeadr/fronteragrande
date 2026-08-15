@@ -9,6 +9,10 @@ post y el botón "Abrir en {red}" lleva al origen).
 > investigación (sin contenido sincronizado de FB/IG). La sincronización es
 > la forma de que el **propio artista** mantenga su perfil y su contenido.
 
+> **Estado actual (agosto 2026):** la app de Meta está configurada en
+> producción, el OAuth ya fue probado y **Apex Ultra quedó verificado**. Falta
+> ejecutar la primera sincronización y programar el cron para publicaciones.
+
 ---
 
 ## 1. Requisitos

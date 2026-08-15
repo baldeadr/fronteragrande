@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import EstadoBadge from "@/components/EstadoBadge";
 import Avatar from "@/components/Avatar";
@@ -280,10 +281,15 @@ export default async function PerfilPage({
         </p>
       )}
       {igfb === "error" && (
-        <p className="rounded-lg border border-inactivo/40 bg-surface px-3 py-2 text-sm text-inactivo">
-          No se pudo conectar la cuenta. Asegúrate de autorizar con la cuenta
-          que administra la página de Facebook registrada e intenta de nuevo.
-        </p>
+        <div className="rounded-lg border border-inactivo/40 bg-surface px-3 py-2 text-sm text-inactivo">
+          <p>
+            No se pudo conectar la cuenta. Asegúrate de autorizar con la cuenta
+            que administra la página de Facebook registrada e intenta de nuevo.
+          </p>
+          <Link href="/ayuda-artistas" className="mt-1 inline-block underline">
+            Consulta la ayuda para artistas
+          </Link>
+        </div>
       )}
 
       {artist.igfb.configurado && !artist.verificado && (
@@ -297,6 +303,9 @@ export default async function PerfilPage({
               artista. La conexión requiere autorizar con la cuenta que
               administra la página de Facebook del proyecto.
             </p>
+            <Link href="/ayuda-artistas" className="text-sm text-accent hover:underline">
+              ¿Cómo funciona la verificación?
+            </Link>
             <ConexionMeta slug={artist.slug} conectado={false} />
           </div>
         </section>
@@ -319,15 +328,6 @@ export default async function PerfilPage({
           </p>
         )}
       </section>
-
-      {artist.logros && (
-        <section>
-          <h2 className="mb-3 text-lg font-bold">En su camino</h2>
-          <p className="whitespace-pre-line text-sm text-muted">
-            {artist.logros}
-          </p>
-        </section>
-      )}
 
       {artist.eventos.length > 0 && (
         <section>

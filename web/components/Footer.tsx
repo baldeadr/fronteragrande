@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="border-t border-line py-6">
@@ -9,6 +11,9 @@ export default function Footer() {
         <p>
           Parte del universo <span className="text-accent">architecting-a-band</span>.
         </p>
+        <Link href="/ayuda-artistas" className="text-accent hover:underline">
+          Ayuda para artistas
+        </Link>
       </div>
     </footer>
   );

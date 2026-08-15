@@ -184,6 +184,12 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                       automáticamente. Géneros, bio y logros se completan
                       después.
                     </p>
+                    <Link
+                      href="/ayuda-artistas"
+                      className="mt-1 inline-block text-xs text-accent hover:underline"
+                    >
+                      ¿Necesitas ayuda para conectar tus redes?
+                    </Link>
                   </div>
                   <button
                     type="button"

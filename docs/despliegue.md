@@ -5,8 +5,9 @@ final (`fronteragrande.mx`) pendiente. Para la prueba con artistas se usa el
 dominio gratuito de cada plataforma y el dominio se apunta después.
 
 > **Estado: ✔ DESPLEGADO en línea (2026-08).** La web y la API están públicas
-> bajo los dominios de prueba (ver tabla). El botón de **conexión con Meta
-> (verificado)** queda pendiente de crear la app de Meta (sección 6).
+> bajo los dominios de prueba (ver tabla). La conexión con Meta ya está activa
+> en producción y Apex Ultra quedó verificado. Falta programar la sincronización
+> automática de publicaciones.
 
 Checklist de despliegue (✔ = hecho, ☐ = pendiente):
 
@@ -17,7 +18,7 @@ Checklist de despliegue (✔ = hecho, ☐ = pendiente):
 | 3. API en Render | ✔ `fronteragrande-api` (health `{"estado":"ok"}`) |
 | 4. Fotos y feed de YouTube | ✔ 20 con foto · 64 videos |
 | 5. Web en Vercel | ✔ `fronteragrande.vercel.app` |
-| 6. Conexión Meta (verificado) | ☐ requiere app de Meta |
+| 6. Conexión Meta (verificado) | ✔ app configurada; Apex Ultra verificado |
 | 7. UptimeRobot (mantener API despierta) | ☐ pendiente de crear monitor |
 | 8. Dominio `fronteragrande.mx` | ☐ sin registrar |
 
@@ -173,9 +174,10 @@ DATABASE_URL="POSTGRESQL_URL_DE_NEON" .venv/bin/python \
      cuando exista). El sitemap/robots/metadatos lo usan.
 4. **Deploy**. Al terminar, la web queda en `https://fronteragrande.vercel.app`.
 
-## 6. (Opcional) Conectar Meta (login y verificación de artistas)
+## 6. Conectar Meta (login y verificación de artistas)
 
-El OAuth de Meta exige **HTTPS** y una URL de callback fija. En producción:
+El OAuth de Meta exige **HTTPS** y una URL de callback fija. En producción ya
+está configurado con la app de Meta de Frontera Grande:
 
 - `META_APP_ID` y `META_APP_SECRET` (las credenciales de la app de Meta) +
   `META_REDIRECT_URI` = `https://fronteragrande-api.onrender.com/api/feed/igfb/callback`
@@ -185,9 +187,9 @@ El OAuth de Meta exige **HTTPS** y una URL de callback fija. En producción:
 - Para artistas reales habría que solicitar la **revisión de la app**
   (Business Verification); en modo desarrollo solo funciona con el admin.
 
-> Si `META_APP_ID`/`META_APP_SECRET` están **vacías**, la API responde
+> Si `META_APP_ID`/`META_APP_SECRET` están vacías, la API responde
 > `igfb.configurado: false` y el botón "Conectar con Meta" no aparece en el
-> perfil del artista (exactamente el estado actual de producción).
+> perfil del artista.
 
 Para la prueba con unos pocos artistas, puedes saltarte este paso.
 
