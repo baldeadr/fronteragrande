@@ -44,6 +44,7 @@ def main():
                             nuevos += 1
                 session.commit()
             except Exception as e:
+                session.rollback()
                 print(f"Error con {artista.nombre}: {e}")
             total += nuevos
             print(f"{artista.nombre}: {nuevos} nuevos")

@@ -181,7 +181,7 @@ class FeedItem(Base):
     titulo: Mapped[str] = mapped_column(String(300))
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     fecha: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
-    imagen: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    imagen: Mapped[str | None] = mapped_column(Text, nullable=True)
     detalle: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

@@ -7,7 +7,7 @@ PostgreSQL (crecimiento nacional/internacional) sea transparente.
 import os
 
 import dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 dotenv.load_dotenv()
@@ -40,6 +40,14 @@ Base.metadata.create_all(engine)
 def _asegurar_columnas_extra():
     """Migración ligera: agrega columnas nuevas a tablas ya existentes."""
     if not DATABASE_URL.startswith("sqlite"):
+        from sqlalchemy import text
+
+        inspector = inspect(engine)
+        if "feed_items" in inspector.get_table_names():
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE feed_items ALTER COLUMN imagen TYPE TEXT")
+                )
         return
     from sqlalchemy import inspect, text
 
