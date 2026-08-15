@@ -144,7 +144,13 @@ def _pagina_artista(artista: Artist, user_token: str) -> dict:
             usuario = base.rsplit("/", 1)[-1].lower()
             for p in paginas:
                 link_pagina = (p.get("link") or "").rstrip("/").lower()
-                if link_pagina.endswith(f"/{usuario}") or (p.get("name") or "").lower() == usuario:
+                nombre_pagina = (p.get("name") or "").strip().casefold()
+                nombre_artista = (artista.nombre or "").strip().casefold()
+                if (
+                    link_pagina.endswith(f"/{usuario}")
+                    or nombre_pagina == usuario
+                    or nombre_pagina == nombre_artista
+                ):
                     return p
         if len(paginas) == 1:
             logger.warning(
