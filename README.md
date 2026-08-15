@@ -165,9 +165,10 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 7. ✔ **Stats de redes + ranking de alcance + panel de stats interactivo:** `GET /api/stats` ampliado (`feed_serie`, `altas_por_mes`, `seguidores`/`reproducciones`, `cobertura`, `posts_90dias`, `por_ciudad`, `eventos_proximos`) y gráficas SVG caseras interactivas en `web/components/stats/` (sin dependencias de cliente).
 8. ✔ **Identidad Frontera Grande + Acerca de:** renombrado en toda la web, `docs/vision.md` (fuente única de qué es/qué no es), página **Acerca de** con la regla de actividad y la fórmula del ranking (KaTeX); feed mejorado (foto real, fecha relativa, "Cargar más", H1 "Actividad de la escena").
 9. ◐ **Sincronización automática con Meta Graph API** (artistas que administran su página): OAuth de producción activo y probado con Apex Ultra (perfil **verificado**); sus publicaciones de Facebook ya aparecen en el perfil. Workflow de GitHub Actions activo cada 6 horas. Pendiente conectar al resto de artistas.
-10. **Panel de administración** en la web (CRUD + scraper) con auth simple.
-11. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
-12. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
+10. `[PROPUESTA]` **Canales oficiales de comunicación:** crear página de Facebook y cuenta de Instagram de Frontera Grande para publicar artistas, eventos, lanzamientos, datos de la escena y reels con fuentes o autorización; enlazar al sitio, definir calendario editorial y medir el tráfico generado.
+11. **Panel de administración** en la web (CRUD + scraper) con auth simple.
+12. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
+13. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
 
 Detalle con estado por etapa y dependencias: [docs/roadmap.md](docs/roadmap.md).
 
