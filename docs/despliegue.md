@@ -193,7 +193,28 @@ está configurado con la app de Meta de Frontera Grande:
 
 Para la prueba con unos pocos artistas, puedes saltarte este paso.
 
-## 7. Mantener viva la API (opcional pero recomendado)
+## 7. Sincronizar publicaciones de Meta
+
+La verificación del artista y la sincronización de publicaciones son procesos
+separados. El workflow `.github/workflows/sync-meta.yml` ejecuta
+`scripts/sync_feed_igfb.py` manualmente o cada 6 horas mediante GitHub Actions.
+
+En GitHub, entra a **Settings → Secrets and variables → Actions** y crea estos
+secretos del repositorio:
+
+- `DATABASE_URL`: connection string de Neon.
+- `META_APP_ID`: App ID de Meta.
+- `META_APP_SECRET`: App Secret de Meta.
+
+Para ejecutar la primera sincronización: entra a **Actions → Sincronizar
+publicaciones de Meta → Run workflow**. El resultado se puede revisar en el
+resumen y los logs de esa ejecución. No pegues estos valores en el código ni en
+los logs.
+
+El horario `0 */6 * * *` significa que GitHub intentará ejecutarlo cada seis
+horas. GitHub puede retrasar unos minutos los workflows programados.
+
+## 8. Mantener viva la API (opcional pero recomendado)
 
 1. Crea una cuenta gratis en [UptimeRobot](https://uptimerobot.com/).
 2. Nuevo monitor HTTP(S) → URL de la API (`/api/health`) → intervalo **14 minutos**.
@@ -202,7 +223,7 @@ Para la prueba con unos pocos artistas, puedes saltarte este paso.
 > **Pendiente:** con la misma cuenta de UptimeRobot se crea el monitor para
 > `https://fronteragrande-api.onrender.com/api/health`.
 
-## 8. Dominio `fronteragrande.mx` (después)
+## 9. Dominio `fronteragrande.mx` (después)
 
 Cuando se registre, en Vercel **Settings → Domains** se apunta
 `fronteragrande.mx`, se actualiza `NEXT_PUBLIC_SITE_URL` y el
