@@ -15,6 +15,8 @@ export interface StatsPlataforma {
   seguidores?: number | null;
   vistas?: number | null;
   reproducciones?: number | null;
+  oyentes_mensuales?: number | null;
+  fecha_captura?: string | null;
 }
 
 export type StatsPerfil = Record<string, StatsPlataforma>;

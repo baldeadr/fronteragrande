@@ -2,7 +2,7 @@
 
 Base de datos interactiva de los **proyectos musicales de la frontera grande de Tamaulipas** (abierta a crecer a otras regiones y disciplinas artísticas). Registra bandas, DJs, solistas, colectivos, covers y tributos, sus ciudades, enlaces de redes, dónde escucharlos/verlos, y monitorea si están **activos** a partir de su huella en internet.
 
-> Es la versión **aplicación web** de la base de datos de [ESCENA_LOCAL.md](https://github.com/anomalyco/architecting-a-band) del proyecto **architecting-a-band**. Los datos semilla (`data/*.csv`) se mantienen en sincronía con ese proyecto. Para el **alcance y los límites** (qué es y qué no es), ver [docs/vision.md](docs/vision.md).
+> Es la versión **aplicación web** de la base de datos de [ESCENA_LOCAL.md](https://github.com/anomalyco/architecting-a-band) del proyecto **architecting-a-band**. Los datos semilla (`data/*.csv`) se mantienen en sincronía con ese proyecto. Para el **alcance y los límites** (qué es y qué no es), ver [docs/vision.md](docs/vision.md). Para costos, audiencia y monetización, ver [docs/finanzas.md](docs/finanzas.md).
 
 ## ¿Para qué sirve?
 
@@ -121,6 +121,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
     ├── actualizar_imagenes.py  # Fotos de perfil desde las redes (URLs, sin descargar)
     ├── actualizar_feed_youtube.py  # Últimos videos de YouTube por RSS (sin API key)
     ├── sync_feed_igfb.py   # Sync automático de posts FB/IG vía Meta Graph API
+    ├── actualizar_oyentes_spotify.py # Captura puntual de oyentes públicos (16 perfiles)
     ├── sync_igfb.sh        # Wrapper para cron (sync Meta)
     ├── recalcular_actividad.py  # Recalcula estado_activo (BD + CSV) con el feed como señal
     └── dev.sh              # Arranca API + web juntas

@@ -11,7 +11,14 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from db.models import ActivityCheck, Artist, ArtistLink, Event, FeedItem
+from db.models import (
+    ActivityCheck,
+    Artist,
+    ArtistLink,
+    Event,
+    FeedItem,
+    SpotifyListenerSnapshot,
+)
 
 
 class ArtistRepository:
@@ -65,6 +72,20 @@ class ArtistRepository:
     def conectados_meta(self) -> list[Artist]:
         return self.session.execute(
             select(Artist).where(Artist.fb_page_token.isnot(None))
+        ).scalars().all()
+
+    def con_spotify(self) -> list[Artist]:
+        """Artistas con un perfil oficial de Spotify registrado."""
+        return self.session.execute(
+            select(Artist)
+            .join(ArtistLink)
+            .where(
+                ArtistLink.plataforma == "spotify",
+                ArtistLink.es_busqueda.is_(False),
+                ArtistLink.url != "",
+            )
+            .distinct()
+            .order_by(Artist.nombre)
         ).scalars().all()
 
     def con_lanzamiento(self) -> list[Artist]:
@@ -181,6 +202,31 @@ class LinkRepository:
         )
         self.session.add(link)
         return link
+
+
+class SpotifySnapshotRepository:
+    """Acceso a capturas históricas de oyentes de Spotify."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def crear(
+        self,
+        artist_id: int,
+        url_spotify: str,
+        oyentes_mensuales: int | None,
+        estado: str = "ok",
+        detalle: str = "",
+    ) -> SpotifyListenerSnapshot:
+        snapshot = SpotifyListenerSnapshot(
+            artist_id=artist_id,
+            url_spotify=url_spotify,
+            oyentes_mensuales=oyentes_mensuales,
+            estado=estado,
+            detalle=detalle,
+        )
+        self.session.add(snapshot)
+        return snapshot
 
 
 class ChecksRepository:

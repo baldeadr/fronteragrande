@@ -74,6 +74,7 @@ export function tipoStat(tipo: string): string {
   if (tipo === "seguidores") return "seguidores";
   if (tipo === "vistas") return "vistas";
   if (tipo === "reproducciones") return "reproducciones";
+  if (tipo === "oyentes_mensuales") return "oyentes mensuales";
   return tipo;
 }
 

@@ -19,6 +19,7 @@ from lib.repository import (
     EventRepository,
     FeedRepository,
     LinkRepository,
+    SpotifySnapshotRepository,
 )
 
 TIPOS_FEED_CONTENIDO = ("video", "lanzamiento", "post", "evento")
@@ -45,6 +46,8 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "followers_yt": a.followers_yt,
             "followers_tt": a.followers_tt,
             "followers_spotify": a.followers_spotify,
+            "oyentes_mensuales_spotify": a.oyentes_mensuales_spotify,
+            "fecha_oyentes_spotify": a.fecha_oyentes_spotify,
             "vistas_yt": a.vistas_yt,
             "vistas_tt": a.vistas_tt,
             "reproducciones_spotify": a.reproducciones_spotify,
@@ -202,7 +205,7 @@ def feed_df(
 
 def metricas_artista(fila) -> dict:
     """Métricas por plataforma de una fila del DataFrame de artistas."""
-    return {
+    metricas = {
         "ig": {"seguidores": fila["followers_ig"]},
         "fb": {"seguidores": fila["followers_fb"]},
         "yt": {
@@ -220,6 +223,11 @@ def metricas_artista(fila) -> dict:
         "bandcamp": {"reproducciones": fila["reproducciones_bandcamp"]},
         "soundcloud": {"reproducciones": fila["reproducciones_soundcloud"]},
     }
+    oyentes = fila["oyentes_mensuales_spotify"]
+    if pd.notna(oyentes):
+        metricas["spotify"]["oyentes_mensuales"] = oyentes
+        metricas["spotify"]["fecha_captura"] = fila["fecha_oyentes_spotify"]
+    return metricas
 
 
 def _agregar_grupo_mencion(
@@ -545,7 +553,12 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
     from scraper.core import estado_activo_recomputado
     from scraper.errors import ScraperError
 
-    resultado: dict = {"imagen": None, "videos": 0, "estado": artista.estado_activo}
+    resultado: dict = {
+        "imagen": None,
+        "videos": 0,
+        "spotify_oyentes": None,
+        "estado": artista.estado_activo,
+    }
 
     # Foto de perfil desde las redes (URL, sin descargar).
     try:
@@ -580,6 +593,28 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
                 )
                 resultado["videos"] += 1
         except ScraperError:
+            pass
+
+    # Oyentes mensuales desde el perfil público de Spotify (captura única).
+    spotify_links = [
+        l for l in artista.links if l.plataforma == "spotify" and not l.es_busqueda
+    ]
+    if spotify_links:
+        from scraper.adapters.spotify_public import SpotifyPublicError, obtener_oyentes
+
+        url_spotify = spotify_links[0].url
+        try:
+            oyentes = obtener_oyentes(url_spotify)
+            artista.oyentes_mensuales_spotify = oyentes
+            artista.fecha_oyentes_spotify = datetime.utcnow()
+            artista.fuente_oyentes_spotify = "spotify_public_profile"
+            SpotifySnapshotRepository(session).crear(
+                artist_id=artista.id,
+                url_spotify=url_spotify,
+                oyentes_mensuales=oyentes,
+            )
+            resultado["spotify_oyentes"] = oyentes
+        except SpotifyPublicError:
             pass
 
     # Recalcular actividad con la señal más reciente (feed incluido).

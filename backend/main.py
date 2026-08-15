@@ -310,6 +310,11 @@ def artist_detail(
         "eventos": eventos,
         "feed": feed_propio,
     }
+    if artist.oyentes_mensuales_spotify is not None:
+        perfil["stats"]["spotify"]["oyentes_mensuales"] = artist.oyentes_mensuales_spotify
+        perfil["stats"]["spotify"]["fecha_captura"] = _json_safe(
+            artist.fecha_oyentes_spotify
+        )
     return _json_safe(perfil)
 
 

@@ -48,6 +48,26 @@ def _asegurar_columnas_extra():
                 conn.execute(
                     text("ALTER TABLE feed_items ALTER COLUMN imagen TYPE TEXT")
                 )
+        if "artists" in inspector.get_table_names():
+            with engine.begin() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "oyentes_mensuales_spotify INTEGER"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "fecha_oyentes_spotify TIMESTAMP"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "fuente_oyentes_spotify VARCHAR(80)"
+                    )
+                )
         return
     from sqlalchemy import text
 
@@ -83,6 +103,14 @@ def _asegurar_columnas_extra():
                     conn.execute(
                         text(f"ALTER TABLE artists ADD COLUMN {columna} VARCHAR(500)")
                     )
+        for columna, tipo in (
+            ("oyentes_mensuales_spotify", "INTEGER"),
+            ("fecha_oyentes_spotify", "DATETIME"),
+            ("fuente_oyentes_spotify", "VARCHAR(80)"),
+        ):
+            if columna not in columnas:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE artists ADD COLUMN {columna} {tipo}"))
 
 
 _asegurar_columnas_extra()

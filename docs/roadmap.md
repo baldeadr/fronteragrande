@@ -43,9 +43,9 @@ debe conseguir.
 |---|-------|-------|
 | 14 | **Canales oficiales de comunicación** | `[PROPUESTA]` Crear página de Facebook y cuenta de Instagram de Frontera Grande. Publicar artistas registrados, eventos, lanzamientos, datos de la escena y reels con fuentes o autorización; enlazar siempre al sitio. Definir identidad, calendario editorial y métricas de tráfico. |
 | 15 | Panel de administración en la web | CRUD de artistas + disparador de scraper, con auth simple. |
-| 16 | Feeds de Bandcamp/SoundCloud y Spotify API | Completar cobertura de plataformas de la escena. |
+| 16 | Feeds de Bandcamp/SoundCloud y métricas públicas de Spotify | Captura puntual de oyentes mensuales desde perfiles públicos de Spotify; 16 URLs confirmadas y 11 artistas sin perfil. Pendiente ejecutar el lote inicial en producción. |
 | 17 | Mapa de artistas por origen | PostGIS: la geografía de la escena (Reynosa/Matamoros/frontera). |
-| 18 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon. Deploy automático desde GitHub. Meta ya sincroniza publicaciones; pendiente: monitor UptimeRobot, conectar más artistas, **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
+| 18 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon. Deploy automático desde GitHub. Meta ya sincroniza publicaciones; pendiente: medir audiencia 90 días, evaluar patrocinio local, monitor UptimeRobot, conectar más artistas, **dominio** (`fronteragrande.mx`) y AdSense. Análisis financiero: `docs/finanzas.md`. |
 
 ## En curso `[PROPUESTA]`
 
@@ -60,6 +60,7 @@ debe conseguir.
 | **Dominio** | Decisión tomada: **`fronteragrande.mx`** (2026-08). Metadatos/sitemap/robots ya usan `https://fronteragrande.mx`. Pendiente: registrar/comprar el dominio y apuntarlo al despliegue. |
 | **Permisos del registro** | El formulario hoy es público (modo desarrollo); requiere auth cuando se decida. |
 | **Sync de Meta** | Workflow de GitHub Actions activo cada 6 horas; primera sincronización confirmada con Apex Ultra. Pendiente conectar al resto de artistas. |
+| **Finanzas** | Análisis inicial en `docs/finanzas.md`: audiencia de nicho, costos casi nulos en free tier, patrocinio local antes que APIs premium y AdSense como complemento. |
 
 ## Cómo se actualiza
 

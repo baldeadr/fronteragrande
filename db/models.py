@@ -74,6 +74,9 @@ class Artist(Base):
     followers_yt: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_tt: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_spotify: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    oyentes_mensuales_spotify: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fecha_oyentes_spotify: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    fuente_oyentes_spotify: Mapped[str] = mapped_column(String(80), default="")
 
     vistas_yt: Mapped[int | None] = mapped_column(Integer, nullable=True)
     vistas_tt: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -126,6 +129,21 @@ class ArtistLink(Base):
     nota: Mapped[str] = mapped_column(String(300), default="")
 
     artist: Mapped["Artist"] = relationship(back_populates="links")
+
+
+class SpotifyListenerSnapshot(Base):
+    """Captura histórica de oyentes mensuales del perfil público de Spotify."""
+
+    __tablename__ = "spotify_listener_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"), index=True)
+    captured_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    oyentes_mensuales: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    url_spotify: Mapped[str] = mapped_column(String(500))
+    fuente: Mapped[str] = mapped_column(String(80), default="spotify_public_profile")
+    estado: Mapped[str] = mapped_column(String(20), default="ok")
+    detalle: Mapped[str] = mapped_column(Text, default="")
 
 
 class Event(Base):

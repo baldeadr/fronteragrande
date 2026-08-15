@@ -76,7 +76,8 @@ y de la detección de actividad. No hay jerarquía entre ellos.
 | `scraper/adapters/tiktok.py` | metadatos de un video/post vía **oEmbed** público (título, autor, miniatura) | ninguno (sin API key) |
 | `scraper/adapters/instagram.py` | oEmbed de un post/reel de IG público (html del embed) | ninguno (sin API key) |
 | `scraper/adapters/facebook.py` | oEmbed de un post de FB público (html del embed) | ninguno (sin API key) |
-| `scraper/adapters/spotify.py` | datos de Spotify | credenciales en `.env` (opcional) |
+| `scraper/adapters/spotify.py` | datos de Spotify vía Web API | credenciales en `.env` (opcional) |
+| `scraper/adapters/spotify_public.py` | oyentes mensuales del perfil público | ninguno; captura HTML puntual |
 | `scraper/adapters/oembed.py` | llamada oEmbed compartida (con caché) para TikTok/IG/FB | ninguno |
 
 Todos los adaptadores lanzan excepciones de la familia `scraper/errors.py`
@@ -132,6 +133,26 @@ Meta permite automatizar la ingesta (sin copiar contenido, solo enlaces):
 
 Si Meta no está configurado, la app funciona solo con los registros de
 investigación (sin contenido sincronizado): no existe vía manual de ingesta.
+
+### Oyentes mensuales de Spotify
+
+La captura de oyentes mensuales usa el perfil público de Spotify, no la Web API
+ni Spotify for Artists. Solo se procesa un artista cuando tiene una URL oficial
+de Spotify registrada (`artist_links.plataforma = spotify` y no es una URL de
+búsqueda). La URL se consulta con `scraper/adapters/spotify_public.py`, que lee
+los metadatos públicos `og:description` o el elemento visible de oyentes.
+
+El script inicial es `scripts/actualizar_oyentes_spotify.py`. Guarda el valor
+actual en el artista y una fila histórica en `spotify_listener_snapshots`, con
+fecha, URL, fuente y estado. Los fallos no detienen el resto del lote.
+
+La captura es puntual por ahora: no hay cron. El onboarding de un artista nuevo
+intenta capturar el dato una vez después de registrar su URL de Spotify; si
+Spotify bloquea o cambia el HTML, el registro del artista continúa.
+
+El dato debe mostrarse como **capturado del perfil público de Spotify** con su
+fecha, no como una métrica en vivo ni como una estadística privada de Spotify
+for Artists. No se buscan ni se registran perfiles ambiguos sin validación.
 
 ## 4. El feed como señal de actividad
 
