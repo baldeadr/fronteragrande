@@ -49,7 +49,7 @@ def _asegurar_columnas_extra():
                     text("ALTER TABLE feed_items ALTER COLUMN imagen TYPE TEXT")
                 )
         return
-    from sqlalchemy import inspect, text
+    from sqlalchemy import text
 
     inspector = inspect(engine)
     if "feed_items" in inspector.get_table_names():
