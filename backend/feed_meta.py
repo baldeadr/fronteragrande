@@ -13,6 +13,7 @@ exponen en la API. Requiere credenciales de app en `.env` (`META_APP_ID`,
 """
 
 import os
+import logging
 from datetime import date, datetime
 from urllib.parse import urlencode
 
@@ -38,6 +39,7 @@ GRAF_API = f"https://graph.facebook.com/{API_VERSION}"
 AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
 router = APIRouter(prefix="/api/feed/igfb", tags=["meta"])
+logger = logging.getLogger(__name__)
 
 
 def _fecha_meta(valor: str | None) -> datetime | None:
@@ -234,8 +236,9 @@ def callback(code: str, state: str):
             )
             session.commit()
             ok = True
-    except Exception:
+    except Exception as exc:
         session.rollback()
+        logger.exception("Error al conectar Meta para el artista %s: %s", state, exc)
     finally:
         session.close()
     return RedirectResponse(f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}")
