@@ -9,6 +9,7 @@ Uso:
     .venv/bin/python scripts/sync_feed_igfb.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,10 @@ from backend.feed_meta import ig_media, pagina_posts
 from db.database import SessionLocal
 from lib.repository import ArtistRepository, FeedRepository
 
-MAX_ITEMS = 10
+try:
+    MAX_ITEMS = max(1, int(os.getenv("META_SYNC_LIMIT", "10")))
+except ValueError:
+    MAX_ITEMS = 10
 
 
 def main():

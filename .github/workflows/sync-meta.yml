@@ -2,6 +2,15 @@ name: Sincronizar publicaciones de Meta
 
 on:
   workflow_dispatch:
+    inputs:
+      limite:
+        description: "Publicaciones por artista en esta ejecución"
+        required: true
+        default: "50"
+        type: choice
+        options:
+          - "50"
+          - "10"
   schedule:
     - cron: "0 */6 * * *"
 
@@ -13,6 +22,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       META_APP_ID: ${{ secrets.META_APP_ID }}
       META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+      META_SYNC_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limite || '10' }}
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4

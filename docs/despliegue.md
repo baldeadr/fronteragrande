@@ -206,10 +206,12 @@ secretos del repositorio:
 - `META_APP_ID`: App ID de Meta.
 - `META_APP_SECRET`: App Secret de Meta.
 
-Para ejecutar la primera sincronización: entra a **Actions → Sincronizar
-publicaciones de Meta → Run workflow**. El resultado se puede revisar en el
-resumen y los logs de esa ejecución. No pegues estos valores en el código ni en
-los logs.
+Para ejecutar una sincronización histórica: entra a **Actions → Sincronizar
+publicaciones de Meta → Run workflow** y deja `50` en **Publicaciones por
+artista**. El workflow automático usa `10` publicaciones por ciclo para
+detectar novedades sin hacer consultas innecesarias. El resultado se puede
+revisar en el resumen y los logs de esa ejecución. No pegues estos valores en
+el código ni en los logs.
 
 El horario `0 */6 * * *` significa que GitHub intentará ejecutarlo cada seis
 horas. GitHub puede retrasar unos minutos los workflows programados.
