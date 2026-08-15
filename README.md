@@ -21,8 +21,8 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
   (`https://fronteragrande.vercel.app`) + PostgreSQL en Neon (29 artistas,
   11 eventos, 20 con foto, 64 videos de YouTube). Deploy automático desde
   GitHub (`baldeadr/fronteragrande`).
-- **Meta (verificado):** ✔ app configurada en producción y Apex Ultra verificado;
-  pendiente la primera sincronización y el cron de publicaciones;
+- **Meta (verificado):** ✔ app configurada en producción, Apex Ultra verificado y
+  publicaciones de Facebook sincronizadas; workflow automático cada 6 horas;
   monitor UptimeRobot para mantener la API despierta; panel de administración
   completo en la web (CRUD + scraper); auth y permisos para el registro de
   artistas (por ahora es público en modo desarrollo); y **dominio**
@@ -164,10 +164,10 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 6. ✔ **Registro voluntario de artistas desde la web** (`POST /api/artists` + onboarding: foto, últimos videos de YouTube y `estado_activo`) y **directorio pulido** (taxonomía de categoría, ciudades base única, filtros mejorados). El perfil se **verifica** conectando la página FB/IG (OAuth).
 7. ✔ **Stats de redes + ranking de alcance + panel de stats interactivo:** `GET /api/stats` ampliado (`feed_serie`, `altas_por_mes`, `seguidores`/`reproducciones`, `cobertura`, `posts_90dias`, `por_ciudad`, `eventos_proximos`) y gráficas SVG caseras interactivas en `web/components/stats/` (sin dependencias de cliente).
 8. ✔ **Identidad Frontera Grande + Acerca de:** renombrado en toda la web, `docs/vision.md` (fuente única de qué es/qué no es), página **Acerca de** con la regla de actividad y la fórmula del ranking (KaTeX); feed mejorado (foto real, fecha relativa, "Cargar más", H1 "Actividad de la escena").
-9. ◐ **Sincronización automática con Meta Graph API** (artistas que administran su página): OAuth de producción activo y probado con Apex Ultra (perfil **verificado**). Workflow de GitHub Actions creado; pendientes: agregar secretos, ejecutar la primera sincronización y conectar al resto de artistas.
+9. ◐ **Sincronización automática con Meta Graph API** (artistas que administran su página): OAuth de producción activo y probado con Apex Ultra (perfil **verificado**); sus publicaciones de Facebook ya aparecen en el perfil. Workflow de GitHub Actions activo cada 6 horas. Pendiente conectar al resto de artistas.
 10. **Panel de administración** en la web (CRUD + scraper) con auth simple.
 11. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
-12. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: primera sincronización y cron de Meta, UptimeRobot, y el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
+12. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
 
 Detalle con estado por etapa y dependencias: [docs/roadmap.md](docs/roadmap.md).
 

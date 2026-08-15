@@ -33,7 +33,7 @@ debe conseguir.
 
 | # | Etapa | Estado | Depende de |
 |---|-------|--------|-----------|
-| 11 | **Sincronización automática FB/IG (Meta)** | ◐ OAuth de producción activo y probado: Apex Ultra quedó **verificado**. Workflow de GitHub Actions creado (`.github/workflows/sync-meta.yml`), pendiente agregar sus secretos y ejecutar la primera sincronización; después correrá cada 6 horas. | Secretos de GitHub y artistas participantes |
+| 11 | **Sincronización automática FB/IG (Meta)** | ◐ OAuth y primera sincronización de producción completados: Apex Ultra quedó **verificado** y sus publicaciones de Facebook ya aparecen en el perfil. Workflow de GitHub Actions activo cada 6 horas. Pendiente conectar al resto de artistas y confirmar el siguiente ciclo automático. | Artistas participantes |
 | 12 | YouTube `vistas_yt` | `[PENDIENTE]` no se extraen sin API key o ejecución de JS. | `YOUTUBE_API_KEY` opcional |
 | 13 | Spotify: números del API | ✔ MCP (`scripts/spotify_mcp_server.py`) + snapshot (`scripts/escena_local_snapshot.py` → `data/escena_local_stats.csv`) clonados de architecting-a-band y probados. **Verificado 2026-08:** con las credenciales de desarrollo el API resuelve nombre/imagen/URI, pero **no entrega followers/popularity/géneros** (los campos ni siquiera aparecen) y `top-tracks` da **403**; el snapshot ya tolera esa respuesta (registra 0/0) y queda listo para re-ejecutarse sin cambios. **`[PENDIENTE]`** el API 2026 entrega esos números solo con **Extended Quota** (revisión de la app en el dashboard: developer.spotify.com/dashboard → app → solicitar quota). | **Extended Quota** de Spotify |
 
@@ -44,13 +44,13 @@ debe conseguir.
 | 14 | Panel de administración en la web | CRUD de artistas + disparador de scraper, con auth simple. |
 | 15 | Feeds de Bandcamp/SoundCloud y Spotify API | Completar cobertura de plataformas de la escena. |
 | 16 | Mapa de artistas por origen | PostGIS: la geografía de la escena (Reynosa/Matamoros/frontera). |
-| 17 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon (29 artistas · 11 eventos · 20 con foto · 64 videos). Deploy automático desde GitHub. Pendiente: monitor UptimeRobot, primera sincronización y cron de Meta, **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
+| 17 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon. Deploy automático desde GitHub. Meta ya sincroniza publicaciones; pendiente: monitor UptimeRobot, conectar más artistas, **dominio** (`fronteragrande.mx`), AdSense/patrocinios. Detalle: `docs/despliegue.md`. |
 
 ## En curso `[PROPUESTA]`
 
 | # | Etapa | Estado |
 |---|-------|--------|
-| 17 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon y Meta configurado en producción. Apex Ultra ya está verificado. Pendientes menores: crear monitor UptimeRobot y programar la sincronización Meta (`docs/despliegue.md` secciones 3, 6 y 7). |
+| 17 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon y Meta sincronizando en producción. Apex Ultra está verificado y muestra publicaciones de Facebook. Pendientes menores: crear monitor UptimeRobot y conectar más artistas (`docs/despliegue.md`). |
 
 ## Pendiente de producto
 
@@ -58,7 +58,7 @@ debe conseguir.
 |------|--------|
 | **Dominio** | Decisión tomada: **`fronteragrande.mx`** (2026-08). Metadatos/sitemap/robots ya usan `https://fronteragrande.mx`. Pendiente: registrar/comprar el dominio y apuntarlo al despliegue. |
 | **Permisos del registro** | El formulario hoy es público (modo desarrollo); requiere auth cuando se decida. |
-| **Sync de Meta** | Workflow de GitHub Actions creado; pendiente agregar `DATABASE_URL`, `META_APP_ID` y `META_APP_SECRET` como secretos y ejecutar la primera sincronización. |
+| **Sync de Meta** | Workflow de GitHub Actions activo cada 6 horas; primera sincronización confirmada con Apex Ultra. Pendiente conectar al resto de artistas. |
 
 ## Cómo se actualiza
 

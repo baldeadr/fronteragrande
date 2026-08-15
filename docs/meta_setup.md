@@ -10,8 +10,9 @@ post y el botón "Abrir en {red}" lleva al origen).
 > la forma de que el **propio artista** mantenga su perfil y su contenido.
 
 > **Estado actual (agosto 2026):** la app de Meta está configurada en
-> producción, el OAuth ya fue probado y **Apex Ultra quedó verificado**. Falta
-> ejecutar la primera sincronización y programar el cron para publicaciones.
+> producción, el OAuth ya fue probado, **Apex Ultra quedó verificado** y sus
+> publicaciones de Facebook ya aparecen en el perfil. GitHub Actions ejecuta
+> la sincronización cada 6 horas. Falta conectar al resto de artistas.
 
 ---
 
