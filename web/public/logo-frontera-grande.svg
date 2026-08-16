@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="titulo descripcion">
   <title id="titulo">Frontera Grande</title>
-  <desc id="descripcion">Círculo negro con un triángulo blanco y las letras FG.</desc>
-  <circle cx="256" cy="256" r="238" fill="#0b0b10"/>
-  <path d="M256 82 438 398H74Z" fill="#fff"/>
+  <desc id="descripcion">Cuadrado negro de bordes redondeados con un triángulo blanco y las letras FG.</desc>
+  <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
+  <path d="M256 72 443 402H69Z" fill="#fff"/>
   <text
     x="256"
     y="326"
     fill="#0b0b10"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="124"
+    font-size="132"
     font-weight="900"
-    letter-spacing="-10"
+    letter-spacing="-8"
+    transform="translate(0 -58) scale(1 1.18)"
   >FG</text>
 </svg>
