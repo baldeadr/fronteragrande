@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
 export const metadata: Metadata = {
   title: "Ayuda para artistas",
@@ -111,9 +112,17 @@ export default function AyudaArtistasPage() {
           ¿Aún tienes problemas? Vuelve a tu perfil y confirma que los enlaces
           de Facebook e Instagram sean públicos y correspondan al proyecto.
         </p>
+        <a
+          href={FACEBOOK_FRONTERA_GRANDE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex text-accent underline underline-offset-2"
+        >
+          Escribir a Frontera Grande por Facebook
+        </a>
         <Link
           href="/artistas"
-          className="mt-3 inline-flex rounded-lg bg-accent px-3 py-1.5 font-medium text-bg hover:opacity-90"
+          className="mt-2 inline-flex rounded-lg bg-accent px-3 py-1.5 font-medium text-bg hover:opacity-90"
         >
           Ir al directorio
         </Link>

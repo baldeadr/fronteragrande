@@ -11,6 +11,7 @@ import IconoVerificado from "@/components/IconoVerificado";
 import ConexionMeta from "@/components/ConexionMeta";
 import IconoMencion from "@/components/IconoMencion";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
+import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
 function tipoMencion(
   mencion: string,
@@ -310,6 +311,18 @@ export default async function PerfilPage({
           </div>
         </section>
       )}
+
+      <p className="text-xs text-muted">
+        ¿Ves un dato incorrecto en este perfil?{" "}
+        <a
+          href={FACEBOOK_FRONTERA_GRANDE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent underline underline-offset-2"
+        >
+          Repórtalo por Facebook
+        </a>
+      </p>
 
       <section>
         <h2 className="mb-3 text-lg font-bold">

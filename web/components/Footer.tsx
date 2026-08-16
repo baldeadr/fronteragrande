@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
 export default function Footer() {
   return (
@@ -14,6 +15,14 @@ export default function Footer() {
         <Link href="/ayuda-artistas" className="text-accent hover:underline">
           Ayuda para artistas
         </Link>
+        <a
+          href={FACEBOOK_FRONTERA_GRANDE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent hover:underline"
+        >
+          Contacto y correcciones por Facebook
+        </a>
       </div>
     </footer>
   );
