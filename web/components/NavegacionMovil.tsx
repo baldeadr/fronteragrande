@@ -95,7 +95,7 @@ export default function NavegacionMovil() {
   return (
     <nav
       className={`fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 px-2 pt-2 backdrop-blur transition-transform duration-200 md:hidden ${ocultas ? "translate-y-full" : "translate-y-0"}`}
-      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.25rem)" }}
       aria-label="Navegación principal"
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
