@@ -211,3 +211,19 @@ class FeedItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     artist: Mapped["Artist"] = relationship()
+
+
+class PushSubscription(Base):
+    """Suscripción Web Push de un dispositivo (PWA instalada).
+
+    Guarda el `endpoint` y las llaves de cifrado (`p256dh`, `auth`) que el
+    navegador entrega al suscribirse. El envío vive en `lib/notificaciones`.
+    """
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    endpoint: Mapped[str] = mapped_column(String(500), unique=True, index=True)
+    keys_p256dh: Mapped[str] = mapped_column(String(200))
+    keys_auth: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

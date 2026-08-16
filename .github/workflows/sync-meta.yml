@@ -22,6 +22,9 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       META_APP_ID: ${{ secrets.META_APP_ID }}
       META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
       META_SYNC_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limite || '10' }}
     steps:
       - name: Descargar el repositorio

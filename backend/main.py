@@ -22,6 +22,7 @@ from backend.dependencies import (
     get_db,
     get_event_repo,
 )
+from backend.push import router as push_router
 from db.models import FeedItem, SpotifyListenerSnapshot
 from lib.helpers import (
     artista_link_principal,
@@ -32,7 +33,8 @@ from lib.plataformas import (
     link_con_metadatos,
     preview_feed,
 )
-from lib.repository import ArtistRepository, EventRepository
+from lib.notificaciones import notificar_todos
+from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository
 from lib.servicios import (
     artistas_df,
     crear_artista,
@@ -74,6 +76,7 @@ app.add_middleware(
 
 app.include_router(feed_meta_router)
 app.include_router(feed_tiktok_router)
+app.include_router(push_router)
 
 @app.get("/tiktokZRAuUrtos3HEHHPy6apDTOQcgqkpwyZC.txt")
 def _verificacion_tiktok():
@@ -268,6 +271,16 @@ def crear_artista_endpoint(
     db.flush()  # asigna artista.id antes del onboarding (snapshots/feed lo usan)
     resumen = onboarding_artista(db, artista)
     db.commit()
+    try:
+        notificar_todos(
+            PushSubscriptionRepository(db),
+            "Nuevo proyecto en Frontera Grande",
+            f"{artista.nombre} se sumó a la escena.",
+            f"/artistas/{artista.slug}",
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
     return {
         "slug": artista.slug,
         "nombre": artista.nombre,

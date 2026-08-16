@@ -1,4 +1,4 @@
-const CACHE = "fronteragrande-v1";
+const CACHE = "fronteragrande-v2";
 const PRECACHE = [
   "/",
   "/manifest.webmanifest",
@@ -64,4 +64,40 @@ self.addEventListener("fetch", (event) => {
         )
     );
   }
+});
+
+self.addEventListener("push", (event) => {
+  let data = { title: "Frontera Grande", body: "", url: "/" };
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: data.url },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(
+    event.notification.data?.url || "/",
+    self.location.origin
+  ).href;
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const abierta = windows.find((client) => client.url === target);
+      if (abierta && "focus" in abierta) return abierta.focus();
+      return clients.openWindow(target);
+    })
+  );
 });

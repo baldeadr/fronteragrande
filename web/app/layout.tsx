@@ -22,6 +22,15 @@ export const metadata: Metadata = {
     title: "Frontera Grande",
     statusBarStyle: "black-translucent",
   },
+  icons: {
+    apple: [
+      {
+        url: "/icons/apple-touch-icon-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
   openGraph: {
     title: "Frontera Grande",
     description:

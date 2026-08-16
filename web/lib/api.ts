@@ -77,6 +77,45 @@ export async function eliminarArtista(slug: string, token: string): Promise<void
   }
 }
 
+export async function suscribirPush(subscription: PushSubscription): Promise<void> {
+  const datos = subscription.toJSON();
+  const res = await fetch(`${API_URL}/api/push/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      endpoint: subscription.endpoint,
+      keys: datos.keys ?? {},
+    }),
+  });
+  if (!res.ok) throw new Error(`Error de API ${res.status}`);
+}
+
+export async function desuscribirPush(endpoint: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/push/unsubscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint, keys: {} }),
+  });
+  if (!res.ok) throw new Error(`Error de API ${res.status}`);
+}
+
+export async function broadcastPush(
+  token: string,
+  body: { titulo: string; cuerpo: string; url: string },
+): Promise<{ enviadas: number }> {
+  const res = await fetch(`${API_URL}/api/push/broadcast`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token,
+    },
+    body: JSON.stringify(body),
+  });
+  const datos = (await res.json()) as { enviadas?: number; detail?: string };
+  if (!res.ok) throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  return { enviadas: datos.enviadas ?? 0 };
+}
+
 export const api = {
   artists: () => get<ArtistCard[]>("/api/artists"),
   artist: (slug: string) => get<ArtistDetail>(`/api/artists/${slug}`),

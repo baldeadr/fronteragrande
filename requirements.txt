@@ -9,3 +9,4 @@ wordcloud>=1.9
 matplotlib>=3.8
 mcp>=1.9,<2
 spotipy>=2.24
+pywebpush>=2.4

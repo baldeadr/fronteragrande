@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   adminArtistas,
+  broadcastPush,
   editarArtista,
   eliminarArtista,
 } from "@/lib/api";
@@ -57,6 +58,10 @@ export default function PanelAdmin() {
   const [artistas, setArtistas] = useState<AdminArtist[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [avisoTitulo, setAvisoTitulo] = useState("");
+  const [avisoCuerpo, setAvisoCuerpo] = useState("");
+  const [avisoUrl, setAvisoUrl] = useState("/feed");
+  const [avisoEstado, setAvisoEstado] = useState("");
 
   const searchParams = useSearchParams();
   const editarSlug = searchParams.get("editar") ?? "";
@@ -150,6 +155,57 @@ export default function PanelAdmin() {
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <form
+        className="flex max-w-xl flex-col gap-2 rounded-xl border border-line bg-surface p-4"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setAvisoEstado("");
+          try {
+            const resultado = await broadcastPush(token, {
+              titulo: avisoTitulo,
+              cuerpo: avisoCuerpo,
+              url: avisoUrl,
+            });
+            setAvisoEstado(`Aviso enviado a ${resultado.enviadas} suscriptores.`);
+            setAvisoTitulo("");
+            setAvisoCuerpo("");
+          } catch (e) {
+            setAvisoEstado(e instanceof Error ? e.message : "No se pudo enviar el aviso.");
+          }
+        }}
+      >
+        <h2 className="font-semibold">Enviar aviso</h2>
+        <p className="text-sm text-muted">Notifica a quienes activaron las notificaciones.</p>
+        <input
+          required
+          value={avisoTitulo}
+          onChange={(e) => setAvisoTitulo(e.target.value)}
+          placeholder="Título"
+          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+        <textarea
+          required
+          value={avisoCuerpo}
+          onChange={(e) => setAvisoCuerpo(e.target.value)}
+          placeholder="Mensaje"
+          rows={2}
+          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+        <input
+          value={avisoUrl}
+          onChange={(e) => setAvisoUrl(e.target.value)}
+          placeholder="Ruta al tocar el aviso, por ejemplo /feed"
+          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+        <button
+          type="submit"
+          className="self-start rounded-lg bg-accent px-3 py-2 text-sm font-medium text-bg hover:opacity-90"
+        >
+          Enviar aviso
+        </button>
+        {avisoEstado && <p className="text-sm text-muted">{avisoEstado}</p>}
+      </form>
 
       <div className="flex flex-col gap-2">
         {artistas.map((a) => (

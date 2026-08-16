@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
+import Notificaciones from "@/components/Notificaciones";
 
 export default function Footer() {
   return (
@@ -26,6 +27,7 @@ export default function Footer() {
         <Link href="/admin" className="text-muted opacity-70 hover:opacity-100 hover:underline">
           Administración
         </Link>
+        <Notificaciones />
       </div>
     </footer>
   );

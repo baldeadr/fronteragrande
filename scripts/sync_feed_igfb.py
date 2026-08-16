@@ -19,7 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from backend.feed_meta import ig_bio, ig_media, pagina_about, pagina_posts
 from db.database import SessionLocal
 from lib.helpers import es_bio_clara
-from lib.repository import ArtistRepository, FeedRepository
+from lib.notificaciones import notificar_todos
+from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository
 
 try:
     MAX_ITEMS = max(1, int(os.getenv("META_SYNC_LIMIT", "10")))
@@ -56,6 +57,16 @@ def main():
                 print(f"Error con {artista.nombre}: {e}")
             total += nuevos
             print(f"{artista.nombre}: {nuevos} nuevos")
+        if total:
+            enviadas = notificar_todos(
+                PushSubscriptionRepository(session),
+                "Nueva actividad en Frontera Grande",
+                f"Hay {total} publicaciones nuevas de la escena.",
+                "/feed",
+            )
+            session.commit()
+            if enviadas:
+                print(f"Aviso enviado a {enviadas} suscriptores")
         print(f"Total de posts nuevos: {total}")
     finally:
         session.close()

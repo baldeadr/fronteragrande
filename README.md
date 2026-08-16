@@ -15,7 +15,7 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
 
 ## Estado
 
-- **Pivote a web pública:** ✔ API REST (FastAPI) sobre la capa de datos existente · ✔ frontend Next.js responsive (móvil + desktop) · ✔ feed con miniaturas y previews (YouTube, TikTok, IG, FB) · ✔ directorio con filtros (categoría/ciudad/actividad con etiqueta y opción "Todas", géneros en chips multi-selección y leyenda de actividad) · ✔ eventos · ✔ **panel de stats interactivo** (gráficas SVG caseras: actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas, dona por categoría) · ✔ **página Acerca de** (historia, qué es/no es, actividad y regla del ranking) · ✔ **identidad Frontera Grande** · ✔ sitemap/robots · ✔ **PWA** (manifest + service worker + iconos, instalable en el celular) · ✔ **registro voluntario de artistas** (botón "Suma tu proyecto": crea el perfil; el artista lo **verifica** conectando su página de Facebook/Instagram vía OAuth, y entonces sus posts se sincronizan automáticamente; badge "Verificado" público) · ✔ **ingesta manual eliminada** (el contenido solo llega por el propio artista) · ✔ 29 proyectos + 11 eventos (27 de `architecting-a-band` + 2 registrados desde la web).
+- **Pivote a web pública:** ✔ API REST (FastAPI) sobre la capa de datos existente · ✔ frontend Next.js responsive (móvil + desktop) · ✔ feed con miniaturas y previews (YouTube, TikTok, IG, FB) · ✔ directorio con filtros (categoría/ciudad/actividad con etiqueta y opción "Todas", géneros en chips multi-selección y leyenda de actividad) · ✔ eventos · ✔ **panel de stats interactivo** (gráficas SVG caseras: actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas, dona por categoría) · ✔ **página Acerca de** (historia, qué es/no es, actividad y regla del ranking) · ✔ **identidad Frontera Grande** · ✔ sitemap/robots · ✔ **PWA instalable con Web Push** (manifest, service worker, iconos y avisos automáticos/manuales) · ✔ **registro voluntario de artistas** (botón "Suma tu proyecto": crea el perfil; el artista lo **verifica** conectando su página de Facebook/Instagram vía OAuth, y entonces sus posts se sincronizan automáticamente; badge "Verificado" público) · ✔ **ingesta manual eliminada** (el contenido solo llega por el propio artista) · ✔ 29 proyectos + 11 eventos (27 de `architecting-a-band` + 2 registrados desde la web).
 - **Despliegue:** ✔ **EN LÍNEA (agosto 2026)** — API en Render
   (`https://fronteragrande-api.onrender.com`, `{"estado":"ok"}`) + web en Vercel
   (`https://fronteragrande.vercel.app`) + PostgreSQL en Neon (29 artistas,
@@ -32,6 +32,7 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
 
 Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
 paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
+La configuración de notificaciones Web Push está en [docs/push.md](docs/push.md).
 El **dominio** quedó decidido como **`fronteragrande.mx`** (metadatos, sitemap
 y robots ya lo usan por defecto).
 

@@ -17,6 +17,7 @@ from db.models import (
     ArtistLink,
     Event,
     FeedItem,
+    PushSubscription,
     SpotifyListenerSnapshot,
 )
 
@@ -244,3 +245,46 @@ class ChecksRepository:
         return self.session.execute(
             select(ActivityCheck).order_by(ActivityCheck.fecha_chequeo.desc()).limit(limite)
         ).scalars().all()
+
+
+class PushSubscriptionRepository:
+    """Suscripciones Web Push de dispositivos (`push_subscriptions`)."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def guardar(
+        self, endpoint: str, keys_p256dh: str, keys_auth: str
+    ) -> PushSubscription:
+        """Crea la suscripción o actualiza sus llaves si el endpoint ya existe."""
+        sub = self.session.execute(
+            select(PushSubscription).where(PushSubscription.endpoint == endpoint)
+        ).scalar_one_or_none()
+        if sub is None:
+            sub = PushSubscription(
+                endpoint=endpoint,
+                keys_p256dh=keys_p256dh,
+                keys_auth=keys_auth,
+            )
+            self.session.add(sub)
+        else:
+            sub.keys_p256dh = keys_p256dh
+            sub.keys_auth = keys_auth
+        return sub
+
+    def por_endpoint(self, endpoint: str) -> PushSubscription | None:
+        return self.session.execute(
+            select(PushSubscription).where(PushSubscription.endpoint == endpoint)
+        ).scalar_one_or_none()
+
+    def todos(self) -> list[PushSubscription]:
+        return self.session.execute(
+            select(PushSubscription).order_by(PushSubscription.created_at)
+        ).scalars().all()
+
+    def eliminar(self, endpoint: str) -> bool:
+        sub = self.por_endpoint(endpoint)
+        if sub is None:
+            return False
+        self.session.delete(sub)
+        return True
