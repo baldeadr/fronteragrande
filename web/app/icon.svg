@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Frontera Grande</title>
+  <desc id="descripcion">Iniciales FG de Frontera Grande.</desc>
+  <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
+  <text
+    x="256"
+    y="292"
+    fill="#fff"
+    text-anchor="middle"
+    font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
+    font-size="168"
+    font-weight="900"
+    letter-spacing="-10"
+    transform="translate(0 -64) scale(1 1.22)"
+  >FG</text>
+  <path d="M128 400h104c11 0 14-8 24-8s13 8 24 8h104" fill="none" stroke="#9d4edd" stroke-linecap="round" stroke-width="3"/>
+</svg>
