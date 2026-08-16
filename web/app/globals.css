@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource/archivo-black/400.css";
 
 :root {
   --bg: #0b0b10;
@@ -31,4 +32,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.font-brand {
+  font-family: "Archivo Black", "Arial Black", Arial, sans-serif;
 }

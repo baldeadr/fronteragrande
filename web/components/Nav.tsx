@@ -32,7 +32,7 @@ export default function Nav() {
             className="rounded-lg"
             aria-hidden
           />
-          <span className="text-lg">Frontera Grande</span>
+          <span className="font-brand text-lg">Frontera Grande</span>
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
