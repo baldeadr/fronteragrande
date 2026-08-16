@@ -15,7 +15,7 @@
   >FG</text>
   <text
     x="256"
-    y="336"
+    y="352"
     fill="#b8b8c2"
     text-anchor="middle"
     font-family="Arial, Helvetica, sans-serif"
@@ -25,7 +25,7 @@
   >FRONTERA</text>
   <text
     x="256"
-    y="374"
+    y="390"
     fill="#b8b8c2"
     text-anchor="middle"
     font-family="Arial, Helvetica, sans-serif"
@@ -34,7 +34,7 @@
     letter-spacing="6"
   >GRANDE</text>
   <path
-    d="M130 406h104c11 0 14-8 24-8s13 8 24 8h104"
+    d="M130 422h104c11 0 14-8 24-8s13 8 24 8h104"
     fill="none"
     stroke="#9d4edd"
     stroke-linecap="round"
