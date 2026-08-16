@@ -103,8 +103,8 @@ export default function AcercaDePage() {
         <Image
           src="/logo-frontera-grande.svg"
           alt="Frontera Grande"
-          width={88}
-          height={88}
+          width={112}
+          height={112}
           className="shrink-0 rounded-xl"
         />
         <div>
