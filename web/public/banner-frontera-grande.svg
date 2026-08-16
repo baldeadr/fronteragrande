@@ -6,28 +6,47 @@
   <circle cx="1530" cy="520" r="210" fill="#2a1a33" opacity="0.65"/>
 
   <rect x="112" y="82" width="460" height="460" rx="74" fill="#14141b" stroke="#262633" stroke-width="3"/>
-  <text
-    x="342"
-    y="358"
-    fill="#fff"
-    text-anchor="middle"
-    font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="164"
-    font-weight="900"
-    letter-spacing="-10"
-    transform="translate(0 -76) scale(1 1.22)"
-  >FG</text>
-  <text
-    x="342"
-    y="420"
-    fill="#b8b8c2"
-    text-anchor="middle"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="40"
-    font-weight="300"
-    letter-spacing="2"
-  >FRONTERA GRANDE</text>
-  <path d="M192 480h104c11 0 14-8 24-8s13 8 24 8h104" fill="none" stroke="#9d4edd" stroke-linecap="round" stroke-width="8"/>
+  <g transform="translate(94.6 64.6) scale(0.966)">
+    <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
+    <text
+      x="256"
+      y="274"
+      fill="#fff"
+      text-anchor="middle"
+      font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
+      font-size="168"
+      font-weight="900"
+      letter-spacing="6"
+      transform="translate(0 -64) scale(1 1.22)"
+    >FG</text>
+    <text
+      x="256"
+      y="352"
+      fill="#b8b8c2"
+      text-anchor="middle"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="32"
+      font-weight="300"
+      letter-spacing="6"
+    >FRONTERA</text>
+    <text
+      x="256"
+      y="390"
+      fill="#b8b8c2"
+      text-anchor="middle"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="32"
+      font-weight="300"
+      letter-spacing="6"
+    >GRANDE</text>
+    <path
+      d="M130 422h104c11 0 14-8 24-8s13 8 24 8h104"
+      fill="none"
+      stroke="#9d4edd"
+      stroke-linecap="round"
+      stroke-width="8"
+    />
+  </g>
 
   <g transform="translate(700 176)">
     <text fill="#fff" font-family="'Archivo Black', 'Arial Black', Arial, sans-serif" font-size="76" font-weight="900">FRONTERA</text>
