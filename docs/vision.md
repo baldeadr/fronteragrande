@@ -2,7 +2,8 @@
 
 > **Documento de referencia única** para la identidad, el alcance y los límites
 > del proyecto. Se actualiza aquí cuando la visión cambia; README.md y AGENTS.md
-> resumen y enlazan a este documento.
+> resumen y enlazan a este documento. El estilo visual de la marca (logo,
+> colores, tipografía) vive en `docs/identidad.md`.
 
 ## Qué es
 
