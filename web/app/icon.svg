@@ -8,10 +8,9 @@
     fill="#fff"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="168"
+    font-size="220"
     font-weight="900"
-    letter-spacing="-10"
-    transform="translate(0 -64) scale(1 1.22)"
+    letter-spacing="-16"
+    transform="translate(0 -70) scale(1 1.12)"
   >FG</text>
-  <path d="M128 400h104c11 0 14-8 24-8s13 8 24 8h104" fill="none" stroke="#9d4edd" stroke-linecap="round" stroke-width="3"/>
 </svg>
