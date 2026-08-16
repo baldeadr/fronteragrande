@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import NavegacionMovil, { BotonAtras } from "@/components/NavegacionMovil";
+import NavegacionMovil from "@/components/NavegacionMovil";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx";
 
@@ -50,7 +50,6 @@ export default function RootLayout({
     <html lang="es" className="h-full antialiased">
       <body className="flex min-h-full flex-col bg-bg text-text">
         <Nav />
-        <BotonAtras />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:py-10 sm:pb-10">
           {children}
         </main>

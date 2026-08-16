@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { BotonAtras, useBarrasOcultas } from "@/components/NavegacionMovil";
 
 const enlaces = [
   { href: "/", texto: "Actividad" },
@@ -14,9 +15,11 @@ const enlaces = [
 
 export default function Nav() {
   const [abierto, setAbierto] = useState(false);
+  const oculto = useBarrasOcultas();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
+    <header className={`relative sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur transition-transform duration-200 ${oculto ? "-translate-y-full" : "translate-y-0"}`}>
+      <BotonAtras />
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
           <Image
