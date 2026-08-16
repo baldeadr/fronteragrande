@@ -19,15 +19,15 @@
     fill="#b8b8c2"
     text-anchor="middle"
     font-family="Arial, Helvetica, sans-serif"
-    font-size="21"
+    font-size="30"
     font-weight="300"
-    letter-spacing="5"
+    letter-spacing="2"
   >FRONTERA GRANDE</text>
   <path
     d="M128 400h104c11 0 14-8 24-8s13 8 24 8h104"
     fill="none"
     stroke="#9d4edd"
     stroke-linecap="round"
-    stroke-width="3"
+    stroke-width="6"
   />
 </svg>
