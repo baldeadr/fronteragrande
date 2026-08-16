@@ -4,13 +4,12 @@
   <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
   <text
     x="256"
-    y="292"
+    y="336"
     fill="#fff"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
     font-size="220"
     font-weight="900"
     letter-spacing="-16"
-    transform="translate(0 -70) scale(1 1.12)"
   >FG</text>
 </svg>
