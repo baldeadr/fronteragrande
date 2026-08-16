@@ -4,14 +4,14 @@
   <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
   <text
     x="256"
-    y="286"
+    y="274"
     fill="#fff"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="178"
+    font-size="168"
     font-weight="900"
-    letter-spacing="24"
-    transform="translate(256 256) scale(0.78 1.35) translate(-256 -256)"
+    letter-spacing="-10"
+    transform="translate(0 -64) scale(1 1.22)"
   >FG</text>
   <text
     x="256"
