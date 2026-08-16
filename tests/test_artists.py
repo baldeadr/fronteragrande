@@ -161,6 +161,23 @@ def test_crear_artista_validaciones(client):
     _limpiar_altas()
 
 
+def test_eliminar_artista_requiere_admin(client):
+    """Borrar un artista exige el token de administrador (403 sin él)."""
+    alta = client.post(
+        "/api/artists", json={"nombre": "Banda a Borrar", "categoria": "Banda"}
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+
+    sin_token = client.delete(f"/api/artists/{slug}")
+    assert sin_token.status_code == 403
+
+    existe = client.get(f"/api/artists/{slug}")
+    assert existe.status_code == 200
+
+    _limpiar_altas()
+
+
 def test_crear_artista_con_spotify(client, monkeypatch):
     """Alta con enlace de Spotify: el onboarding crea su snapshot sin romper."""
     monkeypatch.setattr(

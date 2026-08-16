@@ -10,9 +10,10 @@ from datetime import date, datetime, time
 from typing import Any
 
 import pandas as pd
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from backend.dependencies import (
@@ -20,6 +21,7 @@ from backend.dependencies import (
     get_db,
     get_event_repo,
 )
+from db.models import FeedItem, SpotifyListenerSnapshot
 from lib.helpers import (
     artista_link_principal,
     conteo_generos,
@@ -39,7 +41,11 @@ from lib.servicios import (
     ranking_global,
     stats_escena,
 )
-from backend.feed_meta import meta_configurado, router as feed_meta_router
+from backend.feed_meta import (
+    ADMIN_PASSWORD,
+    meta_configurado,
+    router as feed_meta_router,
+)
 
 app = FastAPI(title="Frontera Grande API", version="0.1.0")
 
@@ -365,6 +371,35 @@ def list_events(eventos_repo: EventRepository = Depends(get_event_repo)):
 def stats(db: Session = Depends(get_db)):
     """Indicadores de la escena para el panel público."""
     return _json_safe(stats_escena(db))
+
+
+@app.delete("/api/artists/{slug}")
+def eliminar_artista_endpoint(
+    slug: str,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Elimina un artista y todo su contenido (solo administración).
+
+    Requiere el `X-Admin-Token` (ADMIN_PASSWORD de `.env`). Borra en cascada
+    enlaces, feed, chequeos de actividad y snapshots de Spotify.
+    """
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    artista = ArtistRepository(db).por_slug(slug)
+    if artista is None:
+        raise HTTPException(status_code=404, detail="Artista no encontrado")
+    db.execute(delete(FeedItem).where(FeedItem.artist_id == artista.id))
+    db.execute(
+        delete(SpotifyListenerSnapshot).where(
+            SpotifyListenerSnapshot.artist_id == artista.id
+        )
+    )
+    db.delete(artista)  # cascada ORM: enlaces y chequeos
+    db.commit()
+    return {"ok": True}
 
 
 @app.get("/api/genres")
