@@ -1,30 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 476 476" role="img" aria-labelledby="titulo descripcion">
   <title id="titulo">Frontera Grande</title>
-  <desc id="descripcion">Cuadrado negro de bordes redondeados con las letras FG, el nombre Frontera Grande y una línea fronteriza abstracta.</desc>
+  <desc id="descripcion">Cuadrado negro de bordes redondeados con las letras FG, el nombre Frontera Grande en dos renglones y una línea fronteriza abstracta.</desc>
   <rect x="18" y="18" width="476" height="476" rx="78" fill="#0b0b10"/>
   <text
     x="256"
-    y="274"
+    y="286"
     fill="#fff"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="168"
+    font-size="178"
     font-weight="900"
-    letter-spacing="-10"
-    transform="translate(0 -64) scale(1 1.22)"
+    letter-spacing="24"
+    transform="translate(256 256) scale(0.78 1.35) translate(-256 -256)"
   >FG</text>
   <text
     x="256"
-    y="354"
+    y="336"
     fill="#b8b8c2"
     text-anchor="middle"
     font-family="Arial, Helvetica, sans-serif"
-    font-size="30"
+    font-size="32"
     font-weight="300"
-    letter-spacing="0"
-  >FRONTERA GRANDE</text>
+    letter-spacing="6"
+  >FRONTERA</text>
+  <text
+    x="256"
+    y="374"
+    fill="#b8b8c2"
+    text-anchor="middle"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="32"
+    font-weight="300"
+    letter-spacing="6"
+  >GRANDE</text>
   <path
-    d="M128 398h104c11 0 14-8 24-8s13 8 24 8h104"
+    d="M130 406h104c11 0 14-8 24-8s13 8 24 8h104"
     fill="none"
     stroke="#9d4edd"
     stroke-linecap="round"
