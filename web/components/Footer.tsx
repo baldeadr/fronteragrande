@@ -23,6 +23,9 @@ export default function Footer() {
         >
           Contacto y correcciones por Facebook
         </a>
+        <Link href="/admin" className="text-muted opacity-70 hover:opacity-100 hover:underline">
+          Administración
+        </Link>
       </div>
     </footer>
   );

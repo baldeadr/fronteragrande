@@ -93,7 +93,16 @@ def _sin_red_onboarding(monkeypatch):
     )
 
 
-_SLUGS_PRUEBA = ("banda_de_prueba", "equipo_doble", "equipo_doble_2", "equipo_tres")
+_SLUGS_PRUEBA = (
+    "banda_de_prueba",
+    "equipo_doble",
+    "equipo_doble_2",
+    "equipo_tres",
+    "banda_a_borrar",
+    "banda_a_editar",
+    "banda_a_editar_2",
+    "banda_a_validar",
+)
 
 
 def _limpiar_altas():
@@ -174,6 +183,103 @@ def test_eliminar_artista_requiere_admin(client):
 
     existe = client.get(f"/api/artists/{slug}")
     assert existe.status_code == 200
+
+    _limpiar_altas()
+
+
+def test_editar_artista_requiere_admin(client):
+    """Editar un artista exige el token de administrador (403 sin él)."""
+    alta = client.post(
+        "/api/artists", json={"nombre": "Banda a Editar", "categoria": "Banda"}
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+
+    sin_token = client.put(f"/api/artists/{slug}", json={"bio": "nueva bio"})
+    assert sin_token.status_code == 403
+
+    existe = client.get(f"/api/artists/{slug}")
+    assert existe.status_code == 200
+    assert existe.json()["bio"] == ""
+
+    _limpiar_altas()
+
+
+def test_admin_list_requiere_admin(client):
+    """El listado de administración exige el token (403 sin él)."""
+    respuesta = client.get("/api/admin/artists")
+    assert respuesta.status_code == 403
+
+
+def test_editar_artista_con_token(client):
+    """Con el token de admin se editan los campos y se reemplazan redes."""
+    alta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda a Editar 2",
+            "ciudad": "Matamoros",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/banda2/"}],
+        },
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+    token = {"X-Admin-Token": "clave_admin_test"}
+
+    respuesta = client.put(
+        f"/api/artists/{slug}",
+        json={
+            "nombre": "Banda Editada",
+            "ciudad": "Reynosa",
+            "generos": "cumbia / norteño",
+            "bio": "bio nueva",
+            "notas": "nota interna",
+            "logros": "un logro",
+            "estado_activo": "inactivo",
+            "redes": [{"plataforma": "yt", "url": "https://www.youtube.com/@banda2"}],
+        },
+        headers=token,
+    )
+    assert respuesta.status_code == 200
+    assert respuesta.json()["slug"] == slug
+
+    detalle = client.get(f"/api/artists/{slug}").json()
+    assert detalle["nombre"] == "Banda Editada"
+    assert detalle["ciudad"] == "Reynosa"
+    assert detalle["estado_activo"] == "inactivo"
+    assert detalle["bio"] == "bio nueva"
+    assert any(l["plataforma"] == "yt" for l in detalle["links"])
+    assert all(l["plataforma"] != "ig" for l in detalle["links"])
+
+    _limpiar_altas()
+
+
+def test_editar_artista_validaciones(client):
+    """La edición valida nombre, categoría y estado con el token de admin."""
+    alta = client.post(
+        "/api/artists", json={"nombre": "Banda a Validar", "categoria": "Banda"}
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+    token = {"X-Admin-Token": "clave_admin_test"}
+
+    vacio = client.put(f"/api/artists/{slug}", json={"nombre": "   "}, headers=token)
+    assert vacio.status_code == 400
+
+    mala_categoria = client.put(
+        f"/api/artists/{slug}", json={"categoria": "NoExiste"}, headers=token
+    )
+    assert mala_categoria.status_code == 400
+
+    mal_estado = client.put(
+        f"/api/artists/{slug}", json={"estado_activo": "raro"}, headers=token
+    )
+    assert mal_estado.status_code == 400
+
+    inexistente = client.put(
+        "/api/artists/no_existe_xyz", json={"nombre": "X"}, headers=token
+    )
+    assert inexistente.status_code == 404
 
     _limpiar_altas()
 

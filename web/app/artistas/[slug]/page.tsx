@@ -10,6 +10,7 @@ import IconoRed from "@/components/IconoRed";
 import IconoVerificado from "@/components/IconoVerificado";
 import ConexionMeta from "@/components/ConexionMeta";
 import IconoMencion from "@/components/IconoMencion";
+import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
@@ -124,6 +125,7 @@ export default async function PerfilPage({
               </p>
             </div>
             <EstadoBadge estado={artist.estado_activo} size="lg" />
+            <BotonEditarAdmin slug={artist.slug} />
           </div>
 
           <div className="flex flex-wrap gap-1.5">

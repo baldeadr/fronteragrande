@@ -190,3 +190,25 @@ export interface ResultadoAlta {
   nombre: string;
   onboarding: OnboardingResult;
 }
+
+export interface LinkAdmin {
+  plataforma: string;
+  url: string;
+}
+
+export interface AdminArtist {
+  slug: string;
+  nombre: string;
+  segmento: string;
+  ciudad: string;
+  generos: string;
+  estado_activo: string;
+  estado_registro: string;
+  es_propio: boolean;
+  bio: string;
+  notas: string;
+  logros: string;
+  imagen_perfil: string | null;
+  verificado: boolean;
+  links: LinkAdmin[];
+}

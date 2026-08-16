@@ -23,8 +23,9 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
   GitHub (`baldeadr/fronteragrande`).
 - **Meta (verificado):** ✔ app configurada en producción, Apex Ultra verificado y
   publicaciones de Facebook sincronizadas; workflow automático cada 6 horas;
-  monitor UptimeRobot para mantener la API despierta; panel de administración
-  completo en la web (CRUD + scraper); auth y permisos para el registro de
+  ✔ **panel de administración en la web** (`/admin`, editar/eliminar con token;
+  pendiente el disparador del scraper); monitor UptimeRobot para mantener la API
+  despierta; auth y permisos para el registro de
   artistas (por ahora es público en modo desarrollo); y **dominio**
   (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan
   `https://fronteragrande.mx`; falta registrar/comprar y apuntar).
@@ -169,7 +170,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 8. ✔ **Identidad Frontera Grande + Acerca de:** renombrado en toda la web, `docs/vision.md` (fuente única de qué es/qué no es), página **Acerca de** con la regla de actividad y la fórmula del ranking (KaTeX); feed mejorado (foto real, fecha relativa, "Cargar más", H1 "Actividad de la escena").
 9. ◐ **Sincronización automática con Meta Graph API** (artistas que administran su página): OAuth de producción activo y probado con Apex Ultra (perfil **verificado**); sus publicaciones de Facebook ya aparecen en el perfil. Workflow de GitHub Actions activo cada 6 horas. Pendiente conectar al resto de artistas.
 10. `[PROPUESTA]` **Canales oficiales de comunicación:** crear página de Facebook y cuenta de Instagram de Frontera Grande para publicar artistas, eventos, lanzamientos, datos de la escena y reels con fuentes o autorización; enlazar al sitio, definir calendario editorial y medir el tráfico generado.
-11. **Panel de administración** en la web (CRUD + scraper) con auth simple.
+11. ✔ **Panel de administración en la web (CRUD con auth):** `/admin` protegido por `ADMIN_PASSWORD` (`X-Admin-Token`) con login en sesión, listado (`GET /api/admin/artists`), edición (`PUT /api/artists/{slug}`: datos, bio, notas, logros, estado y redes) y eliminación con confirmación. Pendiente el disparador del scraper.
 12. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
 13. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
 

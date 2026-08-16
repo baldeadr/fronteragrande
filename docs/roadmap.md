@@ -28,6 +28,7 @@ debe conseguir.
 | 8 | ✔ Directorio pulido + registro desde la web | Taxonomía de categoría (Banda/Solista/DJ/Colectivo/Covers/Tributo; MC y Productor como Solista), ciudades base única con dropdown (Tamaulipas + Valle de Río Grande + "Otro"), filtros con etiqueta y "Todas", géneros en chips; `POST /api/artists` ("Suma tu proyecto") con onboarding (foto, ultimos videos YT, `estado_activo`). El artista **verifica** su perfil conectando la página FB/IG. |
 | 9 | ✔ Identidad **Frontera Grande** + Acerca de | Renombrado en toda la web; `docs/vision.md` (fuente única de qué es/qué no es); página **Acerca de** (historia, "cómo explorar", actividad y regla del ranking con fórmula en LaTeX); feed mejorado (foto real, fecha relativa, "Cargar más", H1 "Actividad de la escena"). |
 | 10 | ✔ **Panel de stats interactivo** | `GET /api/stats` ampliado (`feed_serie`, `altas_por_mes`, `seguidores`/`reproducciones`, `cobertura`, `posts_90dias`, `por_ciudad`, `eventos_proximos`) + gráficas SVG caseras interactivas (actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas con leyenda, dona por categoría) — sin dependencias de cliente. |
+| 11 | ✔ **Panel de administración en la web (CRUD con auth)** | `/admin` protegido por `ADMIN_PASSWORD` (`X-Admin-Token`): login en sesión, listado con `GET /api/admin/artists`, edición (`PUT /api/artists/{slug}`: nombre, ciudad, categoría, géneros, bio, notas, logros, estado de actividad y redes) y eliminación (`DELETE /api/artists/{slug}`) con confirmación. Pendiente el disparador del scraper. |
 
 ## Pendiente de datos externos (bloquea su activación)
 
@@ -42,7 +43,7 @@ debe conseguir.
 | # | Etapa | Notas |
 |---|-------|-------|
 | 14 | **Canales oficiales de comunicación** | `[PROPUESTA]` Crear página de Facebook y cuenta de Instagram de Frontera Grande. Publicar artistas registrados, eventos, lanzamientos, datos de la escena y reels con fuentes o autorización; enlazar siempre al sitio. Definir identidad, calendario editorial y métricas de tráfico. |
-| 15 | Panel de administración en la web | CRUD de artistas + disparador de scraper, con auth simple. |
+| 15 | Disparador de scraper en el panel de admin | ✔ CRUD hecho (`/admin`, editar/eliminar). Pendiente: botón que dispare el scraper de actividad por artista desde el panel. |
 | 16 | Feeds de Bandcamp/SoundCloud y métricas públicas de Spotify | Captura puntual de oyentes mensuales desde perfiles públicos de Spotify; 16 URLs confirmadas y 11 artistas sin perfil. Pendiente ejecutar el lote inicial en producción. |
 | 17 | Mapa de artistas por origen | PostGIS: la geografía de la escena (Reynosa/Matamoros/frontera). |
 | 18 | **Producción y monetización** | ✔ **EN LÍNEA (agosto 2026):** web en Vercel (`fronteragrande.vercel.app`), API en Render (`fronteragrande-api.onrender.com`), BD en Neon. Deploy automático desde GitHub. Meta ya sincroniza publicaciones; pendiente: medir audiencia 90 días, evaluar patrocinio local, monitor UptimeRobot, conectar más artistas, **dominio** (`fronteragrande.mx`) y AdSense. Análisis financiero: `docs/finanzas.md`. |

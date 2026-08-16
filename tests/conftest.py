@@ -10,6 +10,7 @@ import tempfile
 
 _TMPDIR = tempfile.mkdtemp(prefix="escena_tests_")
 os.environ["DATABASE_URL"] = f"sqlite:///{_TMPDIR}/test.db"
+os.environ["ADMIN_PASSWORD"] = "clave_admin_test"
 
 import pytest
 from fastapi.testclient import TestClient

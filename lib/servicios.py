@@ -11,7 +11,7 @@ from datetime import date, datetime
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from db.models import Artist, ActivityCheck
+from db.models import ESTADOS_ACTIVO, Artist, ActivityCheck
 from lib.helpers import TIPOS_FEED, conteo_generos, youtube_thumbnail
 from lib.repository import (
     ArtistRepository,
@@ -493,6 +493,80 @@ def _slug_unico(session: Session, nombre: str) -> str:
         slug = f"{base}_{contador}"
         contador += 1
     return slug
+
+
+def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
+    """Edición de un artista desde el panel de administración.
+
+    Aplica solo los campos presentes en `datos`: campos básicos (nombre,
+    ciudad, categoría, géneros, bio, notas, logros), estado de actividad y
+    el reemplazo de los enlaces de plataforma (si llega `redes`). Devuelve
+    `None` si el slug no existe. No hace commit: lo hace el caller.
+    """
+    repos = ArtistRepository(session)
+    artista = repos.por_slug(slug)
+    if artista is None:
+        return None
+
+    if "nombre" in datos:
+        nombre = (datos.get("nombre") or "").strip()
+        if not nombre:
+            raise ValueError("El nombre es obligatorio")
+        artista.nombre = nombre
+
+    if "categoria" in datos:
+        categoria = (datos.get("categoria") or "").strip()
+        if categoria and categoria not in CATEGORIAS_VALIDAS:
+            raise ValueError(f"Categoría inválida: {categoria}")
+        artista.segmento = categoria
+
+    if "ciudad" in datos:
+        artista.ciudad = (datos.get("ciudad") or "").strip() or "[PENDIENTE]"
+    if "generos" in datos:
+        artista.generos = (datos.get("generos") or "").strip() or "[PENDIENTE]"
+    if "bio" in datos:
+        artista.bio = datos.get("bio") or ""
+    if "notas" in datos:
+        artista.notas = datos.get("notas") or ""
+    if "logros" in datos:
+        artista.logros = datos.get("logros") or ""
+    if "estado_activo" in datos:
+        estado = (datos.get("estado_activo") or "").strip()
+        if estado and estado not in ESTADOS_ACTIVO:
+            raise ValueError(f"Estado de actividad inválido: {estado}")
+        artista.estado_activo = estado
+    if "estado_registro" in datos:
+        artista.estado_registro = datos.get("estado_registro") or ""
+
+    if "redes" in datos:
+        _reemplazar_redes(session, artista, datos.get("redes") or [])
+
+    return artista
+
+
+def _reemplazar_redes(session: Session, artista: Artist, redes: list[dict]) -> None:
+    """Reemplaza los enlaces de plataforma del artista por los indicados.
+
+    Borra los enlaces no-búsqueda existentes y crea los nuevos (misma regla
+    de detección de plataforma que el alta). Los enlaces de búsqueda
+    (`es_busqueda`) se conservan: son respaldo de "dónde escucharlo".
+    """
+    from lib.plataformas import detectar_plataforma
+
+    links_repo = LinkRepository(session)
+    for link in list(artista.links):
+        if not link.es_busqueda:
+            session.delete(link)
+    for red in redes:
+        url = (red.get("url") or "").strip()
+        if not url:
+            continue
+        declarada = (red.get("plataforma") or "").strip().lower()
+        plataforma = detectar_plataforma(url) or declarada or "otro"
+        es_busqueda = "/results?" in url or "/search?" in url
+        links_repo.crear_para_artista(
+            artista, plataforma=plataforma, url=url, es_busqueda=es_busqueda
+        )
 
 
 def crear_artista(session: Session, datos: dict) -> Artist:

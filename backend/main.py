@@ -35,6 +35,7 @@ from lib.repository import ArtistRepository, EventRepository
 from lib.servicios import (
     artistas_df,
     crear_artista,
+    editar_artista,
     eventos_de_artista,
     feed_df,
     onboarding_artista,
@@ -89,6 +90,24 @@ class AltaArtistaEntrada(BaseModel):
     ciudad: str = ""
     categoria: str = ""
     redes: list[RedEntrada] = []
+
+
+class EditarArtistaEntrada(BaseModel):
+    """Cuerpo de PUT /api/artists/{slug} (edición desde el panel de admin).
+
+    Todos los campos son opcionales: solo se aplican los presentes.
+    """
+
+    nombre: str | None = None
+    ciudad: str | None = None
+    categoria: str | None = None
+    generos: str | None = None
+    bio: str | None = None
+    notas: str | None = None
+    logros: str | None = None
+    estado_activo: str | None = None
+    estado_registro: str | None = None
+    redes: list[RedEntrada] | None = None
 
 
 def _json_safe(valor: Any) -> Any:
@@ -400,6 +419,79 @@ def eliminar_artista_endpoint(
     db.delete(artista)  # cascada ORM: enlaces y chequeos
     db.commit()
     return {"ok": True}
+
+
+@app.get("/api/admin/artists")
+def admin_list_artists(
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+    artistas: ArtistRepository = Depends(get_artist_repo),
+):
+    """Listado de administración: campos editables de todos los artistas.
+
+    Requiere el `X-Admin-Token`. Devuelve los datos crudos (sin tags, sin
+    ranking) para el panel de edición: bio, notas, logros, géneros en texto
+    plano y enlaces de plataforma.
+    """
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    lista = []
+    for a in artistas.todos():
+        lista.append(
+            {
+                "slug": a.slug,
+                "nombre": a.nombre,
+                "segmento": a.segmento,
+                "ciudad": a.ciudad,
+                "generos": a.generos,
+                "estado_activo": a.estado_activo,
+                "estado_registro": a.estado_registro,
+                "es_propio": a.es_propio,
+                "bio": a.bio or "",
+                "notas": a.notas or "",
+                "logros": a.logros or "",
+                "imagen_perfil": a.imagen_perfil or None,
+                "verificado": bool(a.fb_page_token and a.estado_registro),
+                "links": [
+                    {"plataforma": l.plataforma, "url": l.url}
+                    for l in a.links
+                    if not l.es_busqueda
+                ],
+            }
+        )
+    return _json_safe(lista)
+
+
+@app.put("/api/artists/{slug}")
+def editar_artista_endpoint(
+    slug: str,
+    entrada: EditarArtistaEntrada,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Edita un artista (solo administración).
+
+    Requiere el `X-Admin-Token`. Aplica solo los campos presentes en el
+    cuerpo (`EditarArtistaEntrada`): datos básicos, bio, notas, logros,
+    estado de actividad y reemplazo de enlaces de plataforma. Recalcula
+    `estado_activo` si cambió la señal que lo alimenta (feed/lanzamiento).
+    """
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    try:
+        artista = editar_artista(
+            db, slug, entrada.model_dump(exclude_unset=True)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    if artista is None:
+        raise HTTPException(status_code=404, detail="Artista no encontrado")
+    db.commit()
+    return {"ok": True, "slug": artista.slug, "nombre": artista.nombre}
 
 
 @app.get("/api/genres")
