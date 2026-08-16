@@ -8,10 +8,10 @@
     fill="#fff"
     text-anchor="middle"
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
-    font-size="148"
+    font-size="168"
     font-weight="900"
-    letter-spacing="-8"
-    transform="translate(0 -52) scale(1 1.18)"
+    letter-spacing="-10"
+    transform="translate(0 -64) scale(1 1.22)"
   >FG</text>
   <text
     x="256"
