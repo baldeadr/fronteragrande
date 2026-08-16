@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FormulaInline, FormulaLatex } from "@/components/Formula";
 import IconoRed from "@/components/IconoRed";
 import { infoPlataforma } from "@/components/Plataformas";
@@ -99,9 +100,14 @@ export default function AcercaDePage() {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-4 rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-8">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-xl text-bg">
-          ♪
-        </span>
+        <Image
+          src="/icon.svg"
+          alt=""
+          width={40}
+          height={40}
+          className="rounded-xl"
+          aria-hidden
+        />
         <div>
           <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
             Acerca de Frontera Grande
