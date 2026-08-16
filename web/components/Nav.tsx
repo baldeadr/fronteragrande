@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const enlaces = [
   { href: "/", texto: "Actividad" },
@@ -18,12 +19,14 @@ export default function Nav() {
     <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-bg"
+          <Image
+            src="/icon.svg"
+            alt=""
+            width={32}
+            height={32}
+            className="rounded-lg"
             aria-hidden
-          >
-            ♪
-          </span>
+          />
           <span className="text-lg">Frontera Grande</span>
         </Link>
 
