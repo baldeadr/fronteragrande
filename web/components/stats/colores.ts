@@ -6,6 +6,8 @@ export const PLATAFORMA_COLOR: Record<string, string> = {
   tt: "#36d6d9",
   bandcamp: "#fe9b5a",
   soundcloud: "#f26f5f",
+  beatport: "#f65c5c",
+  mixcloud: "#52a5e0",
 };
 
 export const CATEGORIA_COLOR: string[] = [

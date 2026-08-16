@@ -21,6 +21,7 @@ from lib.helpers import (
 )
 from scraper.adapters.facebook import facebook_oembed
 from scraper.adapters.instagram import instagram_oembed
+from scraper.adapters.mixcloud import mixcloud_embed_url, mixcloud_oembed
 from scraper.adapters.tiktok import (
     tiktok_embed_url,
     tiktok_oembed,
@@ -32,6 +33,8 @@ FUENTES_DETECTADAS = {
     "facebook.com": "fb",
     "tiktok.com": "tt",
     "youtu": "yt",
+    "beatport.com": "beatport",
+    "mixcloud.com": "mixcloud",
 }
 
 FUENTE_CANONICA = {
@@ -43,6 +46,8 @@ FUENTE_CANONICA = {
     "facebook": "fb",
     "tt": "tt",
     "tiktok": "tt",
+    "beatport": "beatport",
+    "mixcloud": "mixcloud",
 }
 
 # Marcas de URL → plataforma, para los previews cuando la fuente no coincide.
@@ -51,6 +56,8 @@ MARCA_URL_A_PLATAFORMA = [
     ("instagram.com", "ig"),
     ("facebook.com", "fb"),
     ("tiktok.com", "tt"),
+    ("beatport.com", "beatport"),
+    ("mixcloud.com", "mixcloud"),
 ]
 
 
@@ -85,7 +92,7 @@ def link_con_metadatos(link: ArtistLink) -> dict:
     if plataforma == "yt":
         youtube_video_id(link.url)
         extra["canal"] = True
-    if plataforma in ("spotify", "bandcamp", "soundcloud"):
+    if plataforma in ("spotify", "bandcamp", "soundcloud", "beatport", "mixcloud"):
         extra["embebible"] = True
     return {
         "plataforma": plataforma,
@@ -144,11 +151,27 @@ def _preview_tiktok(url: str, imagen_raw: str) -> dict | None:
     return None
 
 
+def _preview_mixcloud(url: str, imagen_raw: str) -> dict | None:
+    datos = mixcloud_oembed(url)
+    if datos:
+        return {
+            "tipo": "mixcloud",
+            "embed_url": mixcloud_embed_url(url),
+            "thumbnail": datos.get("thumbnail_url") or imagen_raw,
+            "title": datos.get("title") or "",
+            "author": datos.get("author_name") or "",
+        }
+    if imagen_raw:
+        return {"tipo": "imagen", "thumbnail": imagen_raw}
+    return None
+
+
 PREVIEWS: dict[str, Callable[[str, str], dict | None]] = {
     "yt": _preview_youtube,
     "ig": _preview_instagram,
     "fb": _preview_facebook,
     "tt": _preview_tiktok,
+    "mixcloud": _preview_mixcloud,
 }
 
 

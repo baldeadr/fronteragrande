@@ -12,6 +12,8 @@ export const plataformas: Record<
     icono: "/assets/icons/dark/soundcloud.svg",
     nombre: "SoundCloud",
   },
+  beatport: { icono: "/assets/icons/dark/beatport.svg", nombre: "Beatport" },
+  mixcloud: { icono: "/assets/icons/dark/mixcloud.svg", nombre: "Mixcloud" },
   apple: { icono: "/assets/icons/dark/applemusic.svg", nombre: "Apple Music" },
   linktree: { icono: "/assets/icons/dark/linktree.svg", nombre: "Linktree" },
   deezer: { icono: "/assets/icons/dark/deezer.svg", nombre: "Deezer" },

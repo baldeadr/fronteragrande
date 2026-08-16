@@ -102,7 +102,7 @@ export default function FeedCard({
             ▶️
           </span>
         </a>
-      ) : item.preview.embed_url ? (
+      ) : item.preview.embed_url && item.preview.tipo !== "mixcloud" ? (
         <div
           className={
             item.preview.tipo === "instagram"

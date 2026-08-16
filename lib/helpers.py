@@ -117,13 +117,15 @@ def generos_hashtags(generos: str) -> list[str]:
 
 # Peso de cada plataforma en el índice de alcance (suma 100).
 PESOS_ALCANCE = {
-    "ig": 0.30,
-    "fb": 0.25,
-    "spotify": 0.20,
-    "yt": 0.10,
-    "tt": 0.10,
+    "ig": 0.29,
+    "fb": 0.24,
+    "spotify": 0.19,
+    "yt": 0.09,
+    "tt": 0.09,
     "bandcamp": 0.025,
     "soundcloud": 0.025,
+    "beatport": 0.03,
+    "mixcloud": 0.02,
 }
 
 # Métrica de alcance por plataforma, en orden de prioridad.
@@ -135,6 +137,8 @@ METRICA_ALCANCE_POR_PLATAFORMA = {
     "spotify": ("reproducciones", "seguidores"),
     "bandcamp": ("reproducciones",),
     "soundcloud": ("reproducciones",),
+    "beatport": ("seguidores",),
+    "mixcloud": ("seguidores",),
 }
 
 

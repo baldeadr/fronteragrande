@@ -40,8 +40,9 @@ def session(_bd_sembrada):
 
 @pytest.fixture(autouse=True)
 def _sin_red(monkeypatch):
-    """Evita llamadas de red a oEmbed (TikTok) en las pruebas."""
+    """Evita llamadas de red a oEmbed (TikTok/Mixcloud) en las pruebas."""
     monkeypatch.setattr("lib.plataformas.tiktok_oembed", lambda url: None)
+    monkeypatch.setattr("lib.plataformas.mixcloud_oembed", lambda url: None)
     yield
 
 

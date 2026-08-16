@@ -19,7 +19,8 @@ def test_detalle_shape(client):
     assert isinstance(perfil["followers"], dict)
     assert isinstance(perfil["stats"], dict)
     assert set(perfil["stats"].keys()) >= {
-        "ig", "fb", "yt", "tt", "spotify", "bandcamp", "soundcloud"
+        "ig", "fb", "yt", "tt", "spotify", "bandcamp", "soundcloud",
+        "beatport", "mixcloud",
     }
     assert isinstance(perfil["ranking"], dict)
     assert isinstance(perfil["menciones"], list)

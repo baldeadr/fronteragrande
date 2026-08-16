@@ -16,6 +16,8 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "spotify", texto: "Spotify" },
   { valor: "bandcamp", texto: "Bandcamp" },
   { valor: "soundcloud", texto: "SoundCloud" },
+  { valor: "beatport", texto: "Beatport" },
+  { valor: "mixcloud", texto: "Mixcloud" },
   { valor: "apple", texto: "Apple Music" },
   { valor: "linktree", texto: "Linktree" },
   { valor: "otro", texto: "Otra" },

@@ -16,6 +16,8 @@ const FILAS: { clave: string; clase: "seguidores" | "reproducciones" }[] = [
   { clave: "spotify", clase: "seguidores" },
   { clave: "bandcamp", clase: "reproducciones" },
   { clave: "soundcloud", clase: "reproducciones" },
+  { clave: "beatport", clase: "seguidores" },
+  { clave: "mixcloud", clase: "seguidores" },
 ];
 
 export default function EcosistemaRedes({

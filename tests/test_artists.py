@@ -33,7 +33,9 @@ def test_artists_shape(client):
     assert first["estado_activo"] in ("activo", "en_duda", "inactivo")
     assert "color_estado" in first and first["color_estado"].startswith("#")
     assert isinstance(first["followers"], dict)
-    assert set(first["followers"]) == {"ig", "fb", "yt", "spotify", "tt"}
+    assert set(first["followers"]) == {
+        "ig", "fb", "yt", "spotify", "tt", "beatport", "mixcloud"
+    }
     assert isinstance(first["links"], list)
     assert isinstance(first["menciones"], list)
     assert first["ranking"]["total"] == len(datos)

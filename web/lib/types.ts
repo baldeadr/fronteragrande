@@ -9,6 +9,8 @@ export interface Followers {
   yt: number | null;
   spotify: number | null;
   tt: number | null;
+  beatport?: number | null;
+  mixcloud?: number | null;
 }
 
 export interface StatsPlataforma {
@@ -49,7 +51,7 @@ export interface ArtistCard {
 }
 
 export interface Preview {
-  tipo: "youtube" | "tiktok" | "instagram" | "facebook" | "imagen" | "texto";
+  tipo: "youtube" | "tiktok" | "instagram" | "facebook" | "mixcloud" | "imagen" | "texto";
   video_id?: string;
   embed_url?: string;
   thumbnail?: string;

@@ -46,6 +46,8 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "followers_yt": a.followers_yt,
             "followers_tt": a.followers_tt,
             "followers_spotify": a.followers_spotify,
+            "followers_beatport": a.followers_beatport,
+            "followers_mixcloud": a.followers_mixcloud,
             "oyentes_mensuales_spotify": a.oyentes_mensuales_spotify,
             "fecha_oyentes_spotify": a.fecha_oyentes_spotify,
             "vistas_yt": a.vistas_yt,
@@ -222,6 +224,8 @@ def metricas_artista(fila) -> dict:
         },
         "bandcamp": {"reproducciones": fila["reproducciones_bandcamp"]},
         "soundcloud": {"reproducciones": fila["reproducciones_soundcloud"]},
+        "beatport": {"seguidores": fila["followers_beatport"]},
+        "mixcloud": {"seguidores": fila["followers_mixcloud"]},
     }
     oyentes = fila["oyentes_mensuales_spotify"]
     if pd.notna(oyentes):
@@ -387,6 +391,8 @@ def stats_escena(session: Session) -> dict:
         "spotify": ("reproducciones_spotify", "reproducciones"),
         "bandcamp": ("reproducciones_bandcamp", "reproducciones"),
         "soundcloud": ("reproducciones_soundcloud", "reproducciones"),
+        "beatport": ("followers_beatport", "seguidores"),
+        "mixcloud": ("followers_mixcloud", "seguidores"),
     }
     seguidores: dict[str, int] = {}
     reproducciones: dict[str, int] = {}

@@ -8,11 +8,13 @@ import type { ArtistCard, Followers } from "@/lib/types";
 import { PLATAFORMA_COLOR } from "./colores";
 
 const PESOS_LISTA: { clave: keyof Followers; peso: number }[] = [
-  { clave: "ig", peso: 0.3 },
-  { clave: "fb", peso: 0.25 },
-  { clave: "spotify", peso: 0.2 },
-  { clave: "yt", peso: 0.1 },
-  { clave: "tt", peso: 0.1 },
+  { clave: "ig", peso: 0.29 },
+  { clave: "fb", peso: 0.24 },
+  { clave: "spotify", peso: 0.19 },
+  { clave: "yt", peso: 0.09 },
+  { clave: "tt", peso: 0.09 },
+  { clave: "beatport", peso: 0.03 },
+  { clave: "mixcloud", peso: 0.02 },
 ];
 
 function log10(v: number) {

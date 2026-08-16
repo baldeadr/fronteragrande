@@ -187,6 +187,8 @@ def list_artists(
                     "yt": fila["followers_yt"],
                     "spotify": fila["followers_spotify"],
                     "tt": fila["followers_tt"],
+                    "beatport": fila["followers_beatport"],
+                    "mixcloud": fila["followers_mixcloud"],
                 },
                 "imagen_perfil": fila.get("imagen_perfil") or None,
                 "imagen_origen": fila.get("imagen_origen") or None,
@@ -292,6 +294,8 @@ def artist_detail(
             "yt": artist.followers_yt,
             "tt": artist.followers_tt,
             "spotify": artist.followers_spotify,
+            "beatport": artist.followers_beatport,
+            "mixcloud": artist.followers_mixcloud,
         },
         "stats": {
             "ig": {"seguidores": artist.followers_ig},
@@ -313,6 +317,12 @@ def artist_detail(
             },
             "soundcloud": {
                 "reproducciones": artist.reproducciones_soundcloud,
+            },
+            "beatport": {
+                "seguidores": artist.followers_beatport,
+            },
+            "mixcloud": {
+                "seguidores": artist.followers_mixcloud,
             },
         },
         "fecha_captura": _json_safe(artist.fecha_captura),

@@ -15,6 +15,8 @@ PRIORIDAD_FOTO_DE_PERFIL = [
     "spotify",
     "bandcamp",
     "soundcloud",
+    "beatport",
+    "mixcloud",
     "yt",
     "ig",
     "fb",
@@ -23,4 +25,14 @@ PRIORIDAD_FOTO_DE_PERFIL = [
 ]
 
 # Enlace "puente" (principal) de la tarjeta de artista.
-PRIORIDAD_LINK_PUENTE = ["yt", "spotify", "bandcamp", "soundcloud", "ig", "tt", "web"]
+PRIORIDAD_LINK_PUENTE = [
+    "yt",
+    "spotify",
+    "bandcamp",
+    "soundcloud",
+    "beatport",
+    "mixcloud",
+    "ig",
+    "tt",
+    "web",
+]

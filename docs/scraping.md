@@ -21,17 +21,22 @@ funciona, la web muestra el **fallback a inicial** del nombre (`web/components/A
 | 1 | Spotify | página *embed* del artista | prefiere la foto `ab676161…`; si el artista no tiene foto, usa su cabecera `ab67616d0000b273…` (recorte grande). Host: `image-cdn-ak.spotifycdn.com`. |
 | 2 | Bandcamp | `og:image` | funciona sin API key. |
 | 3 | SoundCloud | `og:image` | funciona sin API key. |
-| 4 | YouTube | `og:image` | funciona sin API key (og:image del canal). |
-| 5 | Instagram | `og:image` | **suele bloquear bots** (400/429); se omite si falla. |
-| 6 | Facebook | `og:image` | **suele bloquear bots**; se omite si falla. |
-| 7 | TikTok | `og:image` | **suele bloquear bots**; se omite si falla. |
-| 8 | X | `og:image` | se intenta como última opción. |
+| 4 | Beatport | `og:image` | funciona sin API key. |
+| 5 | Mixcloud | `og:image` | funciona sin API key. |
+| 6 | YouTube | `og:image` | funciona sin API key (og:image del canal). |
+| 7 | Instagram | `og:image` | **suele bloquear bots** (400/429); se omite si falla. |
+| 8 | Facebook | `og:image` | **suele bloquear bots**; se omite si falla. |
+| 9 | TikTok | `og:image` | **suele bloquear bots**; se omite si falla. |
+| 10 | X | `og:image` | se intenta como última opción. |
 
 Fuente única en código:
 
 ```python
 # scraper/jerarquias.py
-PRIORIDAD_FOTO_DE_PERFIL = ["spotify", "bandcamp", "soundcloud", "yt", "ig", "fb", "tt", "x"]
+PRIORIDAD_FOTO_DE_PERFIL = [
+    "spotify", "bandcamp", "soundcloud", "beatport", "mixcloud",
+    "yt", "ig", "fb", "tt", "x",
+]
 ```
 
 ---
@@ -51,15 +56,20 @@ según este orden:
 | 2 | Spotify |
 | 3 | Bandcamp |
 | 4 | SoundCloud |
-| 5 | Instagram |
-| 6 | TikTok |
-| 7 | web |
+| 5 | Beatport |
+| 6 | Mixcloud |
+| 7 | Instagram |
+| 8 | TikTok |
+| 9 | web |
 
 Fuente única en código:
 
 ```python
 # scraper/jerarquias.py
-PRIORIDAD_LINK_PUENTE = ["yt", "spotify", "bandcamp", "soundcloud", "ig", "tt", "web"]
+PRIORIDAD_LINK_PUENTE = [
+    "yt", "spotify", "bandcamp", "soundcloud",
+    "beatport", "mixcloud", "ig", "tt", "web",
+]
 ```
 
 ---
@@ -76,6 +86,7 @@ y de la detección de actividad. No hay jerarquía entre ellos.
 | `scraper/adapters/tiktok.py` | metadatos de un video/post vía **oEmbed** público (título, autor, miniatura) | ninguno (sin API key) |
 | `scraper/adapters/instagram.py` | oEmbed de un post/reel de IG público (html del embed) | ninguno (sin API key) |
 | `scraper/adapters/facebook.py` | oEmbed de un post de FB público (html del embed) | ninguno (sin API key) |
+| `scraper/adapters/mixcloud.py` | oEmbed de un set de Mixcloud (título, autor, miniatura, widget) | ninguno (sin API key) |
 | `scraper/adapters/spotify.py` | datos de Spotify vía Web API | credenciales en `.env` (opcional) |
 | `scraper/adapters/spotify_public.py` | oyentes mensuales del perfil público | ninguno; captura HTML puntual |
 | `scraper/adapters/oembed.py` | llamada oEmbed compartida (con caché) para TikTok/IG/FB | ninguno |
@@ -95,6 +106,7 @@ El feed previsualiza el contenido de cada plataforma así (ver el registro
 | TikTok | miniatura + botón de play (o embed) | miniatura/título vía **oEmbed** (sin API key) |
 | Instagram | iframe embebible | `/p/{código}/embed/captioned/` (carga en el navegador, sin token) |
 | Facebook | iframe embebible | `/plugins/post.php` (carga en el navegador, sin token) |
+| Mixcloud | miniatura de portada o widget embebible | vía **oEmbed** público (sin API key); Beatport sin preview (texto/portada) |
 
 **Importante:** Instagram, Facebook y TikTok **bloquean bots**, así que no se
 puede listar automáticamente los posts recientes de un perfil ajeno (IG pide

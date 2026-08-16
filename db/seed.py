@@ -27,6 +27,8 @@ COLUMNAS_LINKS = {
     "url_spotify": "spotify",
     "url_bandcamp": "bandcamp",
     "url_soundcloud": "soundcloud",
+    "url_beatport": "beatport",
+    "url_mixcloud": "mixcloud",
     "url_apple": "apple",
     "url_linktree": "linktree",
     "url_x": "x",
@@ -38,6 +40,8 @@ COLUMNAS_FOLLOWERS = {
     "followers_yt": "followers_yt",
     "followers_tt": "followers_tt",
     "followers_spotify": "followers_spotify",
+    "followers_beatport": "followers_beatport",
+    "followers_mixcloud": "followers_mixcloud",
 }
 
 COLUMNAS_METRICAS = {

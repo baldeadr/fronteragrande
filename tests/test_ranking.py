@@ -10,7 +10,7 @@ def test_indice_vacio():
 def test_indice_un_artista_una_plataforma():
     metricas = {"a": {"ig": {"seguidores": 100}}}
     resultado = indice_alcance(metricas)
-    assert resultado["a"] == 30.0  # peso de Instagram (0.30) * 100
+    assert resultado["a"] == 29.0  # peso de Instagram (0.29) * 100
 
 
 def test_indice_sin_plataforma_penaliza():
@@ -30,7 +30,7 @@ def test_indice_normalizacion_mayor_domina():
         "b": {"ig": {"seguidores": 1}},
     }
     resultado = indice_alcance(metricas)
-    assert resultado["a"] == 30.0  # es el máximo en IG
+    assert resultado["a"] == 29.0  # es el máximo en IG
     assert 0.0 < resultado["b"] < resultado["a"]
 
 
@@ -49,3 +49,23 @@ def test_indice_respeta_rango():
 def test_indice_ignora_nulos_y_no_numericos():
     metricas = {"a": {"ig": {"seguidores": None}, "fb": {"seguidores": "x"}}}
     assert indice_alcance(metricas)["a"] == 0.0
+
+
+def test_pesos_suman_uno():
+    from lib.helpers import PESOS_ALCANCE
+
+    assert round(sum(PESOS_ALCANCE.values()), 3) == 1.0
+
+
+def test_beatport_y_mixcloud_aportan_alcance():
+    from lib.helpers import PESOS_ALCANCE
+
+    assert "beatport" in PESOS_ALCANCE
+    assert "mixcloud" in PESOS_ALCANCE
+    metricas = {
+        "dj": {"beatport": {"seguidores": 1000}, "mixcloud": {"seguidores": 1000}},
+        "sin_dj": {},
+    }
+    resultado = indice_alcance(metricas)
+    assert resultado["dj"] == 5.0  # (0.03 + 0.02) * 100
+    assert resultado["sin_dj"] == 0.0

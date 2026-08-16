@@ -1,9 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx";
+
+export const viewport: Viewport = {
+  themeColor: "#0b0b10",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -13,6 +17,11 @@ export const metadata: Metadata = {
   description:
     "Base de datos interactiva de los proyectos musicales de la frontera grande de Tamaulipas: bandas, DJs y proyectos con enlaces a sus redes.",
   metadataBase: new URL(SITE_URL),
+  appleWebApp: {
+    capable: true,
+    title: "Frontera Grande",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     title: "Frontera Grande",
     description:
@@ -35,6 +44,17 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
+                addEventListener("load", () => {
+                  navigator.serviceWorker.register("/sw.js").catch(() => {});
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

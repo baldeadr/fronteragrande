@@ -13,13 +13,15 @@ export const metadata: Metadata = {
 };
 
 const pesos = [
-  { clave: "ig", plataforma: "Instagram", peso: "0,30" },
-  { clave: "fb", plataforma: "Facebook", peso: "0,25" },
-  { clave: "spotify", plataforma: "Spotify", peso: "0,20" },
-  { clave: "yt", plataforma: "YouTube", peso: "0,10" },
-  { clave: "tt", plataforma: "TikTok", peso: "0,10" },
+  { clave: "ig", plataforma: "Instagram", peso: "0,29" },
+  { clave: "fb", plataforma: "Facebook", peso: "0,24" },
+  { clave: "spotify", plataforma: "Spotify", peso: "0,19" },
+  { clave: "yt", plataforma: "YouTube", peso: "0,09" },
+  { clave: "tt", plataforma: "TikTok", peso: "0,09" },
   { clave: "bandcamp", plataforma: "Bandcamp", peso: "0,025" },
   { clave: "soundcloud", plataforma: "SoundCloud", peso: "0,025" },
+  { clave: "beatport", plataforma: "Beatport", peso: "0,03" },
+  { clave: "mixcloud", plataforma: "Mixcloud", peso: "0,02" },
 ];
 
 const que_es = [

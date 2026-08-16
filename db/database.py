@@ -68,6 +68,18 @@ def _asegurar_columnas_extra():
                         "fuente_oyentes_spotify VARCHAR(80)"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "followers_beatport INTEGER"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "followers_mixcloud INTEGER"
+                    )
+                )
         return
     from sqlalchemy import text
 
@@ -107,6 +119,13 @@ def _asegurar_columnas_extra():
             ("oyentes_mensuales_spotify", "INTEGER"),
             ("fecha_oyentes_spotify", "DATETIME"),
             ("fuente_oyentes_spotify", "VARCHAR(80)"),
+        ):
+            if columna not in columnas:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE artists ADD COLUMN {columna} {tipo}"))
+        for columna, tipo in (
+            ("followers_beatport", "INTEGER"),
+            ("followers_mixcloud", "INTEGER"),
         ):
             if columna not in columnas:
                 with engine.begin() as conn:
