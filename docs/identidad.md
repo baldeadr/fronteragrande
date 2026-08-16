@@ -77,7 +77,7 @@ se toca (verificado midiendo el render, no a ojo).
 | --- | --- | --- |
 | `web/public/logo-frontera-grande.svg` | Página Acerca de, uso general | El logo completo |
 | `web/public/logo-frontera-grande.png` | Export raster (1024×1024) | Misma composición |
-| `web/app/icon.svg` | **Favicon** e ícono de navegación | Solo `FG`, **alargado** (`scale(0.72 1.4)`), `letter-spacing=20`, **sin** wordmark ni línea |
+| `web/app/icon.svg` | **Favicon** e ícono de navegación | `FG` **alargado** (`scale(0.72 1.4)`), `letter-spacing=20`, sin wordmark, con **línea morada gruesa** (`stroke-width=34`) al pie |
 | `web/app/favicon.ico` | Favicon legacy (16/32/48) | Raster del `icon.svg` |
 | `web/public/banner-frontera-grande.svg` + `.png` | Banner para Facebook (1640×624) | Logo embebido + wordmark grande en dos renglones + eslogan "La escena fronteriza, en un solo lugar." |
 
@@ -85,7 +85,8 @@ se toca (verificado midiendo el render, no a ojo).
 
 - **No** mezclar el `FG` alargado del favicon con el `FG` del logo completo:
   el alargado es exclusivo del favicon (pequeño), donde las letras rectas no se
-  distinguen.
+  distinguen. La **línea morada gruesa** del favicon es su propia variante
+  (preview de la identidad a tamaño mínimo), distinta de la línea del logo.
 - **No** volver a una sola línea para el wordmark: en el cuadrado quedaba
   pequeño o desbordado; los dos renglones lo dejan crecer sin romper la caja.
 - **No** cambiar `--accent` (`#9d4edd`) sin actualizar globals.css, los SVG y
