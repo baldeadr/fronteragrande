@@ -44,10 +44,12 @@ colores ajenos al sistema de diseño.
 | Wordmark | **Arial / Helvetica** | 300 (light) | Sobrio, con `letter-spacing` generoso |
 | Títulos de web | Archivo Black (vía Google Fonts) | — | Consistente con `FG` |
 
-- Archivo Black debe estar instalada para rasterizar los SVG (está en
+- Archivo Black debe estar instalada para **regenerar** los SVG/PNG (está en
   `~/.local/share/fonts/ArchivoBlack-Regular.ttf` en el entorno de trabajo).
-- Si el render de un SVG no usa Archivo Black, cae a `Arial Black` y luego
-  `Arial`: el peso del `FG` cambia y se nota.
+- Los SVG publicados ya tienen el texto **convertido a trazados** (paths, vía
+  `export-text-to-path` de Inkscape): se ven idénticos en cualquier navegador
+  sin depender de la fuente. **No** volver a editarlos con `<text>` salvo para
+  regenerarlos con la fuente instalada.
 
 ## 4. Composición del logo (`web/public/logo-frontera-grande.svg`)
 
@@ -104,3 +106,8 @@ se toca (verificado midiendo el render, no a ojo).
 4. Si cambia la composición, actualizar las variantes afectadas (favicon,
    banner) y este documento.
 5. `npm run lint && npm run build` dentro de `web/` antes de commit.
+
+> **Regeneración:** los SVG publicados llevan el texto convertido a paths
+> (auto-contenidos). Para regenerarlos, editar el texto y rasterizar con
+> Inkscape **con Archivo Black instalada**, y volver a convertir a paths con:
+> `inkscape --actions="export-text-to-path;export-filename:salida.svg;export-plain-svg;export-do" origen.svg`.
