@@ -99,14 +99,13 @@ const iconosPagina: Record<string, ReactNode> = {
 export default function AcercaDePage() {
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-4 rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-8">
+      <section className="flex flex-row items-center gap-4 rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:gap-5 sm:p-8">
         <Image
-          src="/icon.svg"
-          alt=""
-          width={40}
-          height={40}
-          className="rounded-xl"
-          aria-hidden
+          src="/logo-frontera-grande.svg"
+          alt="Frontera Grande"
+          width={88}
+          height={88}
+          className="shrink-0 rounded-xl"
         />
         <div>
           <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
