@@ -11,12 +11,14 @@ Uso:
 
 import os
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backend.feed_meta import ig_media, pagina_posts
+from backend.feed_meta import ig_bio, ig_media, pagina_about, pagina_posts
 from db.database import SessionLocal
+from lib.helpers import es_bio_clara
 from lib.repository import ArtistRepository, FeedRepository
 
 try:
@@ -46,6 +48,8 @@ def main():
                     for m in ig_media(artista.ig_user_id, artista.fb_page_token, MAX_ITEMS):
                         if _registrar(feed, artista, "ig", m):
                             nuevos += 1
+                if not artista.bio:
+                    _escribir_bio_meta(artista)
                 session.commit()
             except Exception as e:
                 session.rollback()
@@ -80,6 +84,29 @@ def _registrar(feed: FeedRepository, artista, fuente: str, item: dict) -> bool:
         detalle="",
     )
     return True
+
+
+def _escribir_bio_meta(artista) -> None:
+    """Escribe la bio del artista desde Meta si está clara (FB → IG).
+
+    Solo aplica a artistas conectados (la cuenta autorizada administra la
+    página), así que la fuente es del propio artista.
+    """
+    hoy = date.today().isoformat()
+    try:
+        bio = pagina_about(artista.fb_page_id, artista.fb_page_token) if artista.fb_page_id else ""
+        origen = "Facebook"
+        if not es_bio_clara(bio) and artista.ig_user_id:
+            bio = ig_bio(artista.ig_user_id, artista.fb_page_token)
+            origen = "Instagram"
+        if es_bio_clara(bio):
+            artista.bio = bio
+            nota = f"Bio de {origen} ({hoy})."
+            if not artista.notas or nota not in artista.notas:
+                artista.notas = (artista.notas + " · " + nota).strip(" · ")
+            print(f"Bio escrita desde Meta: {artista.nombre} ({origen})")
+    except Exception as e:
+        print(f"Bio de Meta no disponible para {artista.nombre}: {e}")
 
 
 if __name__ == "__main__":

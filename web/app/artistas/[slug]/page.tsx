@@ -9,6 +9,7 @@ import { infoPlataforma } from "@/components/Plataformas";
 import IconoRed from "@/components/IconoRed";
 import IconoVerificado from "@/components/IconoVerificado";
 import ConexionMeta from "@/components/ConexionMeta";
+import ConexionTikTok from "@/components/ConexionTikTok";
 import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
@@ -52,10 +53,10 @@ export default async function PerfilPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ igfb?: string }>;
+  searchParams: Promise<{ igfb?: string; tiktok?: string }>;
 }) {
   const { slug } = await params;
-  const { igfb } = await searchParams;
+  const { igfb, tiktok } = await searchParams;
   let artist;
   try {
     artist = await api.artist(slug);
@@ -295,6 +296,21 @@ export default async function PerfilPage({
         </div>
       )}
 
+      {tiktok === "ok" && (
+        <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">
+          Cuenta de TikTok conectada. Tus seguidores y videos se sincronizarán
+          automáticamente.
+        </p>
+      )}
+      {tiktok === "error" && (
+        <div className="rounded-lg border border-inactivo/40 bg-surface px-3 py-2 text-sm text-inactivo">
+          <p>
+            No se pudo conectar TikTok. Autoriza con la cuenta que administra el
+            perfil registrado e intenta de nuevo.
+          </p>
+        </div>
+      )}
+
       {artist.igfb.configurado && !artist.verificado && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <h2 className="text-lg font-bold">
@@ -311,6 +327,15 @@ export default async function PerfilPage({
             </Link>
             <ConexionMeta slug={artist.slug} conectado={false} />
           </div>
+          {artist.tiktok.configurado && (
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              <p className="text-sm text-muted">
+                ¿Administras el TikTok de este proyecto? Conéctalo para
+                sincronizar tus seguidores y videos.
+              </p>
+              <ConexionTikTok slug={artist.slug} conectado={false} />
+            </div>
+          )}
         </section>
       )}
 
@@ -374,6 +399,27 @@ export default async function PerfilPage({
               : ""}
           </span>
           <ConexionMeta slug={artist.slug} conectado={true} />
+        </div>
+      )}
+
+      {artist.tiktok.configurado && (
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+          {artist.tiktok.conectado ? (
+            <>
+              <span>
+                TikTok conectado
+                {artist.tiktok.user_id
+                  ? ` · cuenta ${artist.tiktok.user_id}`
+                  : ""}
+              </span>
+              <ConexionTikTok slug={artist.slug} conectado={true} />
+            </>
+          ) : (
+            <span className="flex items-center gap-2">
+              ¿Administras el TikTok de este proyecto?{" "}
+              <ConexionTikTok slug={artist.slug} conectado={false} />
+            </span>
+          )}
         </div>
       )}
     </div>

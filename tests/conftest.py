@@ -11,6 +11,15 @@ import tempfile
 _TMPDIR = tempfile.mkdtemp(prefix="escena_tests_")
 os.environ["DATABASE_URL"] = f"sqlite:///{_TMPDIR}/test.db"
 os.environ["ADMIN_PASSWORD"] = "clave_admin_test"
+# Credenciales opcionales forzadas a vacío: los tests no deben depender del
+# `.env` del desarrollador (los módulos que las necesiten las simulan).
+for _var in (
+    "TIKTOK_CLIENT_KEY",
+    "TIKTOK_CLIENT_SECRET",
+    "META_APP_ID",
+    "META_APP_SECRET",
+):
+    os.environ[_var] = ""
 
 import pytest
 from fastapi.testclient import TestClient

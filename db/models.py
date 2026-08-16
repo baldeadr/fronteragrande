@@ -107,6 +107,9 @@ class Artist(Base):
     fb_page_token: Mapped[str | None] = mapped_column(String(500), nullable=True)
     ig_user_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
+    tt_user_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    tt_refresh_token: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

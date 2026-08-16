@@ -177,6 +177,27 @@ def _grafo(ruta: str, params: dict) -> dict:
     return datos
 
 
+def pagina_about(page_id: str, page_token: str) -> str:
+    """Descripción de la página de Facebook (`description`/`about`)."""
+    datos = _grafo(
+        page_id,
+        {"access_token": page_token, "fields": "about,description"},
+    )
+    descripcion = (datos.get("description") or "").strip()
+    if not descripcion:
+        descripcion = (datos.get("about") or "").strip()
+    return descripcion
+
+
+def ig_bio(ig_user_id: str, page_token: str) -> str:
+    """Bio de la cuenta de Instagram de negocio."""
+    datos = _grafo(
+        ig_user_id,
+        {"access_token": page_token, "fields": "biography"},
+    )
+    return (datos.get("biography") or "").strip()
+
+
 @router.get("/login")
 def login(slug: str):
     """Inicia el flujo OAuth: redirige al diálogo de Facebook."""

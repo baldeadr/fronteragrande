@@ -74,6 +74,11 @@ class ArtistRepository:
             select(Artist).where(Artist.fb_page_token.isnot(None))
         ).scalars().all()
 
+    def conectados_tiktok(self) -> list[Artist]:
+        return self.session.execute(
+            select(Artist).where(Artist.tt_refresh_token.isnot(None))
+        ).scalars().all()
+
     def con_spotify(self) -> list[Artist]:
         """Artistas con un perfil oficial de Spotify registrado."""
         return self.session.execute(

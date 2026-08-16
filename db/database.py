@@ -80,6 +80,18 @@ def _asegurar_columnas_extra():
                         "followers_mixcloud INTEGER"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "tt_user_id VARCHAR(120)"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "tt_refresh_token VARCHAR(500)"
+                    )
+                )
         return
     from sqlalchemy import text
 
@@ -110,6 +122,12 @@ def _asegurar_columnas_extra():
                     )
                 )
         for columna in ("fb_page_id", "fb_page_token", "ig_user_id"):
+            if columna not in columnas:
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(f"ALTER TABLE artists ADD COLUMN {columna} VARCHAR(500)")
+                    )
+        for columna in ("tt_user_id", "tt_refresh_token"):
             if columna not in columnas:
                 with engine.begin() as conn:
                     conn.execute(

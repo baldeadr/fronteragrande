@@ -12,6 +12,7 @@ from typing import Any
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
@@ -47,6 +48,10 @@ from backend.feed_meta import (
     meta_configurado,
     router as feed_meta_router,
 )
+from backend.feed_tiktok import (
+    tiktok_configurado,
+    router as feed_tiktok_router,
+)
 
 app = FastAPI(title="Frontera Grande API", version="0.1.0")
 
@@ -68,6 +73,38 @@ app.add_middleware(
 )
 
 app.include_router(feed_meta_router)
+app.include_router(feed_tiktok_router)
+
+@app.get("/tiktokZRAuUrtos3HEHHPy6apDTOQcgqkpwyZC.txt")
+def _verificacion_tiktok():
+    """Archivo de verificación de la URL prefix en TikTok for Developers."""
+    ruta = os.path.join(
+        os.path.dirname(__file__), "tiktokZRAuUrtos3HEHHPy6apDTOQcgqkpwyZC.txt"
+    )
+    with open(ruta, encoding="utf-8") as f:
+        return PlainTextResponse(f.read())
+
+
+_PAGINA_PENDIENTE = """<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{titulo} · Frontera Grande</title></head>
+<body style="font-family:system-ui;max-width:640px;margin:3rem auto;padding:0 1rem">
+<h1>{titulo}</h1>
+<p>Documento en preparación. <strong>[PENDIENTE]</strong></p>
+</body></html>"""
+
+
+@app.get("/terminos")
+def _terminos():
+    """Página mínima de Términos de Servicio (requisito de TikTok/Meta)."""
+    return HTMLResponse(_PAGINA_PENDIENTE.format(titulo="Términos de Servicio"))
+
+
+@app.get("/privacidad")
+def _privacidad():
+    """Página mínima de Política de Privacidad (requisito de TikTok/Meta)."""
+    return HTMLResponse(_PAGINA_PENDIENTE.format(titulo="Política de Privacidad"))
 
 ESTADO_COLORES = {
     "activo": "#76B041",
@@ -177,7 +214,9 @@ def list_artists(
                 "metodo_actividad": fila["metodo_actividad"],
                 "estado_registro": fila.get("estado_registro") or "",
                 "verificado": bool(
-                    artist and artist.fb_page_token and artist.estado_registro
+                    artist
+                    and (artist.fb_page_token or artist.tt_refresh_token)
+                    and artist.estado_registro
                 ),
                 "ultimo_lanzamiento": _json_safe(fila["ultimo_lanzamiento"]),
                 "ultimo_evento": _json_safe(fila["ultimo_evento"]),
@@ -285,7 +324,10 @@ def artist_detail(
         "color_estado": ESTADO_COLORES.get(artist.estado_activo, "#888"),
         "metodo_actividad": artist.metodo_actividad,
         "estado_registro": artist.estado_registro or "",
-        "verificado": bool(artist.fb_page_token and artist.estado_registro),
+        "verificado": bool(
+            (artist.fb_page_token or artist.tt_refresh_token)
+            and artist.estado_registro
+        ),
         "ultimo_lanzamiento": _json_safe(artist.ultimo_lanzamiento),
         "ultimo_evento": _json_safe(artist.ultimo_evento),
         "followers": {
@@ -336,6 +378,11 @@ def artist_detail(
             "conectado": bool(artist.fb_page_token),
             "pagina_fb": artist.fb_page_id or None,
             "ig": artist.ig_user_id or None,
+        },
+        "tiktok": {
+            "configurado": tiktok_configurado(),
+            "conectado": bool(artist.tt_refresh_token),
+            "user_id": artist.tt_user_id or None,
         },
         "imagen_perfil": artist.imagen_perfil or None,
         "imagen_origen": artist.imagen_origen or None,
@@ -463,7 +510,9 @@ def admin_list_artists(
                 "notas": a.notas or "",
                 "logros": a.logros or "",
                 "imagen_perfil": a.imagen_perfil or None,
-                "verificado": bool(a.fb_page_token and a.estado_registro),
+                "verificado": bool(
+                    (a.fb_page_token or a.tt_refresh_token) and a.estado_registro
+                ),
                 "links": [
                     {"plataforma": l.plataforma, "url": l.url}
                     for l in a.links

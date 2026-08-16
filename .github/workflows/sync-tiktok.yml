@@ -1,0 +1,39 @@
+name: Sincronizar TikTok
+
+on:
+  workflow_dispatch:
+    inputs:
+      limite:
+        description: "Videos por artista en esta ejecución"
+        required: true
+        default: "20"
+        type: choice
+        options:
+          - "20"
+          - "5"
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_SYNC_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limite || '20' }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar videos y seguidores
+        run: python scripts/sync_feed_tiktok.py

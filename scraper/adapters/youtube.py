@@ -4,6 +4,7 @@ No requiere API key: se resuelve el `channel_id` desde la URL del canal
 (handle/@user o /channel/) y se lee el feed de videos.
 """
 
+import json
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -27,6 +28,13 @@ HEADERS = {
 RSS_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 RE_CHANNEL_ID = re.compile(r'["\']channelId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
 RE_BROWSE_ID = re.compile(r'["\']browseId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
+RE_YT_INITIAL = re.compile(r"var ytInitialData\s*=\s*(\{.*?\});</script>", re.DOTALL)
+RE_OG_DESCRIPTION = re.compile(
+    r'<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']+)'
+)
+RE_OG_DESCRIPTION_INV = re.compile(
+    r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:description["\']'
+)
 
 
 class YouTubeError(ScraperError):
@@ -92,6 +100,39 @@ def _parse_rss(xml_text: str, max_videos: int) -> list[dict]:
             }
         )
     return items
+
+
+def _parse_about(html: str) -> str:
+    """Descripción "Acerca de" del canal desde `ytInitialData` (o `og:description`)."""
+    html = html or ""
+    m = RE_YT_INITIAL.search(html)
+    if m:
+        try:
+            datos = json.loads(m.group(1))
+        except ValueError:
+            datos = None
+        if datos:
+            metadata = datos.get("metadata", {}).get("channelMetadataRenderer", {})
+            descripcion = metadata.get("description") or ""
+            if not descripcion:
+                micro = datos.get("microformat", {}).get(
+                    "microformatDataRenderer", {}
+                )
+                descripcion = micro.get("description") or ""
+            if descripcion:
+                return descripcion.strip()
+    og = RE_OG_DESCRIPTION.search(html) or RE_OG_DESCRIPTION_INV.search(html)
+    if og:
+        return og.group(1).strip()
+    return ""
+
+
+def youtube_about(url: str) -> str:
+    """Descripción "Acerca de" de un canal de YouTube (sin API key)."""
+    pagina = _fetch_pagina(url)
+    if pagina is None:
+        raise YouTubeError("No se pudo leer la página del canal: " + url)
+    return _parse_about(pagina)
 
 
 def latest_videos(channel_url: str, max_videos: int = 5) -> list[dict]:

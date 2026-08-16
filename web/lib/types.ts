@@ -146,6 +146,12 @@ export interface EstadoIgfb {
   ig: string | null;
 }
 
+export interface EstadoTiktok {
+  configurado: boolean;
+  conectado: boolean;
+  user_id: string | null;
+}
+
 export interface ArtistDetail {
   slug: string;
   nombre: string;
@@ -166,6 +172,7 @@ export interface ArtistDetail {
   ranking: Ranking;
   menciones: string[];
   igfb: EstadoIgfb;
+  tiktok: EstadoTiktok;
   imagen_perfil: string | null;
   imagen_origen: string | null;
   logros: string;

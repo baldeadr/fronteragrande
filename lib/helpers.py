@@ -115,6 +115,117 @@ def generos_hashtags(generos: str) -> list[str]:
     return etiquetas
 
 
+# Vocabulario para detectar géneros dentro de una bio/descripción con fuente.
+GENEROS_VOCABULARIO = {
+    "pop punk": "pop punk",
+    "punk rock": "punk rock",
+    "rock n roll": "rock n' roll",
+    "rock and roll": "rock n' roll",
+    "rock en español": "rock en español",
+    "rock alternativo": "rock alternativo",
+    "post-punk": "post-punk",
+    "post punk": "post-punk",
+    "electrónica": "electrónica",
+    "electronica": "electrónica",
+    "electrónico": "electrónica",
+    "electronicore": "electronicore",
+    "industrial": "industrial",
+    "darkwave": "darkwave",
+    "dark wave": "darkwave",
+    "new wave": "new wave",
+    "coldwave": "coldwave",
+    "cold wave": "coldwave",
+    "synthpop": "synthpop",
+    "synth pop": "synthpop",
+    "techno": "techno",
+    "tech house": "tech house",
+    "house": "house",
+    "deep house": "deep house",
+    "tribal": "tribal",
+    "riddim": "riddim",
+    "dubstep": "dubstep",
+    "drum and bass": "drum and bass",
+    "hardcore": "hardcore",
+    "metalcore": "metalcore",
+    "hardstyle": "hardstyle",
+    "metal": "metal",
+    "drone": "drone",
+    "ambient": "ambient",
+    "emo": "emo",
+    "rock": "rock",
+    "pop": "pop",
+    "cumbia": "cumbia",
+    "villero": "villero",
+    "reggae": "reggae",
+    "ska": "ska",
+    "indie": "indie",
+    "rap": "rap",
+    "hip hop": "hip hop",
+    "hip-hop": "hip hop",
+    "reggaetón": "reggaetón",
+    "reggaeton": "reggaetón",
+    "trap": "trap",
+    "norteño": "norteño",
+    "corridos": "corridos",
+    "salsa": "salsa",
+    "jazz": "jazz",
+    "blues": "blues",
+    "funk": "funk",
+    "soul": "soul",
+    "folk": "folk",
+}
+
+TEXTO_PLANTILLA = (
+    "share your videos with friends, family, and the world",
+    "listen to",  # plantillas de SoundCloud: "Play X and discover followers..."
+    "explore the largest community",
+    "stream tracks, albums",
+    "fans and supporters",
+    "view the profiles of people",
+    "the official channel of",
+    "videos every week",
+    "subscribe to see",
+)
+
+
+def es_bio_clara(texto: str, minimo: int = 15) -> bool:
+    """True si el texto puede usarse como bio (no es plantilla de plataforma).
+
+    Una bio "clara" tiene longitud mínima y no repite el texto por defecto de
+    la plataforma (YouTube, SoundCloud, etc.).
+    """
+    texto = (texto or "").strip()
+    if len(texto) < minimo:
+        return False
+    bajo = texto.lower()
+    for plantilla in TEXTO_PLANTILLA:
+        if plantilla in bajo:
+            return False
+    return True
+
+
+def generos_desde_texto(texto: str) -> list[str]:
+    """Géneros del vocabulario presentes en una bio/descripción (con fuente).
+
+    Devuelve los géneros detectados en el orden en que aparecen en el texto,
+    sin duplicados y sin redundancias (un género que ya es parte de otro, ej.
+    "pop" dentro de "pop punk", se omite).
+    """
+    texto = (texto or "").lower()
+    posiciones: list[tuple[int, str]] = []
+    for patron, etiqueta in GENEROS_VOCABULARIO.items():
+        m = re.search(rf"(?<!\w){re.escape(patron)}(?!\w)", texto)
+        if m:
+            posiciones.append((m.start(), etiqueta))
+    posiciones.sort()
+    encontrados = [etiqueta for _, etiqueta in posiciones]
+    return [
+        g
+        for g in encontrados
+        if not any(g in otro and g != otro for otro in encontrados)
+    ]
+
+
 # Peso de cada plataforma en el índice de alcance (suma 100).
 PESOS_ALCANCE = {
     "ig": 0.29,
