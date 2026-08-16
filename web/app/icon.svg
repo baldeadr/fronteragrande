@@ -10,7 +10,7 @@
     font-family="'Archivo Black', 'Arial Black', Arial, sans-serif"
     font-size="220"
     font-weight="900"
-    letter-spacing="-16"
+    letter-spacing="20"
     transform="translate(256 256) scale(0.72 1.4) translate(-256 -256)"
   >FG</text>
 </svg>
