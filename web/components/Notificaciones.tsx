@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { desuscribirPush, suscribirPush } from "@/lib/api";
+import Link from "next/link";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -102,7 +103,10 @@ export default function Notificaciones() {
   if (iosSinInstalar) {
     return (
       <p className="mt-2 max-w-sm text-center">
-        En iPhone, añade la app a tu pantalla de inicio para activar notificaciones.
+        En iPhone, añade la app a tu pantalla de inicio para activar notificaciones.{" "}
+        <Link href="/notificaciones" className="text-accent underline underline-offset-2">
+          Ver pasos
+        </Link>
       </p>
     );
   }

@@ -27,6 +27,9 @@ export default function Footer() {
         <Link href="/admin" className="text-muted opacity-70 hover:opacity-100 hover:underline">
           Administración
         </Link>
+        <Link href="/notificaciones" className="text-accent hover:underline">
+          Notificaciones
+        </Link>
         <Notificaciones />
       </div>
     </footer>

@@ -3,6 +3,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NavegacionMovil from "@/components/NavegacionMovil";
+import BannerNotificaciones from "@/components/BannerNotificaciones";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
         </main>
         <Footer />
         <NavegacionMovil />
+        <BannerNotificaciones />
         <script
           dangerouslySetInnerHTML={{
             __html: `

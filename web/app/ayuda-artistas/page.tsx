@@ -126,6 +126,12 @@ export default function AyudaArtistasPage() {
         >
           Ir al directorio
         </Link>
+        <Link
+          href="/notificaciones"
+          className="mt-2 inline-flex rounded-lg border border-line px-3 py-1.5 font-medium text-muted hover:border-accent hover:text-text"
+        >
+          Configurar notificaciones
+        </Link>
       </section>
     </div>
   );

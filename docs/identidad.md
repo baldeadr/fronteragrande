@@ -42,8 +42,13 @@ colores ajenos al sistema de diseño.
 | --- | --- | --- | --- |
 | Iniciales `FG` | **Archivo Black** | 900 | La fuente es el símbolo; no se reemplaza por otra |
 | Wordmark | **Arial / Helvetica** | 300 (light) | Sobrio, con `letter-spacing` generoso |
-| Títulos de web | Archivo Black (vía Google Fonts) | — | Consistente con `FG` |
+| Títulos de web | Archivo Black (paquete local `@fontsource/archivo-black`) | — | Consistente con `FG` |
 
+- La web carga Archivo Black **localmente** vía `@fontsource/archivo-black`
+  (importado en `web/app/globals.css`), sin depender de Google Fonts. La clase
+  `.font-brand` aplica `"Archivo Black", "Arial Black", Arial, sans-serif` al
+  nombre "Frontera Grande" de la barra superior; el resto del cuerpo sigue en
+  `system-ui` para legibilidad.
 - Archivo Black debe estar instalada para **regenerar** los SVG/PNG (está en
   `~/.local/share/fonts/ArchivoBlack-Regular.ttf` en el entorno de trabajo).
 - Los SVG publicados ya tienen el texto **convertido a trazados** (paths, vía
@@ -59,7 +64,7 @@ colores ajenos al sistema de diseño.
 - Cuadrado: `rect x=18 y=18 width=476 height=476 rx=78`, relleno `#0b0b10`.
 - `FG`: Archivo Black, `font-size=168`, `letter-spacing=6` (las iniciales
   separadas), `transform="translate(0 -64) scale(1 1.22)"` (altura natural, sin
-  alargar — el alargado es **solo del favicon**).
+  alargar).
 - Wordmark en **dos renglones**: `FRONTERA` y `GRANDE`, Arial light,
   `font-size=32`, `letter-spacing=6`, color `#b8b8c2`.
 - Línea morada: `#9d4edd`, `stroke-width=8`, leve valle central
@@ -77,15 +82,19 @@ se toca (verificado midiendo el render, no a ojo).
 | --- | --- | --- |
 | `web/public/logo-frontera-grande.svg` | Página Acerca de, uso general | El logo completo |
 | `web/public/logo-frontera-grande.png` | Export raster (1024×1024) | Misma composición |
-| `web/app/icon.svg` | **Favicon** e ícono de navegación | `FG` **alargado** (`scale(0.72 1.4)`), `letter-spacing=20`, sin wordmark, con **línea morada gruesa** (`stroke-width=34`) al pie |
+| `web/app/icon.svg` | **Favicon** e ícono de navegación | Solo `FG` + línea morada (sin wordmark), **proporciones normales** (`transform="matrix(0.9 0 0 1.05 25 -45)"`, `letter-spacing=20`), **línea morada gruesa** (`stroke-width=30`) con leve depresión central, fondo **al ras** (cuadrado de 0,0 a 512,512, sin margen transparente) |
 | `web/app/favicon.ico` | Favicon legacy (16/32/48) | Raster del `icon.svg` |
+| `web/public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon-180.png` | Iconos de la PWA instalable (manifest + iPhone) | Raster del `icon.svg` (solo `FG` + línea; sin wordmark, que no se lee a tamaño de icono) |
 | `web/public/banner-frontera-grande.svg` + `.png` | Banner para Facebook (1640×624) | Logo embebido + wordmark grande en dos renglones + eslogan "La escena fronteriza, en un solo lugar." |
 
 ## 6. Reglas (qué NO se cambia sin decisión)
 
-- **No** mezclar el `FG` alargado del favicon con el `FG` del logo completo:
-  el alargado es exclusivo del favicon (pequeño), donde las letras rectas no se
-  distinguen. La **línea morada gruesa** del favicon es su propia variante
+- **No** usar el wordmark en el favicon ni en los iconos de la PWA: a tamaño
+  pequeño no se lee y se ensucia la composición; ahí manda el monograma `FG`
+  con su línea morada.
+- **No** alargar las iniciales en el favicon (estilo 2026-08, retirado): el
+  monograma actual usa proporciones normales y ya se distingue en tamaños
+  pequeños. La **línea morada gruesa** del favicon es su propia variante
   (preview de la identidad a tamaño mínimo), distinta de la línea del logo.
 - **No** volver a una sola línea para el wordmark: en el cuadrado quedaba
   pequeño o desbordado; los dos renglones lo dejan crecer sin romper la caja.
@@ -105,8 +114,11 @@ se toca (verificado midiendo el render, no a ojo).
 2. Rasterizar con Inkscape: `inkscape logo.svg --export-type=png --export-filename=salida.png --export-width=N --export-height=N`.
 3. Verificar la composición (posición de bandas y separaciones) sobre el render.
 4. Si cambia la composición, actualizar las variantes afectadas (favicon,
-   banner) y este documento.
-5. `npm run lint && npm run build` dentro de `web/` antes de commit.
+   banner, iconos de la PWA) y este documento.
+5. Si cambió `web/app/icon.svg`, regenerar también `favicon.ico` (16/32/48) y
+   los iconos de la PWA en `web/public/icons/` (192/512/maskable/apple-180) con
+   `cairosvg`/PIL a partir del SVG (ver las rutas en la sección 5).
+6. `npm run lint && npm run build` dentro de `web/` antes de commit.
 
 > **Regeneración:** los SVG publicados llevan el texto convertido a paths
 > (auto-contenidos). Para regenerarlos, editar el texto y rasterizar con
