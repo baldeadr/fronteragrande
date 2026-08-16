@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Snapshot de la escena local en Spotify (clonado desde architecting-a-band).
 
-Toma un snapshot de los artistas de data/escena_local.csv que tienen perfil de
-artista en Spotify (followers, popularity, géneros, top tracks) y lo agrega a
-data/escena_local_stats.csv como serie temporal (una fila por artista y fecha).
+Toma un snapshot de los artistas con perfil de artista en Spotify (followers,
+popularity, géneros, top tracks) y lo agrega a data/escena_local_stats.csv como
+serie temporal (una fila por artista y fecha). Los artistas se leen de la BD
+(fuente de verdad), no del CSV.
 
 Modo normal (requiere credenciales):
     python scripts/escena_local_snapshot.py
@@ -27,7 +28,8 @@ import sys
 from datetime import date
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-CSV_BASE = os.path.join(BASE_DIR, "data", "escena_local.csv")
+sys.path.insert(0, BASE_DIR)
+
 CSV_OUT = os.path.join(BASE_DIR, "data", "escena_local_stats.csv")
 
 ARTIST_ID_RE = re.compile(r"artist/([A-Za-z0-9]+)")
@@ -73,23 +75,35 @@ def extract_artist_id(url):
 
 
 def load_escena():
-    """Lee data/escena_local.csv y devuelve las filas con perfil de Spotify."""
+    """Lee de la BD (fuente de verdad) los artistas con perfil de Spotify."""
+    from db.database import SessionLocal
+    from lib.repository import ArtistRepository
+
     rows = []
-    with open(CSV_BASE, encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
-            spotify_id = extract_artist_id(row.get("url_spotify"))
+    session = SessionLocal()
+    try:
+        for artista in ArtistRepository(session).con_spotify():
+            spotify_id = None
+            url_artista = ""
+            for link in artista.links:
+                if link.plataforma == "spotify" and not link.es_busqueda:
+                    url_artista = link.url
+                    spotify_id = extract_artist_id(link.url)
+                    break
             if not spotify_id:
                 continue
             rows.append(
                 {
-                    "id": row.get("id", ""),
-                    "nombre": row.get("nombre", ""),
-                    "segmento": row.get("segmento", ""),
-                    "ciudad": row.get("ciudad", ""),
+                    "id": artista.slug,
+                    "nombre": artista.nombre,
+                    "segmento": artista.segmento,
+                    "ciudad": artista.ciudad,
                     "spotify_id": spotify_id,
-                    "url_artista": row.get("url_spotify", ""),
+                    "url_artista": url_artista,
                 }
             )
+    finally:
+        session.close()
     return rows
 
 
@@ -151,7 +165,7 @@ def main():
     escena_rows = load_escena()
 
     if not escena_rows:
-        print("No hay artistas con URL de Spotify en data/escena_local.csv.")
+        print("No hay artistas con perfil de Spotify en la base de datos.")
         return 1
 
     fecha = date.today().isoformat()

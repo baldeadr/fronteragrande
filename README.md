@@ -113,17 +113,19 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
 │                           # oembed.py (oEmbed común con caché para IG/FB/TikTok),
 │                           # imagenes.py (fotos de perfil desde las redes, sin API key)
 ├── data/
-│   ├── escena_local.csv    # Fuente de verdad de artistas (sincronizado con architecting-a-band)
-│   └── eventos.csv         # Eventos extraídos de ESCENA_LOCAL.md
+│   ├── escena_local.csv    # Bootstrap + export (regenerado desde la BD)
+│   └── eventos.csv         # Bootstrap + export (regenerado desde la BD)
 ├── tests/                  # Suite pytest (BD temporal aislada)
 └── scripts/
-    ├── seed_db.py          # Reconstruir la BD desde los CSV
+    ├── seed_db.py          # Cargar los CSV en una BD vacía (insert-if-missing)
+    ├── exportar_csv.py     # Regenerar los CSV desde la BD (respaldo/sync)
     ├── actualizar_imagenes.py  # Fotos de perfil desde las redes (URLs, sin descargar)
     ├── actualizar_feed_youtube.py  # Últimos videos de YouTube por RSS (sin API key)
     ├── sync_feed_igfb.py   # Sync automático de posts FB/IG vía Meta Graph API
     ├── actualizar_oyentes_spotify.py # Captura puntual de oyentes públicos (16 perfiles)
     ├── sync_igfb.sh        # Wrapper para cron (sync Meta)
-    ├── recalcular_actividad.py  # Recalcula estado_activo (BD + CSV) con el feed como señal
+    ├── sync_local.sh       # Reconstruir la BD local desde producción (Neon)
+    ├── recalcular_actividad.py  # Recalcula estado_activo (solo BD) con el feed como señal
     └── dev.sh              # Arranca API + web juntas
 ```
 
@@ -143,7 +145,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
 
 ## Regla de actividad
 
-> **activo** = señal de actividad (lanzamiento, evento o feed) en los últimos **6 meses**. **en_duda** = señal entre **6 y 18 meses**, o sin señal conocida. **inactivo** = sin señal en más de **18 meses**, o pausa confirmada. Se usa siempre la señal más reciente disponible. Implementada en `scraper/core.py`; se recalcula con `scripts/recalcular_actividad.py` (actualiza BD y CSV semilla).
+> **activo** = señal de actividad (lanzamiento, evento o feed) en los últimos **6 meses**. **en_duda** = señal entre **6 y 18 meses**, o sin señal conocida. **inactivo** = sin señal en más de **18 meses**, o pausa confirmada. Se usa siempre la señal más reciente disponible. Implementada en `scraper/core.py`; se recalcula con `scripts/recalcular_actividad.py` (actualiza la BD; el CSV se regenera con `scripts/exportar_csv.py`).
 
 ## Scraping
 
@@ -178,5 +180,5 @@ Detalle con estado por etapa y dependencias: [docs/roadmap.md](docs/roadmap.md).
 - Todo en **español**.
 - `[PENDIENTE]` = falta por definir; no inventar contenido.
 - `[PROPUESTA]` = propuesta de la IA para que el artista confirme o ajuste.
-- Los datos semilla son la **fuente de verdad**; si cambian en `architecting-a-band`, se vuelve a correr `scripts/seed_db.py` (los campos que se editen se conservan por upsert según `slug`).
+- La **BD es la fuente de verdad operativa**; los CSV son **bootstrap + export**: se leen solo para crear una BD vacía (`scripts/seed_db.py`, insert-if-missing, no pisa filas existentes) y se regeneran con `scripts/exportar_csv.py` (respaldo y sync con `architecting-a-band`). `scripts/sync_local.sh` reconstruye la BD local desde producción.
 - Instrucciones para asistentes de IA: ver [AGENTS.md](AGENTS.md).

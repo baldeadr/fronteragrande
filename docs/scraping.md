@@ -183,8 +183,8 @@ todas las disponibles (lanzamiento, evento o elemento del feed):
 
 Implementada en `scraper/core.py` (`REGLA_ACTIVIDAD`); **no depende de
 jerarquías de plataformas**. `scripts/recalcular_actividad.py` recorre todos
-los artistas y actualiza `estado_activo` (BD **y** CSV semilla, para mantener
-una sola verdad).
+los artistas y actualiza `estado_activo` en la **BD** (fuente de verdad); el
+CSV semilla se regenera aparte con `scripts/exportar_csv.py`.
 
 ---
 

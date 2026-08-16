@@ -93,7 +93,7 @@ def _sin_red_onboarding(monkeypatch):
     )
 
 
-_SLUGS_PRUEBA = ("banda_de_prueba", "equipo_doble", "equipo_doble_2")
+_SLUGS_PRUEBA = ("banda_de_prueba", "equipo_doble", "equipo_doble_2", "equipo_tres")
 
 
 def _limpiar_altas():
@@ -158,4 +158,33 @@ def test_crear_artista_validaciones(client):
     )
     assert mala_categoria.status_code == 400
 
+    _limpiar_altas()
+
+
+def test_crear_artista_con_spotify(client, monkeypatch):
+    """Alta con enlace de Spotify: el onboarding crea su snapshot sin romper."""
+    monkeypatch.setattr(
+        "scraper.adapters.spotify_public.obtener_oyentes", lambda url: 1234
+    )
+    respuesta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Equipo Tres",
+            "categoria": "Solista",
+            "ciudad": "Matamoros",
+            "redes": [
+                {
+                    "plataforma": "spotify",
+                    "url": "https://open.spotify.com/artist/equipotres",
+                }
+            ],
+        },
+    )
+    assert respuesta.status_code == 201
+    slug = respuesta.json()["slug"]
+    assert slug == "equipo_tres"
+    assert respuesta.json()["onboarding"]["spotify_oyentes"] == 1234
+
+    detalle = client.get(f"/api/artists/{slug}").json()
+    assert any(l["plataforma"] == "spotify" for l in detalle["links"])
     _limpiar_altas()

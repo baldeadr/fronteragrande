@@ -199,6 +199,7 @@ def crear_artista_endpoint(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
+    db.flush()  # asigna artista.id antes del onboarding (snapshots/feed lo usan)
     resumen = onboarding_artista(db, artista)
     db.commit()
     return {

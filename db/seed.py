@@ -107,9 +107,22 @@ def _crear_links(artist: Artist, fila: pd.Series) -> list[ArtistLink]:
     return links
 
 
-def cargar_artistas(session: Session, csv_path: str = SEED_ARTISTS) -> int:
+def cargar_artistas(
+    session: Session,
+    csv_path: str = SEED_ARTISTS,
+    sobrescribir: bool = False,
+) -> dict:
+    """Carga artistas desde el CSV semilla.
+
+    Por defecto (`sobrescribir=False`) la BD es la fuente de verdad: solo
+    crea los slugs que no existen y NO toca las filas existentes (la BD ya
+    tiene estado vivo: imágenes, verificación, actividad, métricas). Con
+    `sobrescribir=True` se conserva el comportamiento antiguo de upsert
+    (útil solo para reconstruir una BD desde el CSV).
+    """
     df = pd.read_csv(csv_path, dtype=str)
     contados = 0
+    omitidos = 0
 
     for _, fila in df.iterrows():
         slug = _normalizar(fila.get("id"))
@@ -123,6 +136,9 @@ def cargar_artistas(session: Session, csv_path: str = SEED_ARTISTS) -> int:
         if artista is None:
             artista = Artist(slug=slug)
             session.add(artista)
+        elif not sobrescribir:
+            omitidos += 1
+            continue
 
         artista.nombre = _normalizar(fila.get("nombre")) or slug
         artista.segmento = _normalizar(fila.get("segmento")) or "Sin confirmar"
@@ -155,7 +171,7 @@ def cargar_artistas(session: Session, csv_path: str = SEED_ARTISTS) -> int:
         contados += 1
 
     session.commit()
-    return contados
+    return {"cargados": contados, "omitidos": omitidos}
 
 
 def cargar_eventos(session: Session, csv_path: str = SEED_EVENTS) -> int:
@@ -188,17 +204,26 @@ def cargar_eventos(session: Session, csv_path: str = SEED_EVENTS) -> int:
     return contados
 
 
-def seed(session: Session | None = None) -> dict:
-    """Crea las tablas y carga los datos semilla. Devuelve conteos."""
+def seed(session: Session | None = None, sobrescribir: bool = False) -> dict:
+    """Crea las tablas y carga los datos semilla. Devuelve conteos.
+
+    Por defecto solo crea lo que no existe (insert-if-missing); con
+    `sobrescribir=True` pisa las filas existentes con los valores del CSV
+    (solo para reconstruir una BD desde cero).
+    """
     Base.metadata.create_all(engine)
     propia = session or SessionLocal()
     try:
-        artistas = cargar_artistas(propia)
+        artistas = cargar_artistas(propia, sobrescribir=sobrescribir)
         eventos = cargar_eventos(propia)
     finally:
         if session is None:
             propia.close()
-    return {"artistas": artistas, "eventos": eventos}
+    return {
+        "artistas": artistas["cargados"],
+        "eventos": eventos,
+        "omitidos": artistas["omitidos"],
+    }
 
 
 if __name__ == "__main__":

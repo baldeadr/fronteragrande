@@ -142,9 +142,12 @@ Desde tu máquina (el venv ya tiene `psycopg` en `requirements.txt`):
 DATABASE_URL="POSTGRESQL_URL_DE_NEON" .venv/bin/python scripts/seed_db.py
 ```
 
-Esto crea las tablas y carga los 29 artistas + 11 eventos. Después, **poblarlo
-de contenido** (fotos de perfil y videos de YouTube) con los scripts de
-scraping apuntando a Neon:
+Esto crea las tablas y carga los artistas + eventos. El seed es
+**insert-if-missing**: si la BD ya tiene datos (altas por formulario,
+verificación, actividad), no los pisa. Para reconstruir desde cero usar
+`scripts/seed_db.py --reescribir`. Después, **poblarlo de contenido**
+(fotos de perfil y videos de YouTube) con los scripts de scraping apuntando a
+Neon:
 
 ```bash
 # Fotos de perfil desde las redes (URLs, sin descargar)
@@ -162,6 +165,12 @@ Verifica:
 DATABASE_URL="POSTGRESQL_URL_DE_NEON" .venv/bin/python \
   -c "from lib.repository import ArtistRepository; from db.database import SessionLocal; s=SessionLocal(); print(len(ArtistRepository(s).todos()))"
 ```
+
+> **Fuente de verdad:** la BD de Neon es la única fuente de verdad operativa.
+> Los `data/*.csv` del repo son **bootstrap + export**: se regeneran desde la
+> BD con `scripts/exportar_csv.py` (respaldo y sync con architecting-a-band).
+> Para que la BD local muestre lo mismo que la web, reconstruirla desde
+> producción: `DATABASE_URL="<neon>" ./scripts/sync_local.sh`.
 
 ## 5. Vercel (web Next.js)
 
