@@ -29,6 +29,13 @@ export interface Ranking {
   total: number;
 }
 
+export interface AnalisisPerfil {
+  texto: string;
+  tipo: string;
+  confianza: "alta" | "media" | "baja";
+  actualizado: string | null;
+}
+
 export interface ArtistCard {
   slug: string;
   nombre: string;
@@ -171,6 +178,7 @@ export interface ArtistDetail {
   fecha_captura: string | null;
   ranking: Ranking;
   menciones: string[];
+  analisis: AnalisisPerfil;
   igfb: EstadoIgfb;
   tiktok: EstadoTiktok;
   imagen_perfil: string | null;

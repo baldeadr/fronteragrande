@@ -26,6 +26,7 @@ HEADERS = {
     ),
 }
 RSS_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+CHANNELS_API = "https://www.googleapis.com/youtube/v3/channels"
 RE_CHANNEL_ID = re.compile(r'["\']channelId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
 RE_BROWSE_ID = re.compile(r'["\']browseId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
 RE_YT_INITIAL = re.compile(r"var ytInitialData\s*=\s*(\{.*?\});</script>", re.DOTALL)
@@ -154,3 +155,45 @@ def latest_videos(channel_url: str, max_videos: int = 5) -> list[dict]:
             f"El feed del canal respondió HTTP {respuesta.status_code}"
         )
     return _parse_rss(respuesta.text, max_videos)
+
+
+def channel_statistics(channel_id: str, api_key: str) -> dict:
+    """Obtiene estadísticas públicas de un canal mediante YouTube Data API."""
+    if not channel_id or not api_key:
+        raise YouTubeError("Faltan el channel_id o la clave de YouTube Data API")
+    try:
+        respuesta = requests.get(
+            CHANNELS_API,
+            params={"part": "statistics", "id": channel_id, "key": api_key},
+            timeout=DEFAULT_TIMEOUT,
+            headers=HEADERS,
+        )
+    except requests.RequestException as exc:
+        raise YouTubeError(f"Fallo de red al consultar estadísticas: {exc}") from exc
+    if not respuesta.ok:
+        raise YouTubeError(
+            f"YouTube Data API respondió HTTP {respuesta.status_code}"
+        )
+    try:
+        datos = respuesta.json()
+    except ValueError as exc:
+        raise YouTubeError("Respuesta inválida de YouTube Data API") from exc
+    elementos = datos.get("items") or []
+    if not elementos:
+        raise YouTubeError("YouTube no devolvió estadísticas para el canal")
+    estadisticas = elementos[0].get("statistics") or {}
+
+    def entero(clave: str) -> int | None:
+        valor = estadisticas.get(clave)
+        try:
+            return int(valor) if valor is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    return {
+        "suscriptores": None
+        if estadisticas.get("hiddenSubscriberCount")
+        else entero("subscriberCount"),
+        "vistas": entero("viewCount"),
+        "videos": entero("videoCount"),
+    }

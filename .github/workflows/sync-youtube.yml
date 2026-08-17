@@ -1,0 +1,28 @@
+name: Sincronizar estadísticas de YouTube
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 5 * * 0"
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar estadísticas
+        run: python scripts/sync_youtube_stats.py

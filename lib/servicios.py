@@ -234,6 +234,102 @@ def metricas_artista(fila) -> dict:
     return metricas
 
 
+def analisis_artista(metricas: dict, actualizado=None) -> dict:
+    """Genera una lectura breve y neutral de las señales del perfil.
+
+    No mezcla vistas, reproducciones y seguidores en una sola cifra. Usa los
+    seguidores para comparar presencia social contra audiencia musical y deja
+    las reproducciones como evidencia adicional de presencia en plataformas.
+    """
+
+    def valor(plataforma: str, tipo: str) -> float:
+        dato = metricas.get(plataforma, {}).get(tipo)
+        try:
+            numero = float(dato)
+        except (TypeError, ValueError):
+            return 0.0
+        return numero if numero > 0 else 0.0
+
+    sociales = sum(
+        valor(plataforma, "seguidores") for plataforma in ("ig", "fb", "tt", "yt")
+    )
+    oyentes_spotify = valor("spotify", "oyentes_mensuales")
+    audiencia_musical = oyentes_spotify or valor("spotify", "seguidores")
+    audiencia_musical += sum(
+        valor(plataforma, "seguidores") for plataforma in ("beatport", "mixcloud")
+    )
+    reproducciones = any(
+        valor(plataforma, tipo) > 0
+        for plataforma, tipo in (
+            ("spotify", "reproducciones"),
+            ("bandcamp", "reproducciones"),
+            ("soundcloud", "reproducciones"),
+        )
+    )
+    plataformas_con_datos = sum(
+        any(valor(plataforma, tipo) > 0 for tipo in datos)
+        for plataforma, datos in (
+            ("ig", ("seguidores",)),
+            ("fb", ("seguidores",)),
+            ("tt", ("seguidores",)),
+            ("yt", ("seguidores", "vistas")),
+            ("spotify", ("seguidores", "oyentes_mensuales", "reproducciones")),
+            ("bandcamp", ("reproducciones",)),
+            ("soundcloud", ("reproducciones",)),
+            ("beatport", ("seguidores",)),
+            ("mixcloud", ("seguidores",)),
+        )
+    )
+
+    if plataformas_con_datos < 2:
+        texto = "Aún hay pocos datos conectados para generar un análisis confiable."
+        confianza = "baja"
+        tipo = "datos_insuficientes"
+    elif sociales >= 100 and audiencia_musical == 0:
+        if reproducciones:
+            texto = (
+                "La audiencia registrada se concentra en redes sociales; hay "
+                "reproducciones musicales, pero todavía no una métrica de audiencia "
+                "comparable entre ambas presencias."
+            )
+        else:
+            texto = (
+                "La audiencia registrada se concentra en redes sociales; todavía no "
+                "hay una señal musical suficiente para comparar ambas presencias."
+            )
+        confianza = "media"
+        tipo = "presencia_social"
+    elif sociales >= audiencia_musical * 10 and sociales >= 100:
+        texto = (
+            "La mayor audiencia registrada proviene de redes sociales, mientras "
+            "que la presencia musical es menor. Existe oportunidad para fortalecer "
+            "el vínculo entre ambas plataformas."
+        )
+        confianza = "alta"
+        tipo = "puente_musical"
+    elif audiencia_musical >= sociales * 2 and audiencia_musical >= 100:
+        texto = (
+            "Las plataformas musicales concentran la mayor audiencia registrada; "
+            "las redes sociales representan una oportunidad para ampliar el descubrimiento."
+        )
+        confianza = "media"
+        tipo = "descubrimiento"
+    else:
+        texto = (
+            "La presencia registrada está distribuida entre plataformas sociales "
+            "y musicales, sin una diferencia dominante entre ambas."
+        )
+        confianza = "media"
+        tipo = "presencia_distribuida"
+
+    return {
+        "texto": texto,
+        "tipo": tipo,
+        "confianza": confianza,
+        "actualizado": actualizado,
+    }
+
+
 def _agregar_grupo_mencion(
     menciones: dict[str, list[str]],
     indices: dict[str, float],
@@ -259,7 +355,7 @@ def _agregar_grupo_mencion(
 def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, list[str]]:
     """Menciones especiales de ranking.
 
-    Devuelve {slug: [texto, ...]} con el Top 3 de la escena (ranking global)
+    Devuelve {slug: [texto, ...]} con el Top 3 de la Frontera Grande (ranking global)
     y el Top 3 de cada grupo (género/ciudad/segmento) con al menos 3 artistas
     y puntaje real. Solo algunos artistas tienen menciones.
     """
@@ -285,15 +381,15 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
         if indice <= 0:
             break
         menciones.setdefault(slug, []).append(
-            f"Nº {puesto} de la escena (de {len(globales)})"
+            f"Nº {puesto} de la Frontera Grande (de {len(globales)})"
         )
 
     for genero, slugs in por_genero.items():
         _agregar_grupo_mencion(menciones, indices, genero, slugs, "Nº {puesto} del género {grupo} (de {n})")
     for ciudad, slugs in por_ciudad.items():
-        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº {puesto} en {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº {puesto} de {grupo} (de {n})")
     for segmento, slugs in por_segmento.items():
-        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº {puesto} en la categoría {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº {puesto} de la categoría {grupo} (de {n})")
 
     return menciones
 

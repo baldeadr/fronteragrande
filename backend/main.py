@@ -37,10 +37,12 @@ from lib.notificaciones import notificar_todos
 from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository, SettingsRepository
 from lib.servicios import (
     artistas_df,
+    analisis_artista,
     crear_artista,
     editar_artista,
     eventos_de_artista,
     feed_df,
+    metricas_artista,
     onboarding_artista,
     ranking_global,
     stats_escena,
@@ -303,6 +305,10 @@ def artist_detail(
     fila = df[df["slug"] == slug].iloc[0] if not df.empty else None
 
     ranking, menciones = ranking_global(df)
+    analisis = analisis_artista(
+        metricas_artista(fila) if fila is not None else {},
+        artist.fecha_captura,
+    )
 
     links = [link_con_metadatos(l) for l in artist.links]
     eventos = [
@@ -386,6 +392,7 @@ def artist_detail(
             {"indice": None, "rank": None, "total": len(ranking)},
         ),
         "menciones": menciones.get(artist.slug, []),
+        "analisis": analisis,
         "igfb": {
             "configurado": meta_configurado(),
             "conectado": bool(artist.fb_page_token),

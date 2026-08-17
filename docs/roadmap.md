@@ -36,7 +36,7 @@ debe conseguir.
 | # | Etapa | Estado | Depende de |
 |---|-------|--------|-----------|
 | 11 | **Sincronización automática FB/IG (Meta)** | ◐ OAuth y primera sincronización de producción completados: Apex Ultra quedó **verificado** y sus publicaciones de Facebook ya aparecen en el perfil. Workflow de GitHub Actions activo cada 6 horas. Pendiente conectar al resto de artistas y confirmar el siguiente ciclo automático. | Artistas participantes |
-| 12 | YouTube `vistas_yt` | `[PENDIENTE]` no se extraen sin API key o ejecución de JS. | `YOUTUBE_API_KEY` opcional |
+| 12 | **Estadísticas públicas de YouTube** | ✔ `scripts/sync_youtube_stats.py` usa YouTube Data API v3 para actualizar `followers_yt`, `vistas_yt` y `fecha_captura`; workflow semanal en GitHub Actions. Las tarjetas muestran suscriptores cuando el dato es público. | `YOUTUBE_API_KEY` y validación de canales |
 | 13 | Spotify: números del API | ✔ MCP (`scripts/spotify_mcp_server.py`) + snapshot (`scripts/escena_local_snapshot.py` → `data/escena_local_stats.csv`) clonados de architecting-a-band y probados. **Verificado 2026-08:** con las credenciales de desarrollo el API resuelve nombre/imagen/URI, pero **no entrega followers/popularity/géneros** (los campos ni siquiera aparecen) y `top-tracks` da **403**; el snapshot ya tolera esa respuesta (registra 0/0) y queda listo para re-ejecutarse sin cambios. **`[PENDIENTE]`** el API 2026 entrega esos números solo con **Extended Quota** (revisión de la app en el dashboard: developer.spotify.com/dashboard → app → solicitar quota). | **Extended Quota** de Spotify |
 
 ## Próximas etapas `[PROPUESTA]`

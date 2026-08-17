@@ -10,11 +10,11 @@ export const PLATAFORMA_COLOR: Record<string, string> = {
   mixcloud: "#52a5e0",
 };
 
-export const CATEGORIA_COLOR: string[] = [
-  "var(--accent)",
-  "#1db954",
-  "#f5a623",
-  "#4fa3e8",
-  "#e4572e",
-  "#b57edc",
-];
+export const CATEGORIA_COLOR: Record<string, string> = {
+  Banda: "var(--accent)",
+  Solista: "#1db954",
+  DJ: "#f5a623",
+  Colectivo: "#4fa3e8",
+  Covers: "#e4572e",
+  Tributo: "#b57edc",
+};

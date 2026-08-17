@@ -155,6 +155,9 @@ DATABASE_URL="…" .venv/bin/python scripts/actualizar_imagenes.py
 
 # Últimos videos de YouTube (RSS, sin API key) → alimenta el feed
 DATABASE_URL="…" .venv/bin/python scripts/actualizar_feed_youtube.py
+
+# Suscriptores y vistas públicas (requiere YOUTUBE_API_KEY)
+DATABASE_URL="…" YOUTUBE_API_KEY="…" .venv/bin/python scripts/sync_youtube_stats.py
 ```
 
 > Re-ejecutar estos scripts refresca fotos/feed (las URLs de redes pueden

@@ -18,7 +18,7 @@ import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 function tipoMencion(
   mencion: string,
 ): "genero" | "categoria" | "ciudad" | "escena" {
-  if (mencion.includes("de la escena")) return "escena";
+  if (mencion.includes("de la Frontera Grande")) return "escena";
   if (mencion.includes("género")) return "genero";
   if (mencion.includes("categoría")) return "categoria";
   return "ciudad";
@@ -178,6 +178,22 @@ export default async function PerfilPage({
             </div>
           )}
           </div>
+          </div>
+
+          <div className="mb-6 pb-5">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Análisis
+              </h2>
+              {artist.analisis.actualizado && (
+                <span className="shrink-0 text-xs text-muted">
+                  Actualizado {fechaCaptura(artist.analisis.actualizado)}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+              {artist.analisis.texto}
+            </p>
           </div>
 
           {artist.menciones.length > 0 && (

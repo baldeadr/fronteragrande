@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -57,17 +58,15 @@ export default function RootLayout({
         <Footer />
         <NavegacionMovil />
         <BannerNotificaciones />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
-                addEventListener("load", () => {
-                  navigator.serviceWorker.register("/sw.js").catch(() => {});
-                });
-              }
-            `,
-          }}
-        />
+        <Script id="registro-service-worker" strategy="afterInteractive">
+          {`
+            if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
+              addEventListener("load", () => {
+                navigator.serviceWorker.register("/sw.js").catch(() => {});
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

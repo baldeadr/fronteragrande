@@ -18,8 +18,8 @@ export default function DonaCategorias({
   const datos = Object.entries(segmentos).sort((a, b) => b[1] - a[1]);
   const total = datos.reduce((acc, [, v]) => acc + v, 0);
   const dim = RADIO * 2;
-  const c = 2 * Math.PI * RADIO;
   const grosorInterior = RADIO - GROSOR / 2;
+  const c = 2 * Math.PI * grosorInterior;
 
   const cortes = datos.reduce<
     { k: string; v: number; i: number; fraccion: number; inicio: number }[]
@@ -46,7 +46,7 @@ export default function DonaCategorias({
                   cy={RADIO}
                   r={grosorInterior}
                   fill="none"
-                  stroke={CATEGORIA_COLOR[corte.i % CATEGORIA_COLOR.length]}
+                  stroke={CATEGORIA_COLOR[corte.k] ?? "var(--accent)"}
                   strokeWidth={GROSOR}
                   strokeDasharray={`${corte.fraccion * c} ${c - corte.fraccion * c}`}
                   strokeDashoffset={-(corte.inicio - corte.fraccion) * c}
@@ -93,7 +93,7 @@ export default function DonaCategorias({
             >
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: CATEGORIA_COLOR[i % CATEGORIA_COLOR.length] }}
+                style={{ backgroundColor: CATEGORIA_COLOR[k] ?? "var(--accent)" }}
               />
               <span className="flex-1 text-muted">{k}</span>
               <span className="font-medium tabular-nums">{v}</span>

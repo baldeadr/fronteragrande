@@ -17,6 +17,7 @@ def test_detalle_shape(client):
     assert isinstance(perfil["estado_registro"], str)
     assert isinstance(perfil["verificado"], bool)
     assert isinstance(perfil["followers"], dict)
+    assert "yt" in perfil["followers"]
     assert isinstance(perfil["stats"], dict)
     assert set(perfil["stats"].keys()) >= {
         "ig", "fb", "yt", "tt", "spotify", "bandcamp", "soundcloud",
@@ -24,6 +25,10 @@ def test_detalle_shape(client):
     }
     assert isinstance(perfil["ranking"], dict)
     assert isinstance(perfil["menciones"], list)
+    assert set(perfil["analisis"]) == {
+        "texto", "tipo", "confianza", "actualizado",
+    }
+    assert perfil["analisis"]["texto"]
     assert isinstance(perfil["links"], list)
     assert isinstance(perfil["eventos"], list)
     assert isinstance(perfil["feed"], list)
