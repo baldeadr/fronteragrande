@@ -519,6 +519,7 @@ function FormEditar({
 function SettingsPanel({ token }: { token: string }) {
   const [feedOn, setFeedOn] = useState(false);
   const [verifOn, setVerifOn] = useState(false);
+  const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -530,40 +531,62 @@ function SettingsPanel({ token }: { token: string }) {
       .catch(() => {});
   }, [token]);
 
-  async function toggle(key: "notificar_auto_feed" | "notificar_auto_verificacion", val: boolean) {
+  async function guardar() {
     setMsg("");
+    setGuardando(true);
     try {
-      await adminPutSettings(token, { [key]: val });
-      if (key === "notificar_auto_feed") setFeedOn(val);
-      else setVerifOn(val);
+      await adminPutSettings(token, { notificar_auto_feed: feedOn, notificar_auto_verificacion: verifOn });
+      setMsg("Guardado.");
     } catch {
       setMsg("No se pudo guardar la configuración.");
+    } finally {
+      setGuardando(false);
     }
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
       <h2 className="font-semibold">Notificaciones automáticas</h2>
       <p className="text-sm text-muted">Avisa a los suscriptores cuando haya contenido nuevo o un artista se verifique.</p>
-      <label className="flex items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={feedOn}
-          onChange={(e) => toggle("notificar_auto_feed", e.target.checked)}
-          className="h-4 w-4 accent-accent"
-        />
+      <label className="flex items-center gap-3 text-sm cursor-pointer">
+        <ToggleSwitch checked={feedOn} onChange={setFeedOn} />
         Notificar nuevos posts (Facebook / Instagram / TikTok)
       </label>
-      <label className="flex items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={verifOn}
-          onChange={(e) => toggle("notificar_auto_verificacion", e.target.checked)}
-          className="h-4 w-4 accent-accent"
-        />
+      <label className="flex items-center gap-3 text-sm cursor-pointer">
+        <ToggleSwitch checked={verifOn} onChange={setVerifOn} />
         Notificar verificación de artistas
       </label>
-      {msg && <p className="text-sm text-red-500">{msg}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={guardar}
+          disabled={guardando}
+          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90 disabled:opacity-50"
+        >
+          {guardando ? "Guardando…" : "Guardar cambios"}
+        </button>
+        {msg && <span className="text-sm text-muted">{msg}</span>}
+      </div>
     </div>
+  );
+}
+
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+        checked ? "bg-accent" : "bg-line"
+      }`}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+          checked ? "translate-x-4" : "translate-x-0.5"
+        }`}
+      />
+    </button>
   );
 }
