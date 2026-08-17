@@ -216,16 +216,9 @@ export default async function PerfilPage({
           </div>
 
           <div className="mb-3 pb-2">
-            <div className="flex items-baseline justify-between gap-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-                Análisis
-              </h2>
-              {artist.analisis.actualizado && (
-                <span className="shrink-0 text-xs text-muted">
-                  Actualizado {fechaCaptura(artist.analisis.actualizado)}
-                </span>
-              )}
-            </div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Análisis
+            </h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
               {artist.analisis.texto}
             </p>
