@@ -291,23 +291,23 @@ export default async function PerfilPage({
                 </div>
               </div>
             )}
-            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-2">
+            <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-2">
               {stats.map((s) => {
                 const p = infoPlataforma(s.plataforma);
                 return (
                   <div
                     key={s.plataforma}
-                    className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
+                    className="flex h-full min-h-28 flex-col gap-2 rounded-2xl border border-line bg-surface p-3"
                   >
                     <div className="flex items-center gap-2 text-xs text-muted">
                       <IconoRed src={p.icono} alt={p.nombre} size={18} />
                       <span className="truncate font-medium">{p.nombre}</span>
                     </div>
-                    <div className="flex flex-wrap gap-x-5 gap-y-3">
+                    <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
                       {s.metricas.map((m) => (
                         <div key={m.tipo} className="flex items-start gap-1.5">
                           <p
-                            className="text-2xl font-bold tabular-nums sm:text-3xl"
+                            className="text-xl font-bold tabular-nums sm:text-2xl"
                             title={`${m.valor.toLocaleString("es-MX")} ${tipoStat(
                               m.tipo,
                             )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
