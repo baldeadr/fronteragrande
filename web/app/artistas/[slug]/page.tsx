@@ -235,10 +235,11 @@ export default async function PerfilPage({
               Estadísticas en redes
             </h2>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
-              <div className="mb-3 overflow-x-auto rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
-                <div className="flex min-w-max items-center gap-3 whitespace-nowrap text-xs">
-                  <span className="font-semibold uppercase tracking-wide text-muted">
-                    Ranking de alcance
+              <div className="mb-3 overflow-hidden rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
+                <div className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap text-[10px] sm:gap-3 sm:text-xs">
+                  <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
+                    <span className="sm:hidden">Ranking</span>
+                    <span className="hidden sm:inline">Ranking de alcance</span>
                   </span>
                   <b className="text-base">
                     #{artist.ranking.rank}
@@ -246,14 +247,20 @@ export default async function PerfilPage({
                       {" "}de {artist.ranking.total}
                     </span>
                   </b>
-                  <span className="text-muted">
-                    Global <b className="text-text">{artist.ranking.indice}</b>
+                  <span className="shrink-0 text-muted">
+                    <span className="sm:hidden">G </span>
+                    <span className="hidden sm:inline">Global </span>
+                    <b className="text-text">{artist.ranking.indice}</b>
                   </span>
-                  <span className="text-muted">
-                    Audiencia <b className="text-text">{artist.ranking.audiencia ?? "-"}</b>
+                  <span className="shrink-0 text-muted">
+                    <span className="sm:hidden">A </span>
+                    <span className="hidden sm:inline">Audiencia </span>
+                    <b className="text-text">{artist.ranking.audiencia ?? "-"}</b>
                   </span>
-                  <span className="text-muted">
-                    Consumo <b className="text-text">{artist.ranking.consumo ?? "-"}</b>
+                  <span className="shrink-0 text-muted">
+                    <span className="sm:hidden">C </span>
+                    <span className="hidden sm:inline">Consumo </span>
+                    <b className="text-text">{artist.ranking.consumo ?? "-"}</b>
                   </span>
                 </div>
               </div>
