@@ -291,13 +291,13 @@ export default async function PerfilPage({
                 </div>
               </div>
             )}
-            <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 items-start gap-3 sm:grid-cols-2">
               {stats.map((s) => {
                 const p = infoPlataforma(s.plataforma);
                 return (
                   <div
                     key={s.plataforma}
-                    className="flex h-full min-h-28 flex-col gap-2 rounded-2xl border border-line bg-surface p-3"
+                    className="flex min-h-28 flex-col gap-2 rounded-2xl border border-line bg-surface p-3"
                   >
                     <div className="flex items-center gap-2 text-xs text-muted">
                       <IconoRed src={p.icono} alt={p.nombre} size={18} />
