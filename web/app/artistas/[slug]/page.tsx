@@ -54,6 +54,12 @@ function MetricaRanking({
   );
 }
 
+function etiquetaMetrica(plataforma: string, tipo: string) {
+  if (plataforma === "yt" && tipo === "seguidores") return "suscriptores";
+  if (tipo === "vistas") return "vistas totales";
+  return tipoStat(tipo);
+}
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -258,9 +264,16 @@ export default async function PerfilPage({
 
         {stats.length > 0 && (
           <div className="flex flex-col border-t border-line/50 pt-6 lg:col-span-1 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-              Estadísticas en redes
-            </h2>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Estadísticas en redes
+              </h2>
+              {artist.fecha_captura && (
+                <span className="shrink-0 text-[10px] text-muted">
+                  Actualizado {fechaCaptura(artist.fecha_captura)}
+                </span>
+              )}
+            </div>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
               <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
                 <div className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap text-[10px] sm:gap-3 sm:text-xs">
@@ -303,22 +316,22 @@ export default async function PerfilPage({
                       <IconoRed src={p.icono} alt={p.nombre} size={18} />
                       <span className="truncate font-medium">{p.nombre}</span>
                     </div>
-                    <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
+                    <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-2">
                       {s.metricas.map((m) => (
                         <div key={m.tipo} className="flex items-start gap-1.5">
                           <p
                             className="text-xl font-bold tabular-nums sm:text-2xl"
-                            title={`${m.valor.toLocaleString("es-MX")} ${tipoStat(
+                            title={`${m.valor.toLocaleString("es-MX")} ${etiquetaMetrica(
+                              s.plataforma,
                               m.tipo,
                             )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
                           >
                             {numeroGrande(m.valor)}
                           </p>
                           <div className="flex flex-col pt-0.5 text-[11px] leading-tight text-muted">
-                            <span className="font-medium">{tipoStat(m.tipo)}</span>
-                            {artist.fecha_captura && (
-                              <span>{fechaCaptura(artist.fecha_captura)}</span>
-                            )}
+                            <span className="font-medium">
+                              {etiquetaMetrica(s.plataforma, m.tipo)}
+                            </span>
                           </div>
                         </div>
                       ))}
