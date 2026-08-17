@@ -236,7 +236,7 @@ export default async function PerfilPage({
                     <li
                       key={m}
                       title={m}
-                      className={`flex aspect-square min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[10px] leading-tight ${
+                      className={`flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[10px] leading-tight ${
                         esEscena
                           ? "border-en-duda/50 bg-en-duda/10 font-medium text-en-duda"
                           : "border-accent/40 bg-accent-soft/40 text-accent"

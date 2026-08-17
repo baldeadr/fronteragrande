@@ -383,15 +383,15 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
         if indice <= 0:
             break
         menciones.setdefault(slug, []).append(
-            f"Nº {puesto} de la Frontera Grande (de {len(globales)})"
+            f"Nº {puesto} de la Frontera Grande"
         )
 
     for genero, slugs in por_genero.items():
-        _agregar_grupo_mencion(menciones, indices, genero, slugs, "Nº {puesto} del género {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, genero, slugs, "Nº {puesto} del género {grupo}")
     for ciudad, slugs in por_ciudad.items():
-        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº {puesto} de {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, ciudad, slugs, "Nº {puesto} de {grupo}")
     for segmento, slugs in por_segmento.items():
-        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº {puesto} de la categoría {grupo} (de {n})")
+        _agregar_grupo_mencion(menciones, indices, segmento, slugs, "Nº {puesto} de la categoría {grupo}")
 
     return menciones
 
