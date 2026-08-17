@@ -229,14 +229,14 @@ export default async function PerfilPage({
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                 Menciones especiales
               </h2>
-              <ul className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              <ul className="flex flex-nowrap gap-2">
                 {artist.menciones.map((m) => {
                   const esEscena = tipoMencion(m) === "escena";
                   return (
                     <li
                       key={m}
                       title={m}
-                      className={`flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[10px] leading-tight sm:w-24 sm:text-[11px] ${
+                      className={`flex aspect-square min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[10px] leading-tight ${
                         esEscena
                           ? "border-en-duda/50 bg-en-duda/10 font-medium text-en-duda"
                           : "border-accent/40 bg-accent-soft/40 text-accent"
