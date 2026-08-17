@@ -2,7 +2,7 @@
 
 /** Acciones de la conexión Meta del perfil: volver a conectar y desconectar.
 
- * Colapsadas en un enlace discreto "Gestionar conexión" para no molestar al
+ * Colapsadas en un enlace discreto "Gestionar Meta" para no molestar al
  * visitante; solo quien busca gestionar el perfil las despliega.
  */
 
@@ -61,7 +61,7 @@ export default function ConexionMeta({
         onClick={() => setAbierto((v) => !v)}
         className="text-muted underline underline-offset-2 hover:text-text"
       >
-        Gestionar conexión
+        Gestionar Meta
       </button>
 
       {abierto && (
