@@ -276,7 +276,7 @@ export default async function PerfilPage({
                 </div>
               </div>
             )}
-            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-2">
               {stats.map((s) => {
                 const p = infoPlataforma(s.plataforma);
                 return (
