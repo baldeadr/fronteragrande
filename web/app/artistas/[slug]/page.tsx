@@ -27,27 +27,28 @@ function tipoMencion(
 function MetricaRanking({
   abreviatura,
   nombre,
+  descripcion,
   valor,
 }: {
   abreviatura: string;
   nombre: string;
+  descripcion: string;
   valor: number | null;
 }) {
   return (
     <span
       className="group relative shrink-0 cursor-help text-muted outline-none"
       tabIndex={0}
-      title={nombre}
-      aria-label={`${nombre}: ${valor ?? "sin dato"}`}
+      title={descripcion}
+      aria-label={`${nombre}: ${descripcion}. Valor ${valor ?? "sin dato"}`}
     >
-      <span className="sm:hidden">{abreviatura} </span>
-      <span className="hidden sm:inline">{nombre} </span>
+      {abreviatura}{" "}
       <b className="text-text">{valor ?? "-"}</b>
       <span
         role="tooltip"
         className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-48 -translate-x-1/2 rounded-md bg-surface-2 px-2 py-1 text-[11px] text-text opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus:opacity-100"
       >
-        {nombre}: {valor ?? "sin dato"}
+        {descripcion}
       </span>
     </span>
   );
@@ -264,8 +265,7 @@ export default async function PerfilPage({
               <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
                 <div className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap text-[10px] sm:gap-3 sm:text-xs">
                   <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
-                    <span className="sm:hidden">Ranking</span>
-                    <span className="hidden sm:inline">Ranking de alcance</span>
+                    Ranking
                   </span>
                   <b className="text-base">
                     #{artist.ranking.rank}
@@ -273,16 +273,19 @@ export default async function PerfilPage({
                   <MetricaRanking
                     abreviatura="G"
                     nombre="Global"
+                    descripcion="Combinación de audiencia y consumo"
                     valor={artist.ranking.indice}
                   />
                   <MetricaRanking
                     abreviatura="A"
                     nombre="Audiencia"
+                    descripcion="Tamaño relativo de la comunidad"
                     valor={artist.ranking.audiencia}
                   />
                   <MetricaRanking
                     abreviatura="C"
                     nombre="Consumo"
+                    descripcion="Reproducciones, oyentes y vistas registradas"
                     valor={artist.ranking.consumo}
                   />
                 </div>
