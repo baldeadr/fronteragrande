@@ -60,6 +60,17 @@ export default function AyudaArtistasPage() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6">
+        <h2 className="text-lg font-bold">¿Por qué verificar tu perfil?</h2>
+        <ul className="flex flex-col gap-2 text-sm leading-relaxed text-muted">
+          <li>✓ <b className="text-text">Badge de verificado</b> público en tu perfil.</li>
+          <li>✓ <b className="text-text">Aparece en "Artista de la Semana"</b> en nuestras redes sociales.</li>
+          <li>✓ Tus publicaciones de <b className="text-text">Facebook e Instagram</b> se sincronizan automáticamente.</li>
+          <li>✓ Tu <b className="text-text">foto de perfil</b> se actualiza desde tus redes.</li>
+          <li>✓ <b className="text-text">Mayor visibilidad</b> en el directorio de Frontera Grande.</li>
+        </ul>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6">
         <h2 className="text-lg font-bold">Antes de conectar Facebook</h2>
         <ul className="flex flex-col gap-2 text-sm leading-relaxed text-muted">
           <li>• Usa la cuenta personal de Facebook que administra la página del proyecto.</li>

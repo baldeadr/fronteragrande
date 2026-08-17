@@ -22,6 +22,9 @@ venv/
 # Streamlit
 .streamlit/secrets.toml
 
+# Tarjetas generadas para redes sociales
+scripts/tarjetas/
+
 # OS / editores
 .DS_Store
 .obsidian/

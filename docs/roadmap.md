@@ -57,6 +57,42 @@ debe conseguir.
 |---|-------|--------|
 | 18 | **Despliegue free tier (prueba con artistas)** | ✔ **Activo (2026-08):** API en Render `https://fronteragrande-api.onrender.com` (`{"estado":"ok"}`), web en Vercel `https://fronteragrande.vercel.app`, datos en Neon y Meta sincronizando en producción. Apex Ultra está verificado y muestra publicaciones de Facebook. Pendientes menores: crear monitor UptimeRobot y conectar más artistas (`docs/despliegue.md`). |
 
+## Campaña de lanzamiento `[PROPUESTA]`
+
+Plan de lanzamiento orgánico definido el 2026-08-16. Detalle completo en
+`bitacora/2026-08.md` (sesión del 16).
+
+### Fase 0: Preparación (pendiente)
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| 1 | Botón "Compartir" en perfil de artista (WhatsApp, FB, copiar enlace) | `[PENDIENTE]` |
+| 2 | Imagen OG dinámica por artista (links se ven profesionales en redes) | `[PENDIENTE]` |
+| 3 | Badge "Recién registrado" (primeros 30 días) | `[PENDIENTE]` |
+| 4 | Sección "Nuevos en la escena" en homepage | `[PENDIENTE]` |
+| 5 | Script `generar_tarjeta.py` (Pillow, cuadrado + story, verificados + activos) | `[PENDIENTE]` |
+| 6 | Completar perfiles de FB/IG (bio, portada) | `[PENDIENTE]` |
+| 7 | Preparar contenido base (3-4 posts) | `[PENDIENTE]` |
+| 8 | Actualizar `/ayuda-artistas` con beneficios de verificación | `[PENDIENTE]` |
+| 9 | Crear cuenta de TikTok (cross-posting) | `[PENDIENTE]` |
+
+### Fase 1: Sembrado (1-2 semanas)
+
+- Compartir enlace en grupo de FB (~30 artistas) con post casual.
+- Publicar posts base en IG/FB + primera "Artista de la Semana".
+- Monitorear registros y tráfico. No follow-up agresivo.
+
+### Fase 2: Lanzamiento suave
+
+- $100 MXN boost en mejor post (sí hay señal del grupo FB).
+- Compartir en círculo personal. Artistas compartiendo sus perfiles.
+
+### Fase 3: Crecimiento continuo
+
+- Posts regulares (2-3/semana). "Artista de la Semana" semanal.
+- Medir métricas 90 días. Decisión de dominio (50+ visitas/semana → `fronteragrande.mx`).
+- Patrocinios directos a locales de la zona (bares, escuelas, tiendas).
+
 ## Pendiente de producto
 
 | Ítem | Estado |
