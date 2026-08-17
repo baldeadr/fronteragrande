@@ -67,15 +67,14 @@ export default async function PerfilPage({
   const redes = artist.links.filter((l) => l.url);
   const bio = artist.bio?.trim();
 
-  const stats = Object.entries(artist.stats).flatMap(([plataforma, metricas]) =>
-    Object.entries(metricas)
-      .filter(([, v]) => typeof v === "number" && v !== null)
-      .map(([tipo, valor]) => ({
-        plataforma,
-        tipo,
-        valor: valor as number,
-      })),
-  );
+  const stats = Object.entries(artist.stats)
+    .map(([plataforma, metricas]) => ({
+      plataforma,
+      metricas: Object.entries(metricas)
+        .filter(([, v]) => typeof v === "number" && v !== null)
+        .map(([tipo, valor]) => ({ tipo, valor: valor as number })),
+    }))
+    .filter((s) => s.metricas.length > 0);
 
   const infoActividad = [
     artist.metodo_actividad &&
@@ -262,28 +261,32 @@ export default async function PerfilPage({
                 const p = infoPlataforma(s.plataforma);
                 return (
                   <div
-                    key={`${s.plataforma}-${s.tipo}`}
-                    className="flex flex-col gap-1.5 rounded-2xl border border-line bg-surface p-4"
+                    key={s.plataforma}
+                    className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
                   >
                     <div className="flex items-center gap-2 text-xs text-muted">
                       <IconoRed src={p.icono} alt={p.nombre} size={18} />
                       <span className="truncate font-medium">{p.nombre}</span>
                     </div>
-                    <div className="flex items-start gap-1.5">
-                      <p
-                        className="text-2xl font-bold tabular-nums sm:text-3xl"
-                        title={`${s.valor.toLocaleString("es-MX")} ${tipoStat(
-                          s.tipo,
-                        )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
-                      >
-                        {numeroGrande(s.valor)}
-                      </p>
-                      <div className="flex flex-col pt-0.5 text-[11px] leading-tight text-muted">
-                        <span className="font-medium">{tipoStat(s.tipo)}</span>
-                        {artist.fecha_captura && (
-                          <span>{fechaCaptura(artist.fecha_captura)}</span>
-                        )}
-                      </div>
+                    <div className="flex flex-wrap gap-x-5 gap-y-3">
+                      {s.metricas.map((m) => (
+                        <div key={m.tipo} className="flex items-start gap-1.5">
+                          <p
+                            className="text-2xl font-bold tabular-nums sm:text-3xl"
+                            title={`${m.valor.toLocaleString("es-MX")} ${tipoStat(
+                              m.tipo,
+                            )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
+                          >
+                            {numeroGrande(m.valor)}
+                          </p>
+                          <div className="flex flex-col pt-0.5 text-[11px] leading-tight text-muted">
+                            <span className="font-medium">{tipoStat(m.tipo)}</span>
+                            {artist.fecha_captura && (
+                              <span>{fechaCaptura(artist.fecha_captura)}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
