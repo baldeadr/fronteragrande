@@ -47,7 +47,7 @@ export default function ConexionMeta({
     return (
       <a
         href={`${API_URL}/api/feed/igfb/login?slug=${slug}`}
-        className="mt-1 inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90"
+        className="mt-1 inline-flex w-36 items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90"
       >
         Conectar Meta
       </a>
