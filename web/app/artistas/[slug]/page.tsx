@@ -311,65 +311,69 @@ export default async function PerfilPage({
         </div>
       )}
 
-      {artist.igfb.configurado && !artist.verificado && (
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
-          <h2 className="text-lg font-bold">
-            ¿Eres {artist.nombre}? Reclama tu perfil
-          </h2>
-          <p className="text-sm text-muted">
-            Si este proyecto es tuyo, conéctalo desde la sección "Cuentas
-            conectadas" para verificar que eres el artista y sincronizar tu
-            contenido.
-          </p>
-          <Link href="/ayuda-artistas" className="text-sm text-accent hover:underline">
-            ¿Cómo funciona la verificación?
-          </Link>
-        </section>
-      )}
-
       {(artist.igfb.configurado || artist.tiktok.configurado) && (
-        <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
-          <h2 className="text-lg font-bold">Cuentas conectadas</h2>
+        <details className="group rounded-2xl border border-line bg-surface p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+            <span className="text-sm font-medium text-muted">
+              {artist.verificado
+                ? `¿Administras ${artist.nombre}? Conecta tus redes`
+                : `¿Eres ${artist.nombre}? Conecta tus redes para verificar tu perfil`}
+            </span>
+            <span
+              aria-hidden
+              className="text-xs text-muted transition-transform group-open:rotate-180"
+            >
+              ▾
+            </span>
+          </summary>
 
-          {artist.igfb.configurado && (
-            <div className="flex items-center justify-between gap-3 border-b border-line pb-4 last:border-b-0 last:pb-0">
-              <div>
-                <p className="text-sm font-medium">Facebook / Instagram</p>
-                <p className="text-xs text-muted">
-                  {artist.igfb.conectado
-                    ? `Conectado${
-                        artist.igfb.pagina_fb
-                          ? ` · página ${artist.igfb.pagina_fb}`
-                          : ""
-                      }`
-                    : "Conecta para verificar tu perfil y sincronizar tus publicaciones."}
-                </p>
-              </div>
-              <ConexionMeta slug={artist.slug} conectado={artist.igfb.conectado} />
-            </div>
-          )}
+          <div className="mt-3 flex flex-col gap-4">
+            <Link
+              href="/ayuda-artistas"
+              className="text-xs text-accent hover:underline"
+            >
+              ¿Cómo funciona la verificación?
+            </Link>
 
-          {artist.tiktok.configurado && (
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">TikTok</p>
-                <p className="text-xs text-muted">
-                  {artist.tiktok.conectado
-                    ? `Conectado${
-                        artist.tiktok.user_id
-                          ? ` · cuenta ${artist.tiktok.user_id}`
-                          : ""
-                      }`
-                    : "Conecta para sincronizar tus seguidores y videos."}
-                </p>
+            {artist.igfb.configurado && (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Meta</p>
+                  <p className="text-xs text-muted">
+                    {artist.igfb.conectado
+                      ? `Conectado · sincroniza tus publicaciones de Facebook e Instagram${
+                          artist.igfb.pagina_fb
+                            ? ` (${artist.igfb.pagina_fb})`
+                            : ""
+                        }`
+                      : "Verifica tu perfil y sincroniza tus publicaciones de Facebook e Instagram."}
+                  </p>
+                </div>
+                <ConexionMeta
+                  slug={artist.slug}
+                  conectado={artist.igfb.conectado}
+                />
               </div>
-              <ConexionTikTok
-                slug={artist.slug}
-                conectado={artist.tiktok.conectado}
-              />
-            </div>
-          )}
-        </section>
+            )}
+
+            {artist.tiktok.configurado && (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">TikTok</p>
+                  <p className="text-xs text-muted">
+                    {artist.tiktok.conectado
+                      ? "Conectado · sincroniza tus seguidores y videos"
+                      : "Conecta para sincronizar tus seguidores y videos."}
+                  </p>
+                </div>
+                <ConexionTikTok
+                  slug={artist.slug}
+                  conectado={artist.tiktok.conectado}
+                />
+              </div>
+            )}
+          </div>
+        </details>
       )}
 
       <p className="text-xs text-muted">
