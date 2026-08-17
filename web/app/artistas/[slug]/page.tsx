@@ -235,46 +235,48 @@ export default async function PerfilPage({
               Estadísticas en redes
             </h2>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
-              <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                    Ranking de alcance
-                  </p>
-                  <p className="text-xl font-bold">
-                    #{artist.ranking.rank}
-                    <span className="text-sm font-medium text-muted">
-                      {" "}
-                      de {artist.ranking.total}
-                    </span>
-                  </p>
+              <div className="mb-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      Ranking de alcance
+                    </p>
+                    <p className="text-xl font-bold">
+                      #{artist.ranking.rank}
+                      <span className="text-sm font-medium text-muted">
+                        {" "}
+                        de {artist.ranking.total}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted">Índice global</p>
+                    <p className="text-lg font-bold tabular-nums">
+                      {artist.ranking.indice}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted">Índice</p>
-                  <p className="text-lg font-bold tabular-nums">
-                    {artist.ranking.indice}
-                  </p>
+                {(artist.ranking.audiencia !== null || artist.ranking.consumo !== null) && (
+                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-accent/20 pt-3 text-center">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted">
+                        Audiencia
+                      </p>
+                      <p className="font-bold tabular-nums">
+                        {artist.ranking.audiencia ?? "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted">
+                        Consumo
+                      </p>
+                      <p className="font-bold tabular-nums">
+                        {artist.ranking.consumo ?? "-"}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 </div>
-              </div>
-            )}
-            {(artist.ranking.audiencia !== null || artist.ranking.consumo !== null) && (
-              <div className="mb-3 grid grid-cols-2 gap-2 text-center">
-                <div className="rounded-xl bg-surface-2 p-2">
-                  <p className="text-[11px] uppercase tracking-wide text-muted">
-                    Audiencia
-                  </p>
-                  <p className="font-bold tabular-nums">
-                    {artist.ranking.audiencia ?? "-"}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-surface-2 p-2">
-                  <p className="text-[11px] uppercase tracking-wide text-muted">
-                    Consumo
-                  </p>
-                  <p className="font-bold tabular-nums">
-                    {artist.ranking.consumo ?? "-"}
-                  </p>
-                </div>
-              </div>
             )}
             <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-2">
               {stats.map((s) => {
