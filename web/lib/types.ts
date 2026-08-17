@@ -25,6 +25,8 @@ export type StatsPerfil = Record<string, StatsPlataforma>;
 
 export interface Ranking {
   indice: number | null;
+  audiencia: number | null;
+  consumo: number | null;
   rank: number | null;
   total: number;
 }

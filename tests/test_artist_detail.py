@@ -24,6 +24,9 @@ def test_detalle_shape(client):
         "beatport", "mixcloud",
     }
     assert isinstance(perfil["ranking"], dict)
+    assert set(perfil["ranking"]) >= {
+        "indice", "audiencia", "consumo", "rank", "total",
+    }
     assert isinstance(perfil["menciones"], list)
     assert set(perfil["analisis"]) == {
         "texto", "tipo", "confianza", "actualizado",

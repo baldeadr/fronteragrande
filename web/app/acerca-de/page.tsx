@@ -15,8 +15,10 @@ export const metadata: Metadata = {
 const pesos = [
   { clave: "ig", plataforma: "Instagram", peso: "0,29" },
   { clave: "fb", plataforma: "Facebook", peso: "0,24" },
-  { clave: "spotify", plataforma: "Spotify", peso: "0,19" },
-  { clave: "yt", plataforma: "YouTube", peso: "0,09" },
+  { clave: "spotify", plataforma: "Spotify · seguidores", peso: "0,0475" },
+  { clave: "spotify", plataforma: "Spotify · consumo", peso: "0,1425" },
+  { clave: "yt", plataforma: "YouTube · suscriptores", peso: "0,027" },
+  { clave: "yt", plataforma: "YouTube · vistas", peso: "0,063" },
   { clave: "tt", plataforma: "TikTok", peso: "0,09" },
   { clave: "bandcamp", plataforma: "Bandcamp", peso: "0,025" },
   { clave: "soundcloud", plataforma: "SoundCloud", peso: "0,025" },
@@ -257,7 +259,7 @@ export default function AcercaDePage() {
               const icono = infoPlataforma(p.clave).icono;
               return (
                 <span
-                  key={p.plataforma}
+                  key={`${p.clave}-${p.peso}`}
                   className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-xs"
                 >
                   <IconoRed src={icono} alt={p.plataforma} size={14} />
@@ -269,21 +271,23 @@ export default function AcercaDePage() {
           </div>
 
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            El índice <FormulaInline tex="I_s" /> (0–100) es la suma ponderada del
-            alcance de cada plataforma, normalizado por el máximo de esa
-            plataforma entre todos los artistas de la base:
+            El ranking separa dos señales (0–100): <b>audiencia</b> para
+            seguidores y suscriptores, y <b>consumo</b> para oyentes,
+            reproducciones y vistas. Cada señal se transforma con logaritmo y se
+            normaliza frente al máximo de su métrica. El índice global combina
+            ambos: 55% audiencia y 45% consumo.
           </p>
 
           <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-3">
             <FormulaLatex
-              tex="I_s = 100 \sum_{p \in P} w_p \; \frac{\log_{10}(v_{s,p} + 1)}{\max_{t \in A} \log_{10}(v_{t,p} + 1)}"
+              tex="I_s = 0.55 I_{audiencia} + 0.45 I_{consumo}"
             />
           </div>
 
           <ul className="mt-3 flex flex-col gap-2">
             <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Sin esa plataforma (o con
-              métrica 0), su alcance es 0: la ausencia penaliza.
+              <span className="text-accent">·</span>En YouTube, el consumo pesa
+              70% de su componente y los suscriptores 30%.
             </li>
             <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
               <span className="text-accent">·</span>Si el máximo de una

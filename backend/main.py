@@ -238,7 +238,13 @@ def list_artists(
                 "imagen_origen": fila.get("imagen_origen") or None,
                 "ranking": ranking.get(
                     fila["slug"],
-                    {"indice": None, "rank": None, "total": len(ranking)},
+                    {
+                        "indice": None,
+                        "audiencia": None,
+                        "consumo": None,
+                        "rank": None,
+                        "total": len(ranking),
+                    },
                 ),
                 "menciones": menciones.get(fila["slug"], []),
                 "link_principal": (
@@ -389,7 +395,13 @@ def artist_detail(
         "fecha_captura": _json_safe(artist.fecha_captura),
         "ranking": ranking.get(
             artist.slug,
-            {"indice": None, "rank": None, "total": len(ranking)},
+            {
+                "indice": None,
+                "audiencia": None,
+                "consumo": None,
+                "rank": None,
+                "total": len(ranking),
+            },
         ),
         "menciones": menciones.get(artist.slug, []),
         "analisis": analisis,

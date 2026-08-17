@@ -258,10 +258,12 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
     audiencia_musical += sum(
         valor(plataforma, "seguidores") for plataforma in ("beatport", "mixcloud")
     )
-    reproducciones = any(
+    consumo_registrado = any(
         valor(plataforma, tipo) > 0
         for plataforma, tipo in (
+            ("yt", "vistas"),
             ("spotify", "reproducciones"),
+            ("spotify", "oyentes_mensuales"),
             ("bandcamp", "reproducciones"),
             ("soundcloud", "reproducciones"),
         )
@@ -286,10 +288,10 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
         confianza = "baja"
         tipo = "datos_insuficientes"
     elif sociales >= 100 and audiencia_musical == 0:
-        if reproducciones:
+        if consumo_registrado:
             texto = (
                 "La audiencia registrada se concentra en redes sociales; hay "
-                "reproducciones musicales, pero todavía no una métrica de audiencia "
+                "consumo musical o audiovisual, pero todavía no una métrica de audiencia "
                 "comparable entre ambas presencias."
             )
         else:
@@ -396,16 +398,24 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
 
 def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
     """Ranking de alcance y menciones de todos los artistas."""
-    from lib.helpers import indice_alcance
+    from lib.helpers import indices_audiencia_consumo
 
     metricas = {fila["slug"]: metricas_artista(fila) for _, fila in df.iterrows()}
-    indices = indice_alcance(metricas)
-    ordenados = sorted(indices.items(), key=lambda x: x[1], reverse=True)
+    indices = indices_audiencia_consumo(metricas)
+    ordenados = sorted(indices.items(), key=lambda x: x[1]["indice"], reverse=True)
     ranking = {
-        slug: {"indice": indice, "rank": i + 1, "total": len(ordenados)}
-        for i, (slug, indice) in enumerate(ordenados)
+        slug: {
+            "indice": valores["indice"],
+            "audiencia": valores["audiencia"],
+            "consumo": valores["consumo"],
+            "rank": i + 1,
+            "total": len(ordenados),
+        }
+        for i, (slug, valores) in enumerate(ordenados)
     }
-    menciones = menciones_ranking(df, indices)
+    menciones = menciones_ranking(
+        df, {slug: valores["indice"] for slug, valores in indices.items()}
+    )
     return ranking, menciones
 
 

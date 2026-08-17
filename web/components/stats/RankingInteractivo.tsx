@@ -4,36 +4,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { ArtistCard, Followers } from "@/lib/types";
-import { PLATAFORMA_COLOR } from "./colores";
-
-const PESOS_LISTA: { clave: keyof Followers; peso: number }[] = [
-  { clave: "ig", peso: 0.29 },
-  { clave: "fb", peso: 0.24 },
-  { clave: "spotify", peso: 0.19 },
-  { clave: "yt", peso: 0.09 },
-  { clave: "tt", peso: 0.09 },
-  { clave: "beatport", peso: 0.03 },
-  { clave: "mixcloud", peso: 0.02 },
-];
-
-function log10(v: number) {
-  return Math.log10(v + 1);
-}
+import type { ArtistCard } from "@/lib/types";
 
 function desglose(a: ArtistCard) {
-  let total = 0;
-  const partes: { clave: string; share: number }[] = [];
-  for (const { clave, peso } of PESOS_LISTA) {
-    const valor = a.followers[clave] ?? 0;
-    const aporte = peso * log10(valor);
-    if (aporte > 0) {
-      partes.push({ clave, share: aporte });
-      total += aporte;
-    }
-  }
-  return partes.map((p) => ({ ...p, share: total ? p.share / total : 0 }));
+  const audiencia = a.ranking.audiencia ?? 0;
+  const consumo = a.ranking.consumo ?? 0;
+  const total = audiencia + consumo;
+  if (!total) return [];
+  return [
+    { clave: "audiencia", share: audiencia / total },
+    { clave: "consumo", share: consumo / total },
+  ].filter((p) => p.share > 0);
 }
+
+const GRUPO_COLOR = { audiencia: "var(--accent)", consumo: "#f5a623" };
 
 const LIMITES: { valor: number | null; texto: string }[] = [
   { valor: 5, texto: "Top 5" },
@@ -80,13 +64,13 @@ export default function RankingInteractivo({
       </div>
 
       <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-        {PESOS_LISTA.map((p) => (
+        {[{ clave: "audiencia", nombre: "Audiencia" }, { clave: "consumo", nombre: "Consumo" }].map((p) => (
           <span key={p.clave} className="inline-flex items-center gap-1.5">
             <span
               className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: PLATAFORMA_COLOR[p.clave] }}
+              style={{ backgroundColor: GRUPO_COLOR[p.clave as keyof typeof GRUPO_COLOR] }}
             />
-            {p.clave.toUpperCase()}
+            {p.nombre}
           </span>
         ))}
       </div>
@@ -120,11 +104,10 @@ export default function RankingInteractivo({
                     partes.map((p) => (
                       <div
                         key={p.clave}
-                        style={{
-                          width: `${(p.share * ((a.ranking.indice as number) / max)) * 100}%`,
-                          minWidth: p.share > 0.9 ? undefined : 2,
-                          backgroundColor:
-                            PLATAFORMA_COLOR[p.clave] ?? "var(--accent)",
+                          style={{
+                            width: `${(p.share * ((a.ranking.indice as number) / max)) * 100}%`,
+                            minWidth: p.share > 0.9 ? undefined : 2,
+                            backgroundColor: GRUPO_COLOR[p.clave as keyof typeof GRUPO_COLOR],
                         }}
                         title={p.clave.toUpperCase()}
                       />
@@ -156,8 +139,8 @@ export default function RankingInteractivo({
           </span>
         ) : (
           <span className="text-xs">
-            Pasa el cursor o toca una fila para ver de qué redes viene su
-            alcance.
+            Pasa el cursor o toca una fila para ver la proporción de audiencia
+            y consumo.
           </span>
         )}
       </p>

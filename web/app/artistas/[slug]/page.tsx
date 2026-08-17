@@ -256,6 +256,26 @@ export default async function PerfilPage({
                 </div>
               </div>
             )}
+            {(artist.ranking.audiencia !== null || artist.ranking.consumo !== null) && (
+              <div className="mb-3 grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-xl bg-surface-2 p-2">
+                  <p className="text-[11px] uppercase tracking-wide text-muted">
+                    Audiencia
+                  </p>
+                  <p className="font-bold tabular-nums">
+                    {artist.ranking.audiencia ?? "-"}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-surface-2 p-2">
+                  <p className="text-[11px] uppercase tracking-wide text-muted">
+                    Consumo
+                  </p>
+                  <p className="font-bold tabular-nums">
+                    {artist.ranking.consumo ?? "-"}
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-1">
               {stats.map((s) => {
                 const p = infoPlataforma(s.plataforma);

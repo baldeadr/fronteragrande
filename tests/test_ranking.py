@@ -69,3 +69,31 @@ def test_beatport_y_mixcloud_aportan_alcance():
     resultado = indice_alcance(metricas)
     assert resultado["dj"] == 5.0  # (0.03 + 0.02) * 100
     assert resultado["sin_dj"] == 0.0
+
+
+def test_indices_separan_audiencia_y_consumo_youtube():
+    from lib.helpers import indices_audiencia_consumo
+
+    resultado = indices_audiencia_consumo(
+        {
+            "a": {"yt": {"seguidores": 100, "vistas": 10}},
+            "b": {"yt": {"seguidores": 10, "vistas": 1000}},
+        }
+    )
+
+    assert resultado["a"]["audiencia"] > resultado["b"]["audiencia"]
+    assert resultado["b"]["consumo"] > resultado["a"]["consumo"]
+    assert 0 <= resultado["a"]["indice"] <= 100
+
+
+def test_indices_spotify_prefiere_oyentes_sobre_reproducciones():
+    from lib.helpers import indices_audiencia_consumo
+
+    resultado = indices_audiencia_consumo(
+        {
+            "a": {"spotify": {"oyentes_mensuales": 100}},
+            "b": {"spotify": {"reproducciones": 10}},
+        }
+    )
+
+    assert resultado["a"]["consumo"] > resultado["b"]["consumo"]

@@ -226,7 +226,7 @@ def generos_desde_texto(texto: str) -> list[str]:
     ]
 
 
-# Peso de cada plataforma en el índice de alcance (suma 100).
+# Pesos globales de las señales de audiencia y consumo (suman 100).
 PESOS_ALCANCE = {
     "ig": 0.29,
     "fb": 0.24,
@@ -238,6 +238,26 @@ PESOS_ALCANCE = {
     "beatport": 0.03,
     "mixcloud": 0.02,
 }
+
+PESOS_AUDIENCIA = {
+    ("ig", "seguidores"): 0.29,
+    ("fb", "seguidores"): 0.24,
+    ("tt", "seguidores"): 0.09,
+    ("yt", "seguidores"): 0.027,
+    ("spotify", "seguidores"): 0.0475,
+    ("beatport", "seguidores"): 0.03,
+    ("mixcloud", "seguidores"): 0.02,
+}
+
+PESOS_CONSUMO = {
+    ("yt", "vistas"): 0.063,
+    ("spotify", "consumo"): 0.1425,
+    ("bandcamp", "reproducciones"): 0.025,
+    ("soundcloud", "reproducciones"): 0.025,
+}
+
+PESO_GRUPO_AUDIENCIA = 0.55
+PESO_GRUPO_CONSUMO = 0.45
 
 # Métrica de alcance por plataforma, en orden de prioridad.
 METRICA_ALCANCE_POR_PLATAFORMA = {
@@ -273,7 +293,9 @@ def _alcance_bruto(metricas: dict, plataforma: str) -> float:
 
 
 def _log_reach(valor: float) -> float:
-    return math.log10(valor + 1.0) if valor > 0 else 0.0
+    if not _es_metrico(valor):
+        return 0.0
+    return math.log10(float(valor) + 1.0)
 
 
 def indice_alcance(metricas_por_artista: dict[str, dict]) -> dict[str, float]:
@@ -303,6 +325,59 @@ def indice_alcance(metricas_por_artista: dict[str, dict]) -> dict[str, float]:
             total += peso * (valor_log / maximo) * 100.0
         indice[slug] = round(total, 1)
     return indice
+
+
+def indices_audiencia_consumo(
+    metricas_por_artista: dict[str, dict],
+) -> dict[str, dict[str, float]]:
+    """Calcula índices separados de audiencia, consumo y total.
+
+    Cada señal se normaliza por separado después de aplicar log10. YouTube
+    aporta 30% de su peso a suscriptores y 70% a vistas; Spotify reparte su
+    peso entre seguidores y señales de escucha. Los índices de grupo quedan en
+    0-100 y el índice global combina audiencia (55%) y consumo (45%).
+    """
+
+    grupos = {
+        "audiencia": PESOS_AUDIENCIA,
+        "consumo": PESOS_CONSUMO,
+    }
+
+    def valor_señal(metricas: dict, señal: tuple[str, str]):
+        plataforma, tipo = señal
+        datos = metricas.get(plataforma) or {}
+        if plataforma == "spotify" and tipo == "consumo":
+            return datos.get("oyentes_mensuales") or datos.get("reproducciones")
+        return datos.get(tipo, 0)
+
+    logs: dict[tuple[str, str], list[float]] = {}
+    for pesos in grupos.values():
+        for señal in pesos:
+            logs[señal] = [
+                _log_reach(valor_señal(metricas, señal))
+                for metricas in metricas_por_artista.values()
+            ]
+
+    resultado: dict[str, dict[str, float]] = {}
+    for slug, metricas in metricas_por_artista.items():
+        scores: dict[str, float] = {}
+        for nombre, pesos in grupos.items():
+            peso_total = sum(pesos.values())
+            score = 0.0
+            for señal, peso in pesos.items():
+                maximo = max(logs[señal], default=0.0)
+                if maximo <= 0:
+                    continue
+                valor = _log_reach(valor_señal(metricas, señal))
+                score += (peso / peso_total) * (valor / maximo) * 100.0
+            scores[nombre] = round(score, 1)
+        scores["indice"] = round(
+            scores["audiencia"] * PESO_GRUPO_AUDIENCIA
+            + scores["consumo"] * PESO_GRUPO_CONSUMO,
+            1,
+        )
+        resultado[slug] = scores
+    return resultado
 
 
 def slugificar(nombre: str) -> str:
