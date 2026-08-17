@@ -280,8 +280,8 @@ export default async function PerfilPage({
 
       {igfb === "ok" && (
         <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">
-          Perfil verificado. Tus posts de Facebook/Instagram se sincronizarán
-          automáticamente.
+          Perfil verificado. Tus posts de Facebook/Instagram se sincronizan
+          automáticamente; la actualización se refleja en unas horas.
         </p>
       )}
       {igfb === "error" && (
@@ -299,7 +299,7 @@ export default async function PerfilPage({
       {tiktok === "ok" && (
         <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">
           Cuenta de TikTok conectada. Tus seguidores y videos se sincronizarán
-          automáticamente.
+          automáticamente; la actualización se refleja en unas horas.
         </p>
       )}
       {tiktok === "error" && (
