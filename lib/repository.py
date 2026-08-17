@@ -18,6 +18,7 @@ from db.models import (
     Event,
     FeedItem,
     PushSubscription,
+    Setting,
     SpotifyListenerSnapshot,
 )
 
@@ -288,3 +289,33 @@ class PushSubscriptionRepository:
             return False
         self.session.delete(sub)
         return True
+
+
+class SettingsRepository:
+    """Configuración clave-valor del admin (`settings`)."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def obtener(self, key: str, default: str = "") -> str:
+        row = self.session.execute(
+            select(Setting).where(Setting.key == key)
+        ).scalar_one_or_none()
+        return row.value if row else default
+
+    def obtener_bool(self, key: str, default: bool = False) -> bool:
+        val = self.obtener(key, "").lower()
+        if not val:
+            return default
+        return val in ("1", "true", "yes", "on")
+
+    def guardar(self, key: str, value: str) -> Setting:
+        row = self.session.execute(
+            select(Setting).where(Setting.key == key)
+        ).scalar_one_or_none()
+        if row is None:
+            row = Setting(key=key, value=value)
+            self.session.add(row)
+        else:
+            row.value = value
+        return row

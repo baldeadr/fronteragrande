@@ -213,6 +213,19 @@ class FeedItem(Base):
     artist: Mapped["Artist"] = relationship()
 
 
+class Setting(Base):
+    """Configuración clave-valor del admin (toggle de notificaciones, etc.)."""
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[str] = mapped_column(String(300), default="")
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
 class PushSubscription(Base):
     """Suscripción Web Push de un dispositivo (PWA instalada).
 

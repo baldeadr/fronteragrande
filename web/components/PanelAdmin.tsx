@@ -12,6 +12,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   adminArtistas,
+  adminGetSettings,
+  adminPutSettings,
   broadcastPush,
   editarArtista,
   eliminarArtista,
@@ -206,6 +208,8 @@ export default function PanelAdmin() {
         </button>
         {avisoEstado && <p className="text-sm text-muted">{avisoEstado}</p>}
       </form>
+
+      <SettingsPanel token={token} />
 
       <div className="flex flex-col gap-2">
         {artistas.map((a) => (
@@ -509,5 +513,57 @@ function FormEditar({
         </button>
       </div>
     </form>
+  );
+}
+
+function SettingsPanel({ token }: { token: string }) {
+  const [feedOn, setFeedOn] = useState(false);
+  const [verifOn, setVerifOn] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    adminGetSettings(token)
+      .then((s: { notificar_auto_feed: boolean; notificar_auto_verificacion: boolean }) => {
+        setFeedOn(s.notificar_auto_feed);
+        setVerifOn(s.notificar_auto_verificacion);
+      })
+      .catch(() => {});
+  }, [token]);
+
+  async function toggle(key: "notificar_auto_feed" | "notificar_auto_verificacion", val: boolean) {
+    setMsg("");
+    try {
+      await adminPutSettings(token, { [key]: val });
+      if (key === "notificar_auto_feed") setFeedOn(val);
+      else setVerifOn(val);
+    } catch {
+      setMsg("No se pudo guardar la configuración.");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
+      <h2 className="font-semibold">Notificaciones automáticas</h2>
+      <p className="text-sm text-muted">Avisa a los suscriptores cuando haya contenido nuevo o un artista se verifique.</p>
+      <label className="flex items-center gap-3 text-sm">
+        <input
+          type="checkbox"
+          checked={feedOn}
+          onChange={(e) => toggle("notificar_auto_feed", e.target.checked)}
+          className="h-4 w-4 accent-accent"
+        />
+        Notificar nuevos posts (Facebook / Instagram / TikTok)
+      </label>
+      <label className="flex items-center gap-3 text-sm">
+        <input
+          type="checkbox"
+          checked={verifOn}
+          onChange={(e) => toggle("notificar_auto_verificacion", e.target.checked)}
+          className="h-4 w-4 accent-accent"
+        />
+        Notificar verificación de artistas
+      </label>
+      {msg && <p className="text-sm text-red-500">{msg}</p>}
+    </div>
   );
 }

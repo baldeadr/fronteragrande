@@ -116,6 +116,31 @@ export async function broadcastPush(
   return { enviadas: datos.enviadas ?? 0 };
 }
 
+export async function adminGetSettings(token: string): Promise<{ notificar_auto_feed: boolean; notificar_auto_verificacion: boolean }> {
+  const res = await fetch(`${API_URL}/api/admin/settings`, {
+    headers: { "X-Admin-Token": token },
+  });
+  const datos = (await res.json()) as { detail?: string } & Record<string, unknown>;
+  if (!res.ok) throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  return datos as { notificar_auto_feed: boolean; notificar_auto_verificacion: boolean };
+}
+
+export async function adminPutSettings(
+  token: string,
+  body: { notificar_auto_feed?: boolean; notificar_auto_verificacion?: boolean },
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/admin/settings`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token,
+    },
+    body: JSON.stringify(body),
+  });
+  const datos = (await res.json()) as { detail?: string };
+  if (!res.ok) throw new Error(datos.detail ?? `Error de API ${res.status}`);
+}
+
 export const api = {
   artists: () => get<ArtistCard[]>("/api/artists"),
   artist: (slug: string) => get<ArtistDetail>(`/api/artists/${slug}`),

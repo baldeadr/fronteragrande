@@ -271,6 +271,7 @@ def callback(code: str, state: str):
             )
             session.commit()
             ok = True
+            _notificar_verificacion(session, artista.nombre)
     except Exception as exc:
         session.rollback()
         logger.exception("Error al conectar Meta para el artista %s: %s", state, exc)
@@ -335,3 +336,24 @@ def ig_media(ig_user_id: str, page_token: str, limite: int = 10) -> list[dict]:
             }
         )
     return items
+
+
+def _notificar_verificacion(session, nombre_artista: str) -> None:
+    """Envía notificación push si hay artista verificado y el toggle está activo."""
+    try:
+        from lib.notificaciones import notificar_todos
+        from lib.repository import PushSubscriptionRepository, SettingsRepository
+
+        if not SettingsRepository(session).obtener_bool("notificar_auto_verificacion"):
+            return
+        enviadas = notificar_todos(
+            PushSubscriptionRepository(session),
+            f"{nombre_artista} se verificó",
+            "Un nuevo artista se conectó en Frontera Grande.",
+            "/",
+        )
+        session.commit()
+        if enviadas:
+            print(f"Aviso de verificación enviado a {enviadas} suscriptores")
+    except Exception as exc:
+        logger.warning("No se pudo notificar verificación: %s", exc)

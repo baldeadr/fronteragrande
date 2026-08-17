@@ -20,7 +20,7 @@ from backend.feed_meta import ig_bio, ig_media, pagina_about, pagina_posts
 from db.database import SessionLocal
 from lib.helpers import es_bio_clara
 from lib.notificaciones import notificar_todos
-from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository
+from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository, SettingsRepository
 
 try:
     MAX_ITEMS = max(1, int(os.getenv("META_SYNC_LIMIT", "10")))
@@ -57,7 +57,7 @@ def main():
                 print(f"Error con {artista.nombre}: {e}")
             total += nuevos
             print(f"{artista.nombre}: {nuevos} nuevos")
-        if total:
+        if total and SettingsRepository(session).obtener_bool("notificar_auto_feed"):
             enviadas = notificar_todos(
                 PushSubscriptionRepository(session),
                 "Nueva actividad en Frontera Grande",

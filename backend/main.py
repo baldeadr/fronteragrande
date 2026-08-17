@@ -34,7 +34,7 @@ from lib.plataformas import (
     preview_feed,
 )
 from lib.notificaciones import notificar_todos
-from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository
+from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository, SettingsRepository
 from lib.servicios import (
     artistas_df,
     crear_artista,
@@ -570,3 +570,39 @@ def editar_artista_endpoint(
 def genres(db: Session = Depends(get_db)):
     df = artistas_df(db)
     return _json_safe(conteo_generos(df).index.tolist())
+
+
+@app.get("/api/admin/settings")
+def admin_get_settings(
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Devuelve la configuración actual del admin (solo lectura)."""
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    repo = SettingsRepository(db)
+    return {
+        "notificar_auto_feed": repo.obtener_bool("notificar_auto_feed"),
+        "notificar_auto_verificacion": repo.obtener_bool("notificar_auto_verificacion"),
+    }
+
+
+@app.put("/api/admin/settings")
+def admin_put_settings(
+    entrada: dict,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Actualiza la configuración del admin."""
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    repo = SettingsRepository(db)
+    for key in ("notificar_auto_feed", "notificar_auto_verificacion"):
+        if key in entrada:
+            repo.guardar(key, "1" if entrada[key] else "0")
+    db.commit()
+    return {"ok": True}

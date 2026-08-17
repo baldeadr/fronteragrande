@@ -18,7 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backend.feed_tiktok import refrescar, user_info, video_list
 from db.database import SessionLocal
-from lib.repository import ArtistRepository, FeedRepository
+from lib.notificaciones import notificar_todos
+from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository, SettingsRepository
 
 try:
     MAX_ITEMS = max(1, int(os.getenv("TIKTOK_SYNC_LIMIT", "20")))
@@ -61,6 +62,16 @@ def main():
             total += nuevos
             print(f"{artista.nombre}: {nuevos} videos nuevos")
         print(f"Total de videos nuevos: {total}")
+        if total and SettingsRepository(session).obtener_bool("notificar_auto_feed"):
+            enviadas = notificar_todos(
+                PushSubscriptionRepository(session),
+                "Nueva actividad en Frontera Grande",
+                f"Hay {total} videos nuevos de la escena.",
+                "/feed",
+            )
+            session.commit()
+            if enviadas:
+                print(f"Aviso enviado a {enviadas} suscriptores")
     finally:
         session.close()
 
