@@ -208,7 +208,7 @@ export default async function PerfilPage({
           </div>
           </div>
 
-          <div className="mb-6 pb-5">
+          <div className="mb-3 pb-2">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
                 Análisis
@@ -225,7 +225,7 @@ export default async function PerfilPage({
           </div>
 
           {artist.menciones.length > 0 && (
-            <div className="border-t border-line/50 pt-6">
+            <div className="border-t border-line/50 pt-3">
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                 Menciones especiales
               </h2>
