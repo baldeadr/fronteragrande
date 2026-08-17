@@ -55,6 +55,15 @@ function MetricaRanking({
 }
 
 function etiquetaMetrica(plataforma: string, tipo: string) {
+  if (plataforma === "yt" && tipo === "seguidores") return "suscr.";
+  if (tipo === "seguidores") return "seg.";
+  if (tipo === "vistas") return "vistas";
+  if (tipo === "reproducciones") return "reprod.";
+  if (tipo === "oyentes_mensuales") return "oyentes";
+  return tipo;
+}
+
+function etiquetaMetricaCompleta(plataforma: string, tipo: string) {
   if (plataforma === "yt" && tipo === "seguidores") return "suscriptores";
   if (tipo === "vistas") return "vistas totales";
   return tipoStat(tipo);
@@ -314,7 +323,7 @@ export default async function PerfilPage({
                         <div key={m.tipo} className="flex items-start gap-1.5">
                           <p
                             className="text-xl font-bold tabular-nums sm:text-2xl"
-                            title={`${m.valor.toLocaleString("es-MX")} ${etiquetaMetrica(
+                            title={`${m.valor.toLocaleString("es-MX")} ${etiquetaMetricaCompleta(
                               s.plataforma,
                               m.tipo,
                             )}${artist.fecha_captura ? ` · capturado ${fechaCorta(artist.fecha_captura)}` : ""}`}
@@ -322,7 +331,10 @@ export default async function PerfilPage({
                             {numeroGrande(m.valor)}
                           </p>
                           <div className="flex flex-col pt-0.5 text-[11px] leading-tight text-muted">
-                            <span className="font-medium">
+                            <span
+                              className="font-medium"
+                              title={etiquetaMetricaCompleta(s.plataforma, m.tipo)}
+                            >
                               {etiquetaMetrica(s.plataforma, m.tipo)}
                             </span>
                           </div>
