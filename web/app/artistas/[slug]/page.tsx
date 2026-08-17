@@ -316,24 +316,57 @@ export default async function PerfilPage({
           <h2 className="text-lg font-bold">
             ¿Eres {artist.nombre}? Reclama tu perfil
           </h2>
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted">
-              Si este proyecto es tuyo, conéctalo para verificar que eres el
-              artista. La conexión requiere autorizar con la cuenta que
-              administra la página de Facebook del proyecto.
-            </p>
-            <Link href="/ayuda-artistas" className="text-sm text-accent hover:underline">
-              ¿Cómo funciona la verificación?
-            </Link>
-            <ConexionMeta slug={artist.slug} conectado={false} />
-          </div>
+          <p className="text-sm text-muted">
+            Si este proyecto es tuyo, conéctalo desde la sección "Cuentas
+            conectadas" para verificar que eres el artista y sincronizar tu
+            contenido.
+          </p>
+          <Link href="/ayuda-artistas" className="text-sm text-accent hover:underline">
+            ¿Cómo funciona la verificación?
+          </Link>
+        </section>
+      )}
+
+      {(artist.igfb.configurado || artist.tiktok.configurado) && (
+        <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+          <h2 className="text-lg font-bold">Cuentas conectadas</h2>
+
+          {artist.igfb.configurado && (
+            <div className="flex items-center justify-between gap-3 border-b border-line pb-4 last:border-b-0 last:pb-0">
+              <div>
+                <p className="text-sm font-medium">Facebook / Instagram</p>
+                <p className="text-xs text-muted">
+                  {artist.igfb.conectado
+                    ? `Conectado${
+                        artist.igfb.pagina_fb
+                          ? ` · página ${artist.igfb.pagina_fb}`
+                          : ""
+                      }`
+                    : "Conecta para verificar tu perfil y sincronizar tus publicaciones."}
+                </p>
+              </div>
+              <ConexionMeta slug={artist.slug} conectado={artist.igfb.conectado} />
+            </div>
+          )}
+
           {artist.tiktok.configurado && (
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <p className="text-sm text-muted">
-                ¿Administras el TikTok de este proyecto? Conéctalo para
-                sincronizar tus seguidores y videos.
-              </p>
-              <ConexionTikTok slug={artist.slug} conectado={false} />
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">TikTok</p>
+                <p className="text-xs text-muted">
+                  {artist.tiktok.conectado
+                    ? `Conectado${
+                        artist.tiktok.user_id
+                          ? ` · cuenta ${artist.tiktok.user_id}`
+                          : ""
+                      }`
+                    : "Conecta para sincronizar tus seguidores y videos."}
+                </p>
+              </div>
+              <ConexionTikTok
+                slug={artist.slug}
+                conectado={artist.tiktok.conectado}
+              />
             </div>
           )}
         </section>
@@ -388,39 +421,6 @@ export default async function PerfilPage({
             ))}
           </div>
         </section>
-      )}
-
-      {artist.igfb.conectado && (
-        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
-          <span>
-            Perfil conectado a redes
-            {artist.igfb.pagina_fb
-              ? ` · página ${artist.igfb.pagina_fb}`
-              : ""}
-          </span>
-          <ConexionMeta slug={artist.slug} conectado={true} />
-        </div>
-      )}
-
-      {artist.tiktok.configurado && (
-        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
-          {artist.tiktok.conectado ? (
-            <>
-              <span>
-                TikTok conectado
-                {artist.tiktok.user_id
-                  ? ` · cuenta ${artist.tiktok.user_id}`
-                  : ""}
-              </span>
-              <ConexionTikTok slug={artist.slug} conectado={true} />
-            </>
-          ) : (
-            <span className="flex items-center gap-2">
-              ¿Administras el TikTok de este proyecto?{" "}
-              <ConexionTikTok slug={artist.slug} conectado={false} />
-            </span>
-          )}
-        </div>
       )}
     </div>
   );
