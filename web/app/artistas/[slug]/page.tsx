@@ -235,8 +235,8 @@ export default async function PerfilPage({
               Estadísticas en redes
             </h2>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
-              <div className="mb-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div className="mb-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Ranking de alcance
@@ -249,17 +249,17 @@ export default async function PerfilPage({
                       </span>
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted">Índice global</p>
-                    <p className="text-lg font-bold tabular-nums">
-                      {artist.ranking.indice}
-                    </p>
-                  </div>
-                </div>
-                {(artist.ranking.audiencia !== null || artist.ranking.consumo !== null) && (
-                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-accent/20 pt-3 text-center">
+                  <div className="flex items-center gap-3 text-right">
                     <div>
-                      <p className="text-[11px] uppercase tracking-wide text-muted">
+                      <p className="text-[10px] uppercase tracking-wide text-muted">
+                        Global
+                      </p>
+                      <p className="font-bold tabular-nums">
+                        {artist.ranking.indice}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted">
                         Audiencia
                       </p>
                       <p className="font-bold tabular-nums">
@@ -267,7 +267,7 @@ export default async function PerfilPage({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] uppercase tracking-wide text-muted">
+                      <p className="text-[10px] uppercase tracking-wide text-muted">
                         Consumo
                       </p>
                       <p className="font-bold tabular-nums">
@@ -275,8 +275,8 @@ export default async function PerfilPage({
                       </p>
                     </div>
                   </div>
-                )}
                 </div>
+              </div>
             )}
             <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-2">
               {stats.map((s) => {
