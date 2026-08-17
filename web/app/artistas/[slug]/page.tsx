@@ -235,46 +235,26 @@ export default async function PerfilPage({
               Estadísticas en redes
             </h2>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
-              <div className="mb-3 rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                      Ranking de alcance
-                    </p>
-                    <p className="text-xl font-bold">
-                      #{artist.ranking.rank}
-                      <span className="text-sm font-medium text-muted">
-                        {" "}
-                        de {artist.ranking.total}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-right">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wide text-muted">
-                        Global
-                      </p>
-                      <p className="font-bold tabular-nums">
-                        {artist.ranking.indice}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wide text-muted">
-                        Audiencia
-                      </p>
-                      <p className="font-bold tabular-nums">
-                        {artist.ranking.audiencia ?? "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wide text-muted">
-                        Consumo
-                      </p>
-                      <p className="font-bold tabular-nums">
-                        {artist.ranking.consumo ?? "-"}
-                      </p>
-                    </div>
-                  </div>
+              <div className="mb-3 overflow-x-auto rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
+                <div className="flex min-w-max items-center gap-3 whitespace-nowrap text-xs">
+                  <span className="font-semibold uppercase tracking-wide text-muted">
+                    Ranking de alcance
+                  </span>
+                  <b className="text-base">
+                    #{artist.ranking.rank}
+                    <span className="font-medium text-muted">
+                      {" "}de {artist.ranking.total}
+                    </span>
+                  </b>
+                  <span className="text-muted">
+                    Global <b className="text-text">{artist.ranking.indice}</b>
+                  </span>
+                  <span className="text-muted">
+                    Audiencia <b className="text-text">{artist.ranking.audiencia ?? "-"}</b>
+                  </span>
+                  <span className="text-muted">
+                    Consumo <b className="text-text">{artist.ranking.consumo ?? "-"}</b>
+                  </span>
                 </div>
               </div>
             )}
