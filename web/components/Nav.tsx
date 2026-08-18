@@ -23,7 +23,7 @@ export default function Nav() {
     <header className={`relative sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur transition-transform duration-200 ${oculto ? "-translate-y-full" : "translate-y-0"}`}>
       <BotonAtras />
       <nav className={`mx-auto flex max-w-6xl items-center justify-between px-4 py-3 ${pathname !== "/" ? "pl-14 md:pl-4" : ""}`}>
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight transition duration-150 active:scale-[0.98]">
           <Image
             src="/icon.svg"
             alt=""
@@ -40,7 +40,7 @@ export default function Nav() {
             <Link
               key={e.href}
               href={e.href}
-              className="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-text"
+              className="rounded-lg px-3 py-2 text-sm text-muted transition duration-150 hover:bg-surface-2 hover:text-text active:scale-95 active:bg-accent-soft"
             >
               {e.texto}
             </Link>
@@ -48,7 +48,7 @@ export default function Nav() {
         </div>
 
         <button
-          className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg md:hidden"
+          className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
           onClick={() => setAbierto((v) => !v)}
           aria-label="Menú"
         >
@@ -63,7 +63,7 @@ export default function Nav() {
               key={e.href}
               href={e.href}
               onClick={() => setAbierto(false)}
-              className="block rounded-lg px-3 py-2.5 text-muted hover:bg-surface-2 hover:text-text"
+              className="block rounded-lg px-3 py-2.5 text-muted transition duration-150 hover:bg-surface-2 hover:text-text active:scale-[0.98] active:bg-accent-soft"
             >
               {e.texto}
             </Link>

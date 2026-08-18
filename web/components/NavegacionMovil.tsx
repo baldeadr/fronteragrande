@@ -78,7 +78,7 @@ export function BotonAtras() {
         if (window.history.length > 1) router.back();
         else router.push("/");
       }}
-      className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-accent hover:text-text md:hidden"
+      className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-muted transition duration-150 hover:border-accent hover:text-text active:scale-90 active:bg-accent-soft md:hidden"
       aria-label="Regresar a la página anterior"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -106,7 +106,7 @@ export default function NavegacionMovil() {
               key={destino.href}
               href={destino.href}
               aria-current={activo ? "page" : undefined}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[10px] transition-colors ${
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[10px] transition duration-150 active:scale-95 active:bg-accent-soft ${
                 activo ? "text-accent" : "text-muted hover:text-text"
               }`}
             >

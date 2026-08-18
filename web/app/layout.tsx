@@ -10,6 +10,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx"
 
 export const viewport: Viewport = {
   themeColor: "#0b0b10",
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -50,7 +52,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-bg text-text">
+      <body className="flex min-h-full flex-col overflow-x-hidden bg-bg text-text">
         <Nav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:py-10 sm:pb-10">
           {children}

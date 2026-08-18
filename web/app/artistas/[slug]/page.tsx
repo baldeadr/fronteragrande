@@ -130,7 +130,7 @@ export default async function PerfilPage({
   ].filter(Boolean);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex min-w-0 flex-col gap-8">
       <header className="rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-6">
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-8">
           <div className="flex flex-col gap-6 lg:col-span-2">
@@ -144,7 +144,7 @@ export default async function PerfilPage({
             <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className="break-words text-3xl font-bold">
                 {artist.nombre}
                 {artist.verificado && (
                   <span
@@ -238,7 +238,7 @@ export default async function PerfilPage({
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                 Menciones especiales
               </h2>
-              <ul className="flex flex-nowrap gap-2">
+              <ul className="flex flex-wrap gap-2">
                 {artist.menciones.map((m) => {
                   const esEscena = tipoMencion(m) === "escena";
                   return (
