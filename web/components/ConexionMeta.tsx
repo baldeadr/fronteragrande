@@ -22,9 +22,14 @@ export default function ConexionMeta({
 
   useEffect(() => {
     const prefijo = "#meta_owner=";
-    if (window.location.hash.startsWith(prefijo)) {
-      localStorage.setItem("fg_meta_owner", window.location.hash.slice(prefijo.length));
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const parametro = new URLSearchParams(window.location.search).get("owner");
+    const fragmento = window.location.hash.startsWith(prefijo)
+      ? window.location.hash.slice(prefijo.length)
+      : "";
+    const token = parametro || fragmento;
+    if (token) {
+      localStorage.setItem("fg_meta_owner", token);
+      window.history.replaceState(null, "", `${window.location.pathname}?igfb=ok`);
     }
   }, []);
 

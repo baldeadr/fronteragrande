@@ -329,10 +329,10 @@ def callback(code: str, state: str):
         logger.exception("Error al conectar Meta para el artista %s: %s", state, exc)
     finally:
         session.close()
-    respuesta = RedirectResponse(
-        f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}"
-        + (f"#meta_owner={owner_cookie}" if owner_cookie else "")
-    )
+    destino = f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}"
+    if owner_cookie:
+        destino += f"&owner={owner_cookie}#meta_owner={owner_cookie}"
+    respuesta = RedirectResponse(destino)
     if owner_cookie:
         respuesta.set_cookie(
             OWNER_COOKIE,
