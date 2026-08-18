@@ -37,7 +37,7 @@ def test_ingesta_manual_eliminada(client):
 
 
 def test_desconectar_meta_requiere_admin(client):
-    """Desconectar un perfil de Meta exige el token de administrador."""
+    """Sin sesión del propietario, desconectar exige el token de administrador."""
     respuesta = client.post("/api/feed/igfb/desconectar?slug=apex_ultra")
     assert respuesta.status_code == 403
     respuesta = client.post(
@@ -45,3 +45,17 @@ def test_desconectar_meta_requiere_admin(client):
         headers={"X-Admin-Token": "incorrecto"},
     )
     assert respuesta.status_code == 403
+
+
+def test_desconectar_meta_acepta_sesion_del_propietario(client, monkeypatch):
+    """La sesión firmada emitida por Meta permite desconectar el perfil."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.post(
+        "/api/feed/igfb/desconectar?slug=apex_ultra",
+        cookies={feed_meta.OWNER_COOKIE: token},
+    )
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"ok": True}

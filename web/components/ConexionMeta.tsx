@@ -19,8 +19,6 @@ export default function ConexionMeta({
   const [abierto, setAbierto] = useState(false);
   const [desconectando, setDesconectando] = useState(false);
   const [error, setError] = useState("");
-  const [pedirToken, setPedirToken] = useState(false);
-  const [token, setToken] = useState("");
 
   async function desconectar() {
     setDesconectando(true);
@@ -28,7 +26,7 @@ export default function ConexionMeta({
     try {
       const res = await fetch(`${API_URL}/api/feed/igfb/desconectar?slug=${slug}`, {
         method: "POST",
-        headers: { "X-Admin-Token": token },
+        credentials: "include",
       });
       if (!res.ok) {
         const datos = await res.json().catch(() => null);
@@ -75,52 +73,12 @@ export default function ConexionMeta({
 
           <button
             type="button"
-            onClick={() => {
-              setPedirToken(true);
-              setError("");
-            }}
+            onClick={desconectar}
+            disabled={desconectando}
             className="inline-flex w-fit items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-inactivo hover:text-inactivo"
           >
-            Desconectar
+            {desconectando ? "Desconectando..." : "Desconectar"}
           </button>
-
-          {pedirToken && (
-            <form
-              className="flex w-full max-w-md flex-col gap-2 rounded-lg border border-line bg-surface-2 p-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                desconectar();
-              }}
-            >
-              <label htmlFor="admin-token" className="text-sm text-muted">
-                Clave de administrador para desconectar el perfil:
-              </label>
-              <input
-                id="admin-token"
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                autoFocus
-                className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={desconectando || !token.trim()}
-                  className="inline-flex items-center gap-2 rounded-lg bg-inactivo px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  {desconectando ? "Desconectando..." : "Confirmar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPedirToken(false)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-line"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>

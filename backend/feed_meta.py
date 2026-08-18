@@ -14,11 +14,16 @@ exponen en la API. Requiere credenciales de app en `.env` (`META_APP_ID`,
 
 import os
 import logging
+import base64
+import binascii
+import hashlib
+import hmac
+import time
 from datetime import date, datetime
 from urllib.parse import urlencode
 
 import requests
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Cookie, HTTPException, Header
 from fastapi.responses import RedirectResponse
 
 from db.database import SessionLocal
@@ -33,6 +38,8 @@ REDIRECT_URI = os.getenv(
 )
 WEB_URL = os.getenv("WEB_URL", "http://127.0.0.1:3000")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+OWNER_COOKIE = "fg_meta_owner"
+OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
 SCOPES = "pages_show_list,pages_read_engagement,instagram_basic"
 GRAF_API = f"https://graph.facebook.com/{API_VERSION}"
@@ -40,6 +47,43 @@ AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
 router = APIRouter(prefix="/api/feed/igfb", tags=["meta"])
 logger = logging.getLogger(__name__)
+
+
+def _owner_secret() -> bytes:
+    """Clave estable para firmar las sesiones de propietarios de Meta."""
+    return (APP_SECRET or ADMIN_PASSWORD).encode("utf-8")
+
+
+def _crear_sesion_propietario(slug: str) -> str:
+    """Crea un token firmado que vincula la sesión con un artista."""
+    payload = f"{slug}:{int(time.time()) + OWNER_COOKIE_MAX_AGE}"
+    firma = hmac.new(
+        _owner_secret(), payload.encode("utf-8"), hashlib.sha256
+    ).digest()
+    return (
+        base64.urlsafe_b64encode(payload.encode("utf-8")).decode().rstrip("=")
+        + "."
+        + base64.urlsafe_b64encode(firma).decode().rstrip("=")
+    )
+
+
+def _sesion_autoriza(token: str | None, slug: str) -> bool:
+    """Comprueba que una sesión Meta vigente pertenece al perfil indicado."""
+    if not token or not _owner_secret() or "." not in token:
+        return False
+    codificado, firma_codificada = token.split(".", 1)
+    try:
+        payload = base64.urlsafe_b64decode(codificado + "===").decode("utf-8")
+        firma = base64.urlsafe_b64decode(firma_codificada + "===")
+        token_slug, expira = payload.rsplit(":", 1)
+        if token_slug != slug or int(expira) < int(time.time()):
+            return False
+    except (binascii.Error, ValueError, UnicodeDecodeError):
+        return False
+    esperada = hmac.new(
+        _owner_secret(), payload.encode("utf-8"), hashlib.sha256
+    ).digest()
+    return hmac.compare_digest(firma, esperada)
 
 
 def _fecha_meta(valor: str | None) -> datetime | None:
@@ -219,17 +263,21 @@ def login(slug: str):
 
 
 @router.post("/desconectar")
-def desconectar(slug: str, x_admin_token: str = Header(default="")):
+def desconectar(
+    slug: str,
+    x_admin_token: str = Header(default=""),
+    meta_owner: str | None = Cookie(default=None, alias=OWNER_COOKIE),
+):
     """Quita la conexión Meta del artista (token y ids).
 
-    Requiere el `X-Admin-Token` (ADMIN_PASSWORD de `.env`): una acción de
-    administración no debe poder ejecutarla cualquiera que conozca el slug.
-    Permite volver a conectar con otra cuenta o revocar el acceso. No borra
-    los posts ya sincronizados del feed.
+    Requiere la sesión del propietario emitida por Meta o el `X-Admin-Token`
+    como vía administrativa de emergencia. No borra los posts ya sincronizados.
     """
-    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+    es_admin = bool(ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD)
+    if not es_admin and not _sesion_autoriza(meta_owner, slug):
         raise HTTPException(
-            status_code=403, detail="Acción restringida al administrador"
+            status_code=403,
+            detail="Se requiere la sesión del propietario o del administrador",
         )
     session = SessionLocal()
     try:
@@ -255,6 +303,7 @@ def callback(code: str, state: str):
     """
     session = SessionLocal()
     ok = False
+    owner_cookie = None
     try:
         artista = ArtistRepository(session).por_slug(state)
         if artista is not None and code:
@@ -271,13 +320,27 @@ def callback(code: str, state: str):
             )
             session.commit()
             ok = True
+            owner_cookie = _crear_sesion_propietario(state)
             _notificar_verificacion(session, artista.nombre)
     except Exception as exc:
         session.rollback()
         logger.exception("Error al conectar Meta para el artista %s: %s", state, exc)
     finally:
         session.close()
-    return RedirectResponse(f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}")
+    respuesta = RedirectResponse(
+        f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}"
+    )
+    if owner_cookie:
+        respuesta.set_cookie(
+            OWNER_COOKIE,
+            owner_cookie,
+            max_age=OWNER_COOKIE_MAX_AGE,
+            httponly=True,
+            secure=WEB_URL.startswith("https://"),
+            samesite="lax",
+            path="/",
+        )
+    return respuesta
 
 
 def pagina_posts(page_id: str, page_token: str, limite: int = 10) -> list[dict]:
