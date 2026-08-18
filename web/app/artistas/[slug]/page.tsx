@@ -356,6 +356,12 @@ export default async function PerfilPage({
           automáticamente; la actualización se refleja en unas horas.
         </p>
       )}
+      {igfb === "desconectado" && (
+        <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">
+          Cuenta de Meta desvinculada. Se detuvo la sincronización de nuevas
+          publicaciones; el contenido histórico permanece en el feed.
+        </p>
+      )}
       {igfb === "error" && (
         <div className="rounded-lg border border-inactivo/40 bg-surface px-3 py-2 text-sm text-inactivo">
           <p>
