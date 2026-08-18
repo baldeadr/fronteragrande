@@ -22,6 +22,14 @@ export default async function EventosPage() {
         </p>
       </div>
 
+      <div className="rounded-xl border border-accent/40 bg-accent-soft p-4 text-sm text-text">
+        <p className="font-semibold">Sección en construcción</p>
+        <p className="mt-1 text-muted">
+          Estamos trabajando para ampliar y mantener actualizado el calendario
+          de eventos de la escena.
+        </p>
+      </div>
+
       {eventos.length === 0 ? (
         <p className="rounded-xl border border-line bg-surface p-6 text-center text-muted">
           Aún no hay eventos registrados.
