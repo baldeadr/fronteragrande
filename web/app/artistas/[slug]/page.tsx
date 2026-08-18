@@ -130,8 +130,8 @@ export default async function PerfilPage({
   ].filter(Boolean);
 
   return (
-    <div className="flex min-w-0 flex-col gap-8">
-      <header className="rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-6">
+    <div className="flex min-w-0 flex-col gap-8 overflow-x-hidden">
+      <header className="min-w-0 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-accent-soft to-surface p-5 sm:p-6">
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-stretch lg:gap-8">
           <div className="flex flex-col gap-6 lg:col-span-2">
           <div className="flex gap-4 sm:gap-5">
@@ -278,7 +278,7 @@ export default async function PerfilPage({
             </div>
             {artist.ranking.indice !== null && artist.ranking.rank !== null && (
               <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
-                <div className="flex min-w-0 items-center justify-between gap-2 whitespace-nowrap text-[10px] sm:gap-3 sm:text-xs">
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-[10px] sm:gap-3 sm:text-xs">
                   <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
                     Ranking
                   </span>
@@ -414,8 +414,8 @@ export default async function PerfilPage({
             </Link>
 
             {artist.igfb.configurado && (
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm font-medium">Meta</p>
                   <p className="text-xs text-muted">
                     {artist.igfb.conectado
@@ -435,8 +435,8 @@ export default async function PerfilPage({
             )}
 
             {artist.tiktok.configurado && (
-              <div className="flex items-center justify-between gap-3">
-                <div>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
                   <p className="text-sm font-medium">TikTok</p>
                   <p className="text-xs text-muted">
                     {artist.tiktok.conectado
