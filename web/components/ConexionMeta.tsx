@@ -19,6 +19,8 @@ export default function ConexionMeta({
   const [abierto, setAbierto] = useState(false);
   const [desconectando, setDesconectando] = useState(false);
   const [error, setError] = useState("");
+  const [pedirToken, setPedirToken] = useState(false);
+  const [token, setToken] = useState("");
 
   useEffect(() => {
     const prefijo = "#meta_owner=";
@@ -42,6 +44,7 @@ export default function ConexionMeta({
         credentials: "include",
         headers: {
           "X-Meta-Owner": localStorage.getItem("fg_meta_owner") || "",
+          ...(token ? { "X-Admin-Token": token } : {}),
         },
       });
       if (!res.ok) {
@@ -53,6 +56,7 @@ export default function ConexionMeta({
       window.location.reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error de conexión");
+      setPedirToken(true);
       setDesconectando(false);
     }
   }
@@ -89,12 +93,44 @@ export default function ConexionMeta({
 
           <button
             type="button"
-            onClick={desconectar}
+            onClick={() => {
+              setError("");
+              desconectar();
+            }}
             disabled={desconectando}
             className="inline-flex w-fit items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:border-inactivo hover:text-inactivo"
           >
             {desconectando ? "Desconectando..." : "Desconectar"}
           </button>
+
+          {pedirToken && (
+            <form
+              className="flex w-full max-w-md flex-col gap-2 rounded-lg border border-line bg-surface-2 p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                desconectar();
+              }}
+            >
+              <label htmlFor="admin-token" className="text-sm text-muted">
+                Si la sesión del propietario no está disponible, usa la clave de administrador:
+              </label>
+              <input
+                id="admin-token"
+                type="password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                autoFocus
+                className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
+              />
+              <button
+                type="submit"
+                disabled={desconectando || !token.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-inactivo px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                Confirmar con administrador
+              </button>
+            </form>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
