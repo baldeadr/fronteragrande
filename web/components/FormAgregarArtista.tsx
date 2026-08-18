@@ -57,6 +57,8 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
   const [nombre, setNombre] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [categoria, setCategoria] = useState<string>("Banda");
+  const [generos, setGeneros] = useState("");
+  const [bio, setBio] = useState("");
   const [redes, setRedes] = useState<RedAgregada[]>([
     { plataforma: "ig", url: "" },
   ]);
@@ -114,11 +116,15 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
         nombre: nombre.trim(),
         ciudad: ciudad,
         categoria,
+        generos: generos.trim(),
+        bio: bio.trim(),
         redes: redes.map((r) => ({ plataforma: r.plataforma, url: r.url.trim() })),
       });
       setNombre("");
       setCiudad("");
       setCategoria("Banda");
+      setGeneros("");
+      setBio("");
       setRedes([{ plataforma: "ig", url: "" }]);
       setCreado(resultado);
       onAgregado?.();
@@ -183,8 +189,8 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                       Regístrate como artista de la escena de la frontera.
                       Después conecta tu página de Facebook o Instagram desde tu
                       perfil para verificarlo y que tus posts se sincronicen
-                      automáticamente. Géneros, bio y logros se completan
-                      después.
+                      automáticamente. También puedes añadir géneros y una bio
+                      breve para presentar tu proyecto.
                     </p>
                     <Link
                       href="/ayuda-artistas"
@@ -247,6 +253,39 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="generos" className="text-xs text-muted">
+                    Géneros (máximo 3, separados por coma)
+                  </label>
+                  <input
+                    id="generos"
+                    type="text"
+                    value={generos}
+                    onChange={(e) => setGeneros(e.target.value)}
+                    maxLength={92}
+                    placeholder="Ej. Rock, Indie, Alternativo"
+                    className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="bio" className="text-xs text-muted">
+                    Bio (máximo 500 caracteres)
+                  </label>
+                  <textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    maxLength={500}
+                    rows={4}
+                    placeholder="Describe brevemente tu proyecto…"
+                    className="resize-y rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+                  />
+                  <span className="self-end text-xs text-muted">
+                    {bio.length}/500
+                  </span>
                 </div>
 
                 <div className="flex flex-col gap-2">

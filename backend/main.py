@@ -131,6 +131,8 @@ class AltaArtistaEntrada(BaseModel):
     nombre: str
     ciudad: str = ""
     categoria: str = ""
+    generos: str = ""
+    bio: str = ""
     redes: list[RedEntrada] = []
 
 

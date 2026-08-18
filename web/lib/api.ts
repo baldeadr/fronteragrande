@@ -11,7 +11,7 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function crearArtista(body: { nombre: string; ciudad: string; categoria: string; redes: { plataforma: string; url: string }[] }): Promise<ResultadoAlta> {
+export async function crearArtista(body: { nombre: string; ciudad: string; categoria: string; generos: string; bio: string; redes: { plataforma: string; url: string }[] }): Promise<ResultadoAlta> {
   const res = await fetch(`${API_URL}/api/artists`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

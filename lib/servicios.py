@@ -701,17 +701,32 @@ def crear_artista(session: Session, datos: dict) -> Artist:
 
     ciudad = (datos.get("ciudad") or "").strip() or "[PENDIENTE]"
 
+    generos_partes = [
+        parte.strip() for parte in str(datos.get("generos") or "").split(",")
+        if parte.strip()
+    ]
+    if len(generos_partes) > 3:
+        raise ValueError("Puedes indicar como máximo 3 géneros")
+    if any(len(genero) > 30 for genero in generos_partes):
+        raise ValueError("Cada género puede tener como máximo 30 caracteres")
+    generos = ", ".join(generos_partes) or "[PENDIENTE]"
+
+    bio = str(datos.get("bio") or "").strip()
+    if len(bio) > 500:
+        raise ValueError("La bio puede tener como máximo 500 caracteres")
+
     repos = ArtistRepository(session)
     artista = repos.crear(
         slug=_slug_unico(session, nombre),
         nombre=nombre,
         segmento=categoria,
         ciudad=ciudad,
-        generos="[PENDIENTE]",
+        generos=generos,
         estado_registro="registrado (formulario, sin conectar)",
         estado_activo="en_duda",
         metodo_actividad="sin datos",
     )
+    artista.bio = bio
 
     links_repo = LinkRepository(session)
     for red in datos.get("redes") or []:

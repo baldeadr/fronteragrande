@@ -128,6 +128,8 @@ def test_crear_artista_formulario(client):
             "nombre": "Banda de Prueba",
             "ciudad": "Matamoros",
             "categoria": "Banda",
+            "generos": "Rock, Indie",
+            "bio": "Una bio breve de la banda de prueba.",
             "redes": [
                 {"plataforma": "ig", "url": "https://www.instagram.com/bandadeprueba/"}
             ],
@@ -142,6 +144,8 @@ def test_crear_artista_formulario(client):
     detalle = client.get("/api/artists/banda_de_prueba").json()
     assert detalle["segmento"] == "Banda"
     assert detalle["ciudad"] == "Matamoros"
+    assert detalle["generos"] == ["Rock", "Indie"]
+    assert detalle["bio"] == "Una bio breve de la banda de prueba."
     assert any(l["plataforma"] == "ig" for l in detalle["links"])
     _limpiar_altas()
 
