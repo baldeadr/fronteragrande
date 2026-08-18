@@ -243,7 +243,7 @@ def ig_bio(ig_user_id: str, page_token: str) -> str:
 
 
 @router.get("/login")
-def login(slug: str):
+def login(slug: str, intencion: str = "conectar"):
     """Inicia el flujo OAuth: redirige al diálogo de Facebook."""
     if not meta_configurado():
         raise HTTPException(
@@ -251,11 +251,13 @@ def login(slug: str):
             detail="Meta no configurado. Revisa META_APP_ID/META_APP_SECRET en .env",
         )
     _get(slug)
+    if intencion not in ("conectar", "desconectar"):
+        raise HTTPException(status_code=400, detail="Intención no válida")
     params = urlencode(
         {
             "client_id": APP_ID,
             "redirect_uri": REDIRECT_URI,
-            "state": slug,
+            "state": f"{slug}:{intencion}",
             "scope": SCOPES,
         }
     )
@@ -303,33 +305,45 @@ def callback(code: str, state: str):
     `confirmado (artista, YYYY-MM-DD)`, la señal de que la cuenta autorizada
     administra la página registrada del artista.
     """
+    partes = state.split(":", 1)
+    slug = partes[0]
+    intencion = partes[1] if len(partes) == 2 else "conectar"
+    if intencion not in ("conectar", "desconectar"):
+        return RedirectResponse(f"{WEB_URL}/artistas/{slug}?igfb=error")
     session = SessionLocal()
     ok = False
     owner_cookie = None
     try:
-        artista = ArtistRepository(session).por_slug(state)
+        artista = ArtistRepository(session).por_slug(slug)
         if artista is not None and code:
             corto = _intercambiar_code(code)
             largo = _token_larga_duracion(corto)
             pagina = _pagina_artista(artista, largo)
-            artista.fb_page_id = pagina["id"]
-            artista.fb_page_token = pagina["access_token"]
-            artista.ig_user_id = (
-                pagina.get("instagram_business_account") or {}
-            ).get("id")
-            artista.estado_registro = (
-                f"confirmado (artista, {date.today().isoformat()})"
-            )
+            if intencion == "desconectar":
+                artista.fb_page_id = None
+                artista.fb_page_token = None
+                artista.ig_user_id = None
+            else:
+                artista.fb_page_id = pagina["id"]
+                artista.fb_page_token = pagina["access_token"]
+                artista.ig_user_id = (
+                    pagina.get("instagram_business_account") or {}
+                ).get("id")
+                artista.estado_registro = (
+                    f"confirmado (artista, {date.today().isoformat()})"
+                )
             session.commit()
             ok = True
-            owner_cookie = _crear_sesion_propietario(state)
-            _notificar_verificacion(session, artista.nombre)
+            if intencion == "conectar":
+                owner_cookie = _crear_sesion_propietario(slug)
+                _notificar_verificacion(session, artista.nombre)
     except Exception as exc:
         session.rollback()
-        logger.exception("Error al conectar Meta para el artista %s: %s", state, exc)
+        logger.exception("Error al gestionar Meta para el artista %s: %s", slug, exc)
     finally:
         session.close()
-    destino = f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}"
+    resultado = "desconectado" if intencion == "desconectar" and ok else "ok"
+    destino = f"{WEB_URL}/artistas/{slug}?igfb={resultado if ok else 'error'}"
     if owner_cookie:
         destino += f"&owner={owner_cookie}#meta_owner={owner_cookie}"
     respuesta = RedirectResponse(destino)
