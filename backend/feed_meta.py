@@ -196,14 +196,6 @@ def _pagina_artista(artista: Artist, user_token: str) -> dict:
                     or nombre_pagina == nombre_artista
                 ):
                     return p
-        if len(paginas) == 1:
-            logger.warning(
-                "Meta devolvió una sola página con enlace distinto para %s; "
-                "se usará esa página: %s",
-                url_fb,
-                paginas[0].get("id"),
-            )
-            return paginas[0]
         raise RuntimeError(
             "La cuenta autorizada no administra la página de Facebook registrada "
             f"para este artista ({url_fb})"
