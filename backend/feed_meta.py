@@ -266,6 +266,7 @@ def login(slug: str):
 def desconectar(
     slug: str,
     x_admin_token: str = Header(default=""),
+    x_meta_owner: str = Header(default="", alias="X-Meta-Owner"),
     meta_owner: str | None = Cookie(default=None, alias=OWNER_COOKIE),
 ):
     """Quita la conexión Meta del artista (token y ids).
@@ -274,7 +275,8 @@ def desconectar(
     como vía administrativa de emergencia. No borra los posts ya sincronizados.
     """
     es_admin = bool(ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD)
-    if not es_admin and not _sesion_autoriza(meta_owner, slug):
+    sesion_propietario = x_meta_owner or meta_owner
+    if not es_admin and not _sesion_autoriza(sesion_propietario, slug):
         raise HTTPException(
             status_code=403,
             detail="Se requiere la sesión del propietario o del administrador",
@@ -329,6 +331,7 @@ def callback(code: str, state: str):
         session.close()
     respuesta = RedirectResponse(
         f"{WEB_URL}/artistas/{state}?igfb={'ok' if ok else 'error'}"
+        + (f"#meta_owner={owner_cookie}" if owner_cookie else "")
     )
     if owner_cookie:
         respuesta.set_cookie(

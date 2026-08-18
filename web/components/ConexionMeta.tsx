@@ -6,7 +6,7 @@
  * visitante; solo quien busca gestionar el perfil las despliega.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { API_URL } from "@/lib/api";
 
 export default function ConexionMeta({
@@ -20,6 +20,14 @@ export default function ConexionMeta({
   const [desconectando, setDesconectando] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    const prefijo = "#meta_owner=";
+    if (window.location.hash.startsWith(prefijo)) {
+      localStorage.setItem("fg_meta_owner", window.location.hash.slice(prefijo.length));
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+
   async function desconectar() {
     setDesconectando(true);
     setError("");
@@ -27,6 +35,9 @@ export default function ConexionMeta({
       const res = await fetch(`${API_URL}/api/feed/igfb/desconectar?slug=${slug}`, {
         method: "POST",
         credentials: "include",
+        headers: {
+          "X-Meta-Owner": localStorage.getItem("fg_meta_owner") || "",
+        },
       });
       if (!res.ok) {
         const datos = await res.json().catch(() => null);

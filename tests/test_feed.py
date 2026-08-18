@@ -59,3 +59,16 @@ def test_desconectar_meta_acepta_sesion_del_propietario(client, monkeypatch):
     )
     assert respuesta.status_code == 200
     assert respuesta.json() == {"ok": True}
+
+
+def test_desconectar_meta_acepta_sesion_en_header(client, monkeypatch):
+    """La sesión también puede viajar en header entre dominios distintos."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.post(
+        "/api/feed/igfb/desconectar?slug=apex_ultra",
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 200
