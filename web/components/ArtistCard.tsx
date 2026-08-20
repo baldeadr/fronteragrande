@@ -3,9 +3,13 @@ import Link from "next/link";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import EstadoBadge from "./EstadoBadge";
 import IconoVerificado from "./IconoVerificado";
+import IconoRed from "./IconoRed";
+import { infoPlataforma } from "./Plataformas";
+import { numeroGrande } from "@/lib/formato";
 
 export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
   const inicial = artist.nombre ? artist.nombre[0].toUpperCase() : "♪";
+  const youtube = infoPlataforma("yt");
 
   return (
     <Link
@@ -47,6 +51,12 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
           {artist.segmento}
           {artist.ciudad ? ` · ${artist.ciudad}` : ""}
         </p>
+        {artist.followers.yt !== null && artist.followers.yt > 0 && (
+          <p className="flex items-center gap-1.5 text-xs text-muted">
+            <IconoRed src={youtube.icono} alt={youtube.nombre} size={14} />
+            <span>{numeroGrande(artist.followers.yt)} suscriptores</span>
+          </p>
+        )}
         <p className="flex flex-wrap gap-1">
           {artist.generos.length === 0 && (
             <span className="text-xs text-muted">Géneros por definir</span>

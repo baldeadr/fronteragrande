@@ -179,6 +179,30 @@ class FeedRepository:
         self.session.add(item)
         return item
 
+    def crear_si_nuevo(
+        self, artist_id: int, fuente: str, tipo: str, item: dict
+    ) -> bool:
+        """Crea un FeedItem desde un dict normalizado si su URL no existe.
+
+        `item` lleva las claves `url`, `titulo`, `fecha` e `imagen` (el
+        formato común de los adaptadores). Devuelve True solo si lo creó:
+        la regla anti-duplicados vive en un solo lugar para todos los syncs.
+        """
+        url = item.get("url") or ""
+        if not url or self.existe_url(url):
+            return False
+        self.crear(
+            artist_id=artist_id,
+            fuente=fuente,
+            tipo=tipo,
+            titulo=(item.get("titulo") or "")[:200],
+            url=url,
+            fecha=item.get("fecha"),
+            imagen=item.get("imagen") or None,
+            detalle="",
+        )
+        return True
+
 
 class LinkRepository:
     """Consultas sobre `artist_links`."""

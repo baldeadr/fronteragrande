@@ -8,6 +8,7 @@ SoundCloud es texto de marketing y no se usa como bio.
 
 import json
 import re
+from datetime import datetime
 
 import requests
 
@@ -19,6 +20,11 @@ USER_AGENT = (
     "Chrome/126 Safari/537.36"
 )
 MARCA_HIDRATACION = "window.__sc_hydration"
+API_V2 = "https://api-v2.soundcloud.com"
+RE_SCRIPT_BUNDLE = re.compile(
+    r'<script[^>]+src="(https://a-v2\.sndcdn\.com/[^"]+\.js)"'
+)
+RE_CLIENT_ID = re.compile(r'client_id["\':\s=]+["\']([A-Za-z0-9]{15,})["\']')
 
 
 class SoundCloudError(ScraperError):
@@ -91,3 +97,100 @@ def soundcloud_bio(url: str) -> str:
     if html is None:
         raise SoundCloudError(f"No se pudo leer el perfil de SoundCloud: {url}")
     return _parse_bio(html)
+
+
+_CLIENT_ID_CACHE: dict = {}
+
+
+def _client_id(url: str) -> str:
+    """client_id de la api-v2 de SoundCloud (leído de su bundle JS).
+
+    SoundCloud no documenta una API pública; el `client_id` que usa su propia
+    web se extrae del bundle de scripts (patrón frágil, se cachea por
+    proceso). Si no aparece, devuelve "" y el llamador omite la fuente.
+    """
+    if _CLIENT_ID_CACHE.get("id"):
+        return _CLIENT_ID_CACHE["id"]
+    html = _get(url) or ""
+    for src in RE_SCRIPT_BUNDLE.findall(html):
+        cuerpo = _get(src)
+        if not cuerpo:
+            continue
+        m = RE_CLIENT_ID.search(cuerpo)
+        if m:
+            _CLIENT_ID_CACHE["id"] = m.group(1)
+            return m.group(1)
+    return ""
+
+
+def _user_id(url: str) -> int | None:
+    """ID interno del usuario desde la hidratación del perfil."""
+    html = _get(url)
+    if not html:
+        return None
+    inicio = html.find(MARCA_HIDRATACION)
+    if inicio < 0:
+        return None
+    raw = _json_balanceado(html, inicio)
+    if not raw:
+        return None
+    try:
+        datos = json.loads(raw)
+    except ValueError:
+        return None
+    for objeto in datos:
+        if isinstance(objeto, dict) and objeto.get("hydratable") == "user":
+            return (objeto.get("data") or {}).get("id")
+    return None
+
+
+def _fecha_iso(valor: str | None) -> datetime | None:
+    """Convierte `created_at` ISO (ej. 2026-08-01T12:00:00Z) en datetime."""
+    if not valor:
+        return None
+    try:
+        return datetime.fromisoformat(valor.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
+def ultimas_pistas(url: str, limite: int = 6) -> list[dict]:
+    """Últimas pistas subidas por el artista vía api-v2.
+
+    Requiere el `client_id` del bundle (ver `_client_id`). Devuelve el
+    formato normalizado de feed (`titulo`, `url`, `fecha`, `imagen`); si la
+    fuente no responde, devuelve una lista vacía (fuente opcional).
+    """
+    user_id = _user_id(url)
+    client_id = _client_id(url)
+    if not user_id or not client_id:
+        return []
+    try:
+        respuesta = requests.get(
+            f"{API_V2}/users/{user_id}/tracks",
+            params={"client_id": client_id, "limit": limite, "filter.format": "mp3"},
+            headers={"User-Agent": USER_AGENT},
+            timeout=TIMEOUT,
+        )
+    except requests.RequestException:
+        return []
+    if not respuesta.ok:
+        return []
+    items = []
+    for t in respuesta.json().get("collection", []):
+        if t.get("kind") != "track":
+            continue
+        url_track = t.get("permalink_url") or ""
+        if not url_track:
+            continue
+        items.append(
+            {
+                "titulo": t.get("title") or "",
+                "url": url_track,
+                "fecha": _fecha_iso(t.get("created_at")),
+                "imagen": t.get("artwork_url")
+                or (t.get("user") or {}).get("avatar_url")
+                or "",
+            }
+        )
+    return items[:limite]

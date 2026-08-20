@@ -10,6 +10,7 @@ Fuentes probadas:
 - Instagram/Facebook/TikTok suelen bloquear scrapers (se omite si fallan).
 """
 
+import os
 import re
 
 import requests
@@ -21,12 +22,26 @@ USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/126 Safari/537.36"
 )
+META_GRAPH = f"https://graph.facebook.com/{os.getenv('META_API_VERSION', 'v22.0')}"
 
 
 def _get(url: str) -> requests.Response | None:
     try:
         return requests.get(
             url,
+            timeout=TIMEOUT,
+            allow_redirects=True,
+            headers={"User-Agent": USER_AGENT},
+        )
+    except requests.RequestException:
+        return None
+
+
+def _get_con_params(url: str, params: dict) -> requests.Response | None:
+    try:
+        return requests.get(
+            url,
+            params=params,
             timeout=TIMEOUT,
             allow_redirects=True,
             headers={"User-Agent": USER_AGENT},
@@ -79,6 +94,76 @@ def _og(url: str) -> str:
     if respuesta is None or respuesta.status_code != 200:
         return ""
     return _og_image(respuesta.text)
+
+
+def meta_picture(page_id: str, page_token: str) -> str:
+    """Foto de la página de Facebook vía Graph API (`picture` redirige al CDN).
+
+    Requiere el token de la página (artistas conectados). Devuelve la URL
+    final tras el redirect de Meta.
+    """
+    respuesta = _get_con_params(
+        f"{META_GRAPH}/{page_id}/picture",
+        {"access_token": page_token, "type": "large"},
+    )
+    if respuesta is None or respuesta.status_code != 200:
+        return ""
+    return respuesta.url or ""
+
+
+def ig_picture(ig_user_id: str, page_token: str) -> str:
+    """Foto de la cuenta de Instagram de negocio (`profile_picture_url`)."""
+    respuesta = _get_con_params(
+        f"{META_GRAPH}/{ig_user_id}",
+        {"access_token": page_token, "fields": "profile_picture_url"},
+    )
+    if respuesta is None or respuesta.status_code != 200:
+        return ""
+    try:
+        return (respuesta.json().get("profile_picture_url") or "").strip()
+    except ValueError:
+        return ""
+
+
+def youtube_thumbnail_de_canal(links, api_key: str) -> str:
+    """Miniatura del canal vía YouTube Data API (requiere `YOUTUBE_API_KEY`).
+
+    `links` es la colección de enlaces del artista; usa el primer canal
+    registrado (no de búsqueda).
+    """
+    from scraper.adapters.youtube import channel_id_from_url
+
+    for l in links:
+        if l.plataforma != "yt" or l.es_busqueda:
+            continue
+        channel_id = channel_id_from_url(l.url)
+        if not channel_id:
+            continue
+        respuesta = _get_con_params(
+            "https://www.googleapis.com/youtube/v3/channels",
+            {
+                "part": "snippet",
+                "id": channel_id,
+                "fields": "items/snippet/thumbnails/high/url",
+                "key": api_key,
+            },
+        )
+        if respuesta is None or respuesta.status_code != 200:
+            continue
+        try:
+            items = respuesta.json().get("items") or []
+        except ValueError:
+            continue
+        if not items:
+            continue
+        url = (
+            (items[0].get("snippet", {}).get("thumbnails", {}).get("high", {}) or {})
+            .get("url", "")
+            .strip()
+        )
+        if url:
+            return url
+    return ""
 
 
 # Cada plataforma usa su propio extractor.

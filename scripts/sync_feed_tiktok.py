@@ -12,6 +12,7 @@ Uso:
 
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -48,6 +49,10 @@ def main():
                 info = user_info(tokens["access_token"])
                 if info["follower_count"]:
                     artista.followers_tt = info["follower_count"]
+                if info["avatar_url"]:
+                    artista.imagen_perfil = info["avatar_url"]
+                    artista.imagen_origen = "tt"
+                    artista.imagen_actualizada = datetime.utcnow()
 
                 try:
                     for v in video_list(tokens["access_token"], MAX_ITEMS):
@@ -83,22 +88,7 @@ def main():
 
 def _registrar(feed: FeedRepository, artista, video: dict) -> bool:
     """Crea el FeedItem si la URL aún no existe. Devuelve True si lo creó."""
-    url = video.get("url") or ""
-    if not url:
-        return False
-    if feed.existe_url(url):
-        return False
-    feed.crear(
-        artist_id=artista.id,
-        fuente="tt",
-        tipo="video",
-        titulo=(video.get("titulo") or "")[:200],
-        url=url,
-        fecha=video.get("fecha"),
-        imagen=video.get("imagen") or None,
-        detalle="",
-    )
-    return True
+    return feed.crear_si_nuevo(artista.id, "tt", "video", video)
 
 
 if __name__ == "__main__":

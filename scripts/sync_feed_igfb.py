@@ -16,7 +16,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backend.feed_meta import ig_bio, ig_media, pagina_about, pagina_posts
+from backend.feed_meta import (
+    ig_bio,
+    ig_media,
+    ig_seguidores,
+    pagina_about,
+    pagina_posts,
+    pagina_seguidores,
+)
 from db.database import SessionLocal
 from lib.helpers import es_bio_clara
 from lib.notificaciones import notificar_todos
@@ -51,6 +58,7 @@ def main():
                             nuevos += 1
                 if not artista.bio:
                     _escribir_bio_meta(artista)
+                _actualizar_seguidores_meta(artista)
                 session.commit()
             except Exception as e:
                 session.rollback()
@@ -79,22 +87,7 @@ def main():
 
 def _registrar(feed: FeedRepository, artista, fuente: str, item: dict) -> bool:
     """Crea el FeedItem si la URL aún no existe. Devuelve True si lo creó."""
-    url = item.get("url") or ""
-    if not url:
-        return False
-    if feed.existe_url(url):
-        return False
-    feed.crear(
-        artist_id=artista.id,
-        fuente=fuente,
-        tipo="post",
-        titulo=(item.get("titulo") or "")[:200],
-        url=url,
-        fecha=item.get("fecha"),
-        imagen=item.get("imagen") or None,
-        detalle="",
-    )
-    return True
+    return feed.crear_si_nuevo(artista.id, fuente, "post", item)
 
 
 def _escribir_bio_meta(artista) -> None:
@@ -118,6 +111,34 @@ def _escribir_bio_meta(artista) -> None:
             print(f"Bio escrita desde Meta: {artista.nombre} ({origen})")
     except Exception as e:
         print(f"Bio de Meta no disponible para {artista.nombre}: {e}")
+
+
+def _actualizar_seguidores_meta(artista) -> None:
+    """Actualiza `followers_fb`/`followers_ig` desde la Graph API.
+
+    Solo escribe cuando la API devuelve un valor: si la página oculta sus
+    seguidores o el campo falta, se conserva el valor anterior (no se
+    inventa un cero), igual que en `sync_youtube_stats`.
+    """
+    actualizado = False
+    if artista.fb_page_id:
+        try:
+            seguidores = pagina_seguidores(artista.fb_page_id, artista.fb_page_token)
+            if seguidores is not None:
+                artista.followers_fb = seguidores
+                actualizado = True
+        except Exception as e:
+            print(f"Seguidores FB no disponibles para {artista.nombre}: {e}")
+    if artista.ig_user_id:
+        try:
+            seguidores = ig_seguidores(artista.ig_user_id, artista.fb_page_token)
+            if seguidores is not None:
+                artista.followers_ig = seguidores
+                actualizado = True
+        except Exception as e:
+            print(f"Seguidores IG no disponibles para {artista.nombre}: {e}")
+    if actualizado:
+        artista.fecha_captura = date.today()
 
 
 if __name__ == "__main__":

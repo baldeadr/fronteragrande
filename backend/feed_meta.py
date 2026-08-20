@@ -234,6 +234,30 @@ def ig_bio(ig_user_id: str, page_token: str) -> str:
     return (datos.get("biography") or "").strip()
 
 
+def _followers_count(datos: dict) -> int | None:
+    """Lee `followers_count` de una respuesta de la Graph API sin inventar ceros."""
+    valor = datos.get("followers_count")
+    return valor if isinstance(valor, int) else None
+
+
+def pagina_seguidores(page_id: str, page_token: str) -> int | None:
+    """Seguidores de la página de Facebook (`followers_count`)."""
+    datos = _grafo(
+        page_id,
+        {"access_token": page_token, "fields": "followers_count"},
+    )
+    return _followers_count(datos)
+
+
+def ig_seguidores(ig_user_id: str, page_token: str) -> int | None:
+    """Seguidores de la cuenta de Instagram de negocio (`followers_count`)."""
+    datos = _grafo(
+        ig_user_id,
+        {"access_token": page_token, "fields": "followers_count"},
+    )
+    return _followers_count(datos)
+
+
 @router.get("/login")
 def login(slug: str, intencion: str = "conectar"):
     """Inicia el flujo OAuth: redirige al diálogo de Facebook."""

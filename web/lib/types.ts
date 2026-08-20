@@ -60,7 +60,7 @@ export interface ArtistCard {
 }
 
 export interface Preview {
-  tipo: "youtube" | "tiktok" | "instagram" | "facebook" | "mixcloud" | "imagen" | "texto";
+  tipo: "youtube" | "tiktok" | "instagram" | "facebook" | "spotify" | "mixcloud" | "imagen" | "texto";
   video_id?: string;
   embed_url?: string;
   thumbnail?: string;

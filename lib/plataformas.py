@@ -9,6 +9,7 @@ Cada previewer recibe `(url, imagen_raw)` y devuelve el dict de preview o
 `None` si la URL no aplica a esa plataforma.
 """
 
+import re
 from typing import Callable
 
 from db.models import ArtistLink
@@ -46,6 +47,7 @@ FUENTE_CANONICA = {
     "facebook": "fb",
     "tt": "tt",
     "tiktok": "tt",
+    "spotify": "spotify",
     "beatport": "beatport",
     "mixcloud": "mixcloud",
 }
@@ -56,6 +58,7 @@ MARCA_URL_A_PLATAFORMA = [
     ("instagram.com", "ig"),
     ("facebook.com", "fb"),
     ("tiktok.com", "tt"),
+    ("spotify.com", "spotify"),
     ("beatport.com", "beatport"),
     ("mixcloud.com", "mixcloud"),
 ]
@@ -151,6 +154,17 @@ def _preview_tiktok(url: str, imagen_raw: str) -> dict | None:
     return None
 
 
+def _preview_spotify(url: str, imagen_raw: str) -> dict | None:
+    m = re.search(r"open\.spotify\.com/(album|track|playlist|episode)/([A-Za-z0-9]+)", url)
+    if not m:
+        return None
+    return {
+        "tipo": "spotify",
+        "embed_url": f"https://open.spotify.com/embed/{m.group(1)}/{m.group(2)}",
+        "thumbnail": imagen_raw,
+    }
+
+
 def _preview_mixcloud(url: str, imagen_raw: str) -> dict | None:
     datos = mixcloud_oembed(url)
     if datos:
@@ -171,6 +185,7 @@ PREVIEWS: dict[str, Callable[[str, str], dict | None]] = {
     "ig": _preview_instagram,
     "fb": _preview_facebook,
     "tt": _preview_tiktok,
+    "spotify": _preview_spotify,
     "mixcloud": _preview_mixcloud,
 }
 

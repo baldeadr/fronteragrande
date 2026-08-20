@@ -54,6 +54,26 @@ def test_preview_tiktok_sin_oembed():
     assert preview["embed_url"] == "https://www.tiktok.com/embed/v2/123456789"
 
 
+def test_preview_spotify():
+    preview = preview_feed(
+        {
+            "url": "https://open.spotify.com/album/6Q1n6Oj35ftB2gfcW2bw6s",
+            "fuente": "spotify",
+            "imagen": "https://i.scdn.co/image/x",
+        }
+    )
+    assert preview["tipo"] == "spotify"
+    assert preview["embed_url"] == "https://open.spotify.com/embed/album/6Q1n6Oj35ftB2gfcW2bw6s"
+    assert preview["thumbnail"] == "https://i.scdn.co/image/x"
+
+
+def test_preview_spotify_cae_a_texto_sin_url_valida():
+    preview = preview_feed(
+        {"url": "https://open.spotify.com/artist/abc", "fuente": "spotify"}
+    )
+    assert preview["tipo"] == "texto"
+
+
 def test_preview_mixcloud(monkeypatch):
     monkeypatch.setattr(
         "lib.plataformas.mixcloud_oembed",

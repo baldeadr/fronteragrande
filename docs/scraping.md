@@ -167,6 +167,49 @@ El dato debe mostrarse como **capturado del perfil público de Spotify** con su
 fecha, no como una métrica en vivo ni como una estadística privada de Spotify
 for Artists. No se buscan ni se registran perfiles ambiguos sin validación.
 
+### Lanzamientos y contenido nuevo en el feed (fase 2026-08)
+
+El feed registra también el **contenido nuevo** (material propio, no
+apariciones) de cada artista por plataforma, vía `scripts/sync_lanzamientos.py`
+(cron cada 6 h, workflow `sync-lanzamientos.yml`):
+
+| Plataforma | Vía de datos | Adaptador | Detalle |
+|------------|--------------|-----------|---------|
+| Spotify | API oficial (`/artists/{id}/albums`, client credentials) | `scraper/adapters/spotify.py` (`get_artist_releases`) | álbumes y sencillos propios; funciona en apps en modo dev |
+| Bandcamp | cuadrícula `music-grid-item` del HTML | `scraper/adapters/bandcamp.py` (`ultimos_lanzamientos`) | fecha = año del título del lanzamiento (el artista lo escribe); sin año → sin fecha |
+| SoundCloud | api-v2 pública con `client_id` extraído del bundle JS | `scraper/adapters/soundcloud.py` (`ultimas_pistas`) | fuente frágil (el bundle cambia); si falla, se omite |
+| Beatport | `__NEXT_DATA__` de la página del artista | `scraper/adapters/beatport.py` (nuevo) | sin API pública; `queries → state.data.results` |
+| Mixcloud | API REST pública `api.mixcloud.com/{user}/cloudcasts/` | `scraper/adapters/mixcloud.py` (`ultimos_sets`) | lista los sets (cloudcasts) subidos |
+
+Reglas del sync unificado:
+
+- Solo **material propio** del artista (Spotify usa `include_groups=album,single`).
+- Anti-duplicados por URL: `FeedRepository.crear_si_nuevo` (un solo lugar).
+- Ventana de actividad: solo entran items de los últimos `SPOTIFY_SYNC_MESES`
+  meses (24 por defecto); el feed es bitácora, no discografía completa.
+- Un fallo por artista/plataforma no detiene el lote (try/except aislado).
+- Al final recalcula `estado_activo` (el contenido reciente ≤ 6 meses lo
+  alimenta).
+
+### Seguidores de Facebook/Instagram (Meta Graph API)
+
+El sync de Meta (`scripts/sync_feed_igfb.py`) también actualiza los
+**seguidores** de los artistas conectados: `followers_count` de la página FB
+(`backend/feed_meta.py::pagina_seguidores`) y de la cuenta IG de negocio
+(`ig_seguidores`). Los scopes actuales (`pages_read_engagement`,
+`instagram_basic`) ya lo permiten. Solo escribe cuando la API devuelve un
+valor (no inventa ceros) y marca `fecha_captura`.
+
+### Fotos de perfil por API
+
+`scripts/actualizar_imagenes.py` prioriza las **API oficiales** antes del
+scraping: foto de la página FB (`/{page}/picture`) o de la cuenta IG
+(`profile_picture_url`) para artistas conectados, y miniatura del canal vía
+YouTube Data API si hay `YOUTUBE_API_KEY`. El avatar de TikTok se actualiza en
+`scripts/sync_feed_tiktok.py` (donde ya se rota el token). Si ninguna API
+responde, cae a la cadena de scraping `og:image` (jerarquía en
+`scraper/jerarquias.py`).
+
 ## 4. El feed como señal de actividad
 
 El **feed del perfil** no es solo un escaparate: es la **bitácora de señales

@@ -15,6 +15,10 @@ export default function FeedCard({
   const esVideo =
     item.preview.tipo === "youtube" ||
     (item.preview.tipo === "tiktok" && item.preview.thumbnail);
+  const esSpotify = item.preview.tipo === "spotify" && item.preview.embed_url;
+  const alturaSpotify = item.preview.embed_url?.includes("/album/")
+    ? "h-[352px]"
+    : "h-[152px]";
   const imagen = item.preview.thumbnail ?? "";
   const url = item.url ?? "";
   const fuente = infoPlataforma(item.fuente);
@@ -72,7 +76,17 @@ export default function FeedCard({
         </div>
       )}
 
-      {enPerfil && item.preview.tipo === "youtube" && item.preview.embed_url ? (
+      {esSpotify ? (
+        <div className="overflow-hidden rounded-xl bg-surface-2">
+          <iframe
+            src={item.preview.embed_url}
+            title={item.titulo}
+            className={`${alturaSpotify} w-full border-0`}
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+          />
+        </div>
+      ) : enPerfil && item.preview.tipo === "youtube" && item.preview.embed_url ? (
         <div className="overflow-hidden rounded-xl bg-surface-2">
           <iframe
             src={item.preview.embed_url}
