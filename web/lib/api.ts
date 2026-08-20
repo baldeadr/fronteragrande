@@ -207,3 +207,7 @@ export const api = {
   eventos: () => get<Evento[]>("/api/events"),
   stats: () => get<Stats>("/api/stats"),
 };
+
+export function buscarArtistas(q: string): Promise<ArtistCard[]> {
+  return get<ArtistCard[]>(`/api/artists?q=${encodeURIComponent(q)}`);
+}

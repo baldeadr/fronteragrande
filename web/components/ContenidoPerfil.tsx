@@ -109,7 +109,7 @@ export default function ContenidoPerfil({
         Contenido de {nombre}
       </h2>
 
-      <div className="mb-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mb-4 flex flex-nowrap items-center gap-1">
         {PESTANAS.map((p) => {
           const activo = pestana === p.id;
           return (
@@ -117,15 +117,17 @@ export default function ContenidoPerfil({
               key={p.id}
               onClick={() => setPestana(p.id)}
               aria-pressed={activo}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
                 activo
                   ? "border-accent bg-accent text-bg"
                   : "border-line bg-surface text-muted hover:text-foreground"
               }`}
             >
-              <IconoPestana tipo={p.icono} className="h-3.5 w-3.5 shrink-0" />
+              <IconoPestana tipo={p.icono} className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
               {p.etiqueta}
-              {conteos[p.id] > 0 && ` (${conteos[p.id]})`}
+              {conteos[p.id] > 0 && (
+                <span className="hidden sm:inline"> ({conteos[p.id]})</span>
+              )}
             </button>
           );
         })}

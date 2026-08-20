@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { BotonAtras, useBarrasOcultas } from "@/components/NavegacionMovil";
+import IconoVerificado from "@/components/IconoVerificado";
+import { buscarArtistas } from "@/lib/api";
+import type { ArtistCard } from "@/lib/types";
 
 const enlaces = [
   { href: "/", texto: "Actividad" },
@@ -34,22 +37,126 @@ function IconoBuscar({ className = "" }: { className?: string }) {
   );
 }
 
+function ResultadoArtista({ artista, alIr }: { artista: ArtistCard; alIr: () => void }) {
+  const inicial = artista.nombre ? artista.nombre[0].toUpperCase() : "♪";
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={alIr}
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-surface-2"
+      >
+        {artista.imagen_perfil ? (
+          <Image
+            src={artista.imagen_perfil}
+            alt={`Foto de ${artista.nombre}`}
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent">
+            {inicial}
+          </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1 truncate text-sm font-medium">
+            {artista.nombre}
+            {artista.verificado && (
+              <IconoVerificado className="h-3.5 w-3.5 shrink-0 text-accent" />
+            )}
+          </span>
+          <span className="block truncate text-xs text-muted">
+            {artista.segmento}
+            {artista.ciudad ? ` · ${artista.ciudad}` : ""}
+          </span>
+        </span>
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: artista.color_estado }}
+          title={`Estado de actividad: ${artista.estado_activo}`}
+        />
+      </button>
+    </li>
+  );
+}
+
 export default function Nav() {
   const [abierto, setAbierto] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [q, setQ] = useState("");
+  const [resultados, setResultados] = useState<ArtistCard[]>([]);
+  const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const contenedorRef = useRef<HTMLDivElement | null>(null);
   const oculto = useBarrasOcultas();
   const pathname = usePathname();
   const router = useRouter();
   const esPerfilArtista = pathname.startsWith("/artistas/");
 
+  useEffect(() => {
+    if (dropdownAbierto) {
+      function cerrar(e: MouseEvent) {
+        if (!contenedorRef.current?.contains(e.target as Node)) {
+          setDropdownAbierto(false);
+        }
+      }
+      document.addEventListener("mousedown", cerrar);
+      return () => document.removeEventListener("mousedown", cerrar);
+    }
+  }, [dropdownAbierto]);
+
+  useEffect(() => {
+    const texto = q.trim();
+    if (!texto || !esPerfilArtista) return;
+    const temporizador = window.setTimeout(async () => {
+      try {
+        const r = await buscarArtistas(texto);
+        setResultados(r.slice(0, 8));
+        setDropdownAbierto(true);
+      } catch {
+        setResultados([]);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(temporizador);
+      setResultados([]);
+      setDropdownAbierto(false);
+    };
+  }, [q, esPerfilArtista]);
+
+  function irAlPerfil(slug: string) {
+    setQ("");
+    setResultados([]);
+    setDropdownAbierto(false);
+    setBuscando(false);
+    router.push(`/artistas/${slug}`);
+  }
+
   function buscar(e: React.FormEvent) {
     e.preventDefault();
     const texto = q.trim();
     if (!texto) return;
+    if (resultados.length > 0) {
+      irAlPerfil(resultados[0].slug);
+      return;
+    }
     setBuscando(false);
     router.push(`/artistas?q=${encodeURIComponent(texto)}`);
   }
+
+  const desplegable =
+    q.trim() && esPerfilArtista && dropdownAbierto && resultados.length > 0 && (
+      <ul className="absolute inset-x-0 top-full z-50 mt-1 max-h-80 overflow-auto rounded-xl border border-line bg-surface p-1 shadow-lg">
+        {resultados.map((a) => (
+          <ResultadoArtista
+            key={a.slug}
+            artista={a}
+            alIr={() => irAlPerfil(a.slug)}
+          />
+        ))}
+      </ul>
+    );
 
   return (
     <header className={`relative sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur transition-transform duration-200 ${oculto ? "-translate-y-full" : "translate-y-0"}`}>
@@ -80,23 +187,26 @@ export default function Nav() {
         </div>
 
         {esPerfilArtista && (
-        <form
-          onSubmit={buscar}
-          role="search"
-          className="hidden min-w-0 md:block"
-        >
-          <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
-            <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar artistas…"
-              aria-label="Buscar artistas"
-              className="w-40 bg-transparent text-sm outline-none placeholder:text-muted lg:w-48"
-            />
+          <div ref={contenedorRef} className="relative hidden min-w-0 md:block">
+            <form
+              onSubmit={buscar}
+              role="search"
+              className="hidden md:block"
+            >
+              <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
+                <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Buscar artistas…"
+                  aria-label="Buscar artistas"
+                  className="w-40 bg-transparent text-sm outline-none placeholder:text-muted lg:w-48"
+                />
+              </div>
+            </form>
+            {desplegable}
           </div>
-        </form>
-      )}
+        )}
 
         <div className="flex items-center gap-1">
           {esPerfilArtista && (
@@ -120,23 +230,22 @@ export default function Nav() {
       </nav>
 
       {buscando && esPerfilArtista && (
-        <form
-          onSubmit={buscar}
-          role="search"
-          className="border-t border-line px-4 py-2 md:hidden"
-        >
-          <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
-            <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar artistas…"
-              aria-label="Buscar artistas"
-              autoFocus
-              className="w-full bg-transparent text-sm outline-none placeholder:text-muted"
-            />
-          </div>
-        </form>
+        <div ref={contenedorRef} className="relative border-t border-line px-4 py-2 md:hidden">
+          <form onSubmit={buscar} role="search">
+            <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
+              <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar artistas…"
+                aria-label="Buscar artistas"
+                autoFocus
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted"
+              />
+            </div>
+          </form>
+          {desplegable}
+        </div>
       )}
 
       {abierto && (
