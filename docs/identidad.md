@@ -86,6 +86,7 @@ se toca (verificado midiendo el render, no a ojo).
 | `web/app/favicon.ico` | Favicon legacy (16/32/48) | Raster del `icon.svg` |
 | `web/public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon-180.png` | Iconos de la PWA instalable (manifest + iPhone) | Raster del `icon.svg` (solo `FG` + línea; sin wordmark, que no se lee a tamaño de icono) |
 | `web/public/banner-frontera-grande.svg` + `.png` | Banner para Facebook (1640×624) | Logo embebido + wordmark grande en dos renglones + eslogan "La escena fronteriza, en un solo lugar." |
+| `web/public/portada-playlist.svg` + `.png` | **Portada de la playlist de Spotify** (3000×3000) | Monograma `FG` (estilo favicon: proporciones normales, `matrix(0.96 0 0 1.06 30 -40)`, `letter-spacing=40`) + línea morada centrada + wordmark `FRONTERA`/`GRANDE` en Archivo Black + etiqueta "DESCUBRIMIENTO SEMANAL" (Arial light) + eslogan al pie. Misma receta del banner: el monograma manda a tamaño de miniatura (64px), el resto acompaña. |
 
 ## 6. Reglas (qué NO se cambia sin decisión)
 

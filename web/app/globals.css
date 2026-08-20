@@ -37,3 +37,63 @@ body {
 .font-brand {
   font-family: "Archivo Black", "Arial Black", Arial, sans-serif;
 }
+
+@keyframes fg-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fg-esconder {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+
+@keyframes fg-mini-aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fg-mini-esconder {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+.fg-anim-aparecer {
+  animation: fg-aparecer 180ms ease-out both;
+}
+
+.fg-anim-esconder {
+  animation: fg-esconder 160ms ease-in both;
+}
+
+.fg-anim-mini-aparecer {
+  animation: fg-mini-aparecer 160ms ease-out both;
+}
+
+.fg-anim-mini-esconder {
+  animation: fg-mini-esconder 140ms ease-in both;
+}

@@ -5,6 +5,7 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import NavegacionMovil from "@/components/NavegacionMovil";
 import BannerNotificaciones from "@/components/BannerNotificaciones";
+import PlaylistSemanal from "@/components/PlaylistSemanal";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
         <Footer />
         <NavegacionMovil />
         <BannerNotificaciones />
+        <PlaylistSemanal />
         <Script id="registro-service-worker" strategy="afterInteractive">
           {`
             if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
