@@ -42,6 +42,8 @@ import random
 import sys
 from pathlib import Path
 
+import requests
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
@@ -109,13 +111,11 @@ def _pedir(funcion, *args, **kwargs):
     """Ejecuta una petición GET re-intentando ante límite de tasa (429)."""
     import time
 
-    import requests
-
-    for intento in range(3):
+    for intento in range(2):
         respuesta = funcion(*args, **kwargs)
         if respuesta.status_code != 429:
             return respuesta
-        time.sleep(5 * (intento + 1))
+        time.sleep(3 * (intento + 1))
     return respuesta
 
 
@@ -185,18 +185,69 @@ def _primeros_temas_lanzamientos(access_token: str, artist_id: str, limite: int)
     return items
 
 
-def _canciones_artista(access_token: str, artist_id: str, limite: int) -> list[dict]:
-    """Top tracks si están disponibles; si no, primer tema por lanzamiento."""
+def _buscar_por_nombre(access_token: str, nombre: str, artist_id: str, limite: int) -> list[dict]:
+    """Canciones del artista buscadas por nombre y filtradas por ID exacto.
+
+    Último recurso para apps en modo desarrollo (donde top-tracks y álbumes
+    están limitados): la búsqueda sí responde, y filtrar por el ID del artista
+    evita los homónimos.
+    """
+    respuesta = _pedir(
+        requests.get,
+        f"{API_BASE}/search",
+        params={"q": f'"{nombre}"', "type": "track", "limit": 10},
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=15,
+    )
+    respuesta.raise_for_status()
+    items = respuesta.json().get("tracks", {}).get("items", [])
+    matches = [
+        t
+        for t in items
+        if any(a.get("id") == artist_id for a in t.get("artists", []))
+    ]
+    result = []
+    for t in matches:
+        result.append(
+            {
+                "uri": t.get("uri"),
+                "titulo": t.get("name", ""),
+                "artistas": ", ".join(a.get("name", "") for a in t.get("artists", [])),
+                "album": (t.get("album") or {}).get("name", ""),
+            }
+        )
+        if len(result) >= limite:
+            break
+    return result
+
+
+def _canciones_artista(
+    access_token: str, artist_id: str, nombre: str, limite: int
+) -> tuple[list[dict], list[str]]:
+    """Canciones candidatas del artista y errores de cada fuente intentada.
+
+    Cadena de fuentes: top-tracks → primer tema por lanzamiento → búsqueda.
+    """
+    errores = []
     try:
         top = _top_tracks(access_token, artist_id, limite)
         if top:
-            return top
-    except Exception:
-        pass
+            return top, errores
+    except Exception as exc:
+        errores.append(f"top-tracks: {exc}")
     try:
-        return _primeros_temas_lanzamientos(access_token, artist_id, limite)
-    except Exception:
-        return []
+        lanzamientos = _primeros_temas_lanzamientos(access_token, artist_id, limite)
+        if lanzamientos:
+            return lanzamientos, errores
+    except Exception as exc:
+        errores.append(f"lanzamientos: {exc}")
+    try:
+        buscadas = _buscar_por_nombre(access_token, nombre, artist_id, limite)
+        if buscadas:
+            return buscadas, errores
+    except Exception as exc:
+        errores.append(f"búsqueda: {exc}")
+    return [], errores
 
 
 def seleccionar(canciones_por_artista, tamanio, por_artista) -> list[dict]:
@@ -371,15 +422,18 @@ def main() -> int:
             continue
         try:
             if token_cliente:
-                canciones = _canciones_artista(token_cliente, artist_id, por_artista)
+                canciones, errores = _canciones_artista(
+                    token_cliente, artist_id, artista.nombre, por_artista
+                )
             else:
                 print(f"  [--] {artista.nombre}: sin credenciales (dry-run sin top tracks)")
-                canciones = []
+                canciones, errores = [], []
             canciones_por_artista[artista.nombre] = canciones
             if canciones:
                 print(f"  [ok] {artista.nombre}: {', '.join(c['titulo'] for c in canciones)}")
             else:
-                print(f"  [warn] {artista.nombre}: sin canciones disponibles")
+                motivo = " | ".join(errores) if errores else "sin canciones disponibles"
+                print(f"  [warn] {artista.nombre}: {motivo}")
         except Exception as exc:
             print(f"  [warn] {artista.nombre}: {exc}")
             canciones_por_artista[artista.nombre] = []
