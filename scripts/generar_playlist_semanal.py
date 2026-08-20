@@ -293,7 +293,13 @@ def _usuario_token() -> str:
         },
         timeout=15,
     )
-    respuesta.raise_for_status()
+    if respuesta.status_code != 200:
+        cuerpo = respuesta.text[:300]
+        raise RuntimeError(
+            f"Spotify rechazó el refresh token (HTTP {respuesta.status_code}): {cuerpo}. "
+            "El token debe generarse con las MISMAS credenciales "
+            "(SPOTIFY_CLIENT_ID/SECRET) que se usan aquí (GitHub)."
+        )
     return respuesta.json()["access_token"]
 
 
