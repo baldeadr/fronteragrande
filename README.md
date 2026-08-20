@@ -29,12 +29,13 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
   artistas (por ahora es público en modo desarrollo); y **dominio**
   (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan
   `https://fronteragrande.mx`; falta registrar/comprar y apuntar).
-- **Playlist semanal de Spotify:** ✔ `scripts/generar_playlist_semanal.py` crea/actualiza
+- **Playlist semanal de Spotify:** ✔ `scripts/generar_playlist_semanal.py` actualiza
   la playlist pública **"Frontera Grande: Descubrimiento Semanal"** (selección aleatoria
   de canciones de los artistas con Spotify, 1ª canción por artista y relleno hasta ~24;
   ID estable en `data/playlist_semanal.json`) + workflow `sync-playlist.yml` cada lunes.
-  Pendiente: autorización única del artista (`--auth`) para dejar el refresh token como
-  secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN` y la primera corrida.
+  Pendiente: crear la playlist manualmente en Spotify (no se puede crear vía API en modo
+  desarrollo) y guardar su ID como secreto `SPOTIFY_PLAYLIST_ID`; el refresh token
+  (`--auth`) ya está en `SPOTIFY_PLAYLIST_REFRESH_TOKEN`.
 
 Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
 paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
@@ -164,7 +165,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 
 - **`scripts/spotify_mcp_server.py`** — servidor MCP local de Spotify configurado en `opencode.json` (tools en la conversación: qué suena, recientes, top, búsquedas y stats de artistas). Autorización única del artista: `python scripts/spotify_mcp_server.py --auth` (token en `scripts/.spotify_cache.json`, no versionado). Requiere `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/`SPOTIFY_REDIRECT_URI` en `.env` (ver `.env.example`).
 - **`scripts/escena_local_snapshot.py`** — snapshot de los artistas con perfil de Spotify a `data/escena_local_stats.csv` (serie temporal: followers, popularity, géneros, top tracks). Modo dry-run sin credenciales: `--dry-run`.
-- **`scripts/generar_playlist_semanal.py`** — genera/actualiza la playlist pública **"Frontera Grande: Descubrimiento Semanal"**: una selección aleatoria de canciones de los artistas con Spotify (se prefiere el top track; si la app no recibe top-tracks, primer tema de sus lanzamientos). La playlist es estable entre corridas (ID en `data/playlist_semanal.json`). Workflow `sync-playlist.yml` (cada lunes). Autorización única del artista: `python scripts/generar_playlist_semanal.py --auth` (el refresh token va como secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN`).
+- **`scripts/generar_playlist_semanal.py`** — actualiza la playlist pública **"Frontera Grande: Descubrimiento Semanal"**: una selección aleatoria de canciones de los artistas con Spotify (se prefiere el top track; si la app no recibe top-tracks, primer tema de sus lanzamientos). La playlist es estable entre corridas (ID en `data/playlist_semanal.json` o env `SPOTIFY_PLAYLIST_ID`). Workflow `sync-playlist.yml` (cada lunes). Autorización única del artista: `python scripts/generar_playlist_semanal.py --auth` (el refresh token va como secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN`). **Ojo:** Spotify no permite **crear** playlists vía API en apps en modo desarrollo (403); la playlist se crea manualmente en Spotify y su ID va en `SPOTIFY_PLAYLIST_ID` (el script solo la rellena con el endpoint `/items`).
 - **Límite 2026 del API:** las apps en modo desarrollo **ya no reciben followers/popularity/géneros/top-tracks** (top-tracks devuelve 403); el snapshot registra **presencia** (quién tiene perfil) con 0/0. Para recuperar los números hace falta **Extended Quota** (revisión de la app en el dashboard de Spotify) — pendiente.
 
 ## Roadmap

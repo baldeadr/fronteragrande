@@ -334,6 +334,13 @@ def _playlist_id(token_usuario: str) -> str:
         json={"name": nombre, "description": descripcion, "public": True},
         timeout=15,
     )
+    if creada.status_code == 403:
+        raise SystemExit(
+            "Spotify bloquea crear playlists en apps en modo desarrollo (403). "
+            "Crea la playlist manualmente en Spotify (con el nombre que prefieras) "
+            "y define la variable SPOTIFY_PLAYLIST_ID con su ID, que el script "
+            "solo la rellenará."
+        )
     creada.raise_for_status()
     playlist_id = creada.json()["id"]
     PLAYLIST_FILE.write_text(
@@ -352,7 +359,7 @@ def _rellenar(token_usuario: str, playlist_id: str, uris: list[str]) -> None:
         print("Sin canciones que poner en la playlist.")
         return
     respuesta = requests.put(
-        f"{API_BASE}/playlists/{playlist_id}/tracks",
+        f"{API_BASE}/playlists/{playlist_id}/items",
         headers={
             "Authorization": f"Bearer {token_usuario}",
             "Content-Type": "application/json",

@@ -14,6 +14,7 @@ jobs:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       SPOTIFY_PLAYLIST_REFRESH_TOKEN: ${{ secrets.SPOTIFY_PLAYLIST_REFRESH_TOKEN }}
+      SPOTIFY_PLAYLIST_ID: ${{ secrets.SPOTIFY_PLAYLIST_ID }}
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
