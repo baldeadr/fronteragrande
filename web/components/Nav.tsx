@@ -41,6 +41,7 @@ export default function Nav() {
   const oculto = useBarrasOcultas();
   const pathname = usePathname();
   const router = useRouter();
+  const esPerfilArtista = pathname.startsWith("/artistas/");
 
   function buscar(e: React.FormEvent) {
     e.preventDefault();
@@ -78,6 +79,7 @@ export default function Nav() {
           ))}
         </div>
 
+        {esPerfilArtista && (
         <form
           onSubmit={buscar}
           role="search"
@@ -94,16 +96,19 @@ export default function Nav() {
             />
           </div>
         </form>
+      )}
 
         <div className="flex items-center gap-1">
-          <button
-            className="grid h-9 w-9 place-items-center rounded-lg border border-line text-muted transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
-            onClick={() => setBuscando((v) => !v)}
-            aria-label="Buscar"
-            aria-expanded={buscando}
-          >
-            <IconoBuscar className="h-4 w-4" />
-          </button>
+          {esPerfilArtista && (
+            <button
+              className="grid h-9 w-9 place-items-center rounded-lg border border-line text-muted transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
+              onClick={() => setBuscando((v) => !v)}
+              aria-label="Buscar"
+              aria-expanded={buscando}
+            >
+              <IconoBuscar className="h-4 w-4" />
+            </button>
+          )}
           <button
             className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
             onClick={() => setAbierto((v) => !v)}
@@ -114,7 +119,7 @@ export default function Nav() {
         </div>
       </nav>
 
-      {buscando && (
+      {buscando && esPerfilArtista && (
         <form
           onSubmit={buscar}
           role="search"

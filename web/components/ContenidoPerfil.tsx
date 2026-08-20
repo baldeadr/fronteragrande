@@ -109,7 +109,7 @@ export default function ContenidoPerfil({
         Contenido de {nombre}
       </h2>
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {PESTANAS.map((p) => {
           const activo = pestana === p.id;
           return (
