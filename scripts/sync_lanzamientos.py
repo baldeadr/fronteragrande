@@ -8,8 +8,9 @@ Plataformas y su vía de datos (ver `scraper/adapters/`):
 - **Mixcloud**: API REST pública (`api.mixcloud.com`).
 
 Todos los items pasan por `FeedRepository.crear_si_nuevo` (sin duplicar por
-URL) y por la ventana de actividad (`SPOTIFY_SYNC_MESES` meses, 24 por
-defecto): el feed es bitácora de actividad, no discografía completa. Al final
+URL). No hay ventana temporal: entra todo el historial de lanzamientos que
+exponga cada plataforma (más historial, mejor). El tope `SYNC_LANZAMIENTOS_LIMIT`
+limita cuántos items por plataforma se consultan (no es una ventana). Al final
 recalcula `estado_activo`.
 
 Uso:
@@ -18,7 +19,6 @@ Uso:
 
 import os
 import sys
-from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -38,20 +38,9 @@ from scraper.adapters.soundcloud import ultimas_pistas as soundcloud_items
 from scraper.adapters.spotify import artist_id_from_url, get_artist_releases
 
 try:
-    MESES_MAX = max(1, int(os.getenv("SPOTIFY_SYNC_MESES", "24")))
+    MAX_ITEMS = max(1, int(os.getenv("SYNC_LANZAMIENTOS_LIMIT", "20")))
 except ValueError:
-    MESES_MAX = 24
-try:
-    MAX_ITEMS = max(1, int(os.getenv("SYNC_LANZAMIENTOS_LIMIT", "6")))
-except ValueError:
-    MAX_ITEMS = 6
-
-
-def _dentro_de_ventana(fecha, hoy: date) -> bool:
-    """True si el contenido es de los últimos MESES_MAX meses (aprox.)."""
-    if fecha is None:
-        return True
-    return (hoy - fecha.date() if hasattr(fecha, "date") else (hoy - fecha)).days <= MESES_MAX * 31
+    MAX_ITEMS = 20
 
 
 def _extraer_spotify(artista, enlace, limite: int) -> list[dict]:
@@ -72,7 +61,6 @@ PLATAFORMAS = {
 
 
 def main() -> None:
-    hoy = date.today()
     session = SessionLocal()
     total = 0
     try:
@@ -83,8 +71,6 @@ def main() -> None:
                 nuevos = 0
                 try:
                     for item in PLATAFORMAS[enlace.plataforma](artista, enlace, MAX_ITEMS):
-                        if not _dentro_de_ventana(item.get("fecha"), hoy):
-                            continue
                         if feed.crear_si_nuevo(
                             artista.id, enlace.plataforma, "lanzamiento", item
                         ):

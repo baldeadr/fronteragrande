@@ -9,7 +9,12 @@ export const metadata: Metadata = {
     "Explora la base de datos de la escena de la frontera grande de Tamaulipas: bandas, DJs y proyectos con su estado de actividad y enlaces a redes.",
 };
 
-export default async function ArtistasPage() {
+export default async function ArtistasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const artistas = await api.artists();
 
   return (
@@ -23,7 +28,11 @@ export default async function ArtistasPage() {
         </div>
         <FormAgregarArtista />
       </div>
-      <Directorio artistas={artistas} />
+      <Directorio
+        key={q ?? ""}
+        artistas={artistas}
+        busquedaInicial={q ?? ""}
+      />
     </div>
   );
 }

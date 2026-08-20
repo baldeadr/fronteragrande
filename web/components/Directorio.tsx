@@ -4,8 +4,14 @@ import { useMemo, useState } from "react";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import ArtistCard from "./ArtistCard";
 
-export default function Directorio({ artistas }: { artistas: ArtistCardData[] }) {
-  const [q, setQ] = useState("");
+export default function Directorio({
+  artistas,
+  busquedaInicial = "",
+}: {
+  artistas: ArtistCardData[];
+  busquedaInicial?: string;
+}) {
+  const [q, setQ] = useState(busquedaInicial);
   const [segmento, setSegmento] = useState("todos");
   const [ciudad, setCiudad] = useState("todos");
   const [estado, setEstado] = useState("todos");

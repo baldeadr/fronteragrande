@@ -185,8 +185,10 @@ Reglas del sync unificado:
 
 - Solo **material propio** del artista (Spotify usa `include_groups=album,single`).
 - Anti-duplicados por URL: `FeedRepository.crear_si_nuevo` (un solo lugar).
-- Ventana de actividad: solo entran items de los últimos `SPOTIFY_SYNC_MESES`
-  meses (24 por defecto); el feed es bitácora, no discografía completa.
+- **Sin ventana temporal:** entra todo el historial que exponga cada plataforma
+  (el tope `SYNC_LANZAMIENTOS_LIMIT`, 20 por defecto, limita items consultados
+  por plataforma, no la antigüedad). El feed del perfil organiza ese historial
+  en pestañas (Todo/Posts/Video/Música/Eventos).
 - Un fallo por artista/plataforma no detiene el lote (try/except aislado).
 - Al final recalcula `estado_activo` (el contenido reciente ≤ 6 meses lo
   alimenta).

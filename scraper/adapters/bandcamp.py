@@ -36,16 +36,15 @@ class BandcampError(ScraperError):
     pass
 
 
-def _get(url: str) -> str | None:
+def _get(url: str) -> tuple[str | None, int | None]:
+    """Devuelve (HTML, status). HTML es None si hubo error de red o status no-ok."""
     try:
         respuesta = requests.get(
             url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}
         )
-        if respuesta.ok:
-            return respuesta.text
+        return (respuesta.text if respuesta.ok else None), respuesta.status_code
     except requests.RequestException:
-        return None
-    return None
+        return None, None
 
 
 def _div_balanceado(html: str, inicio: int) -> str:
@@ -108,17 +107,17 @@ def _parse_tags(html: str) -> list[str]:
 
 def bandcamp_bio(url: str) -> str:
     """Bio/descripción del artista desde su página de Bandcamp."""
-    html = _get(url)
+    html, status = _get(url)
     if html is None:
-        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url}")
+        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url} (status {status})")
     return _parse_bio(html)
 
 
 def bandcamp_tags(url: str) -> list[str]:
     """Etiquetas de género de la página de Bandcamp del artista."""
-    html = _get(url)
+    html, status = _get(url)
     if html is None:
-        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url}")
+        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url} (status {status})")
     return _parse_tags(html)
 
 
@@ -180,8 +179,15 @@ def ultimos_lanzamientos(url: str, limite: int = 6) -> list[dict]:
 
     Devuelve el formato normalizado de feed (`titulo`, `url`, `fecha`,
     `imagen`). La fecha es el año del título (ver `_fecha_desde_titulo`).
+    Levanta `BandcampError` si la página no se puede leer o si no expone la
+    cuadrícula (p. ej. Bandcamp responde una página de verificación/bloqueo).
     """
-    html = _get(url)
+    html, status = _get(url)
     if html is None:
-        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url}")
-    return _parse_grid(html, url, limite)
+        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url} (status {status})")
+    items = _parse_grid(html, url, limite)
+    if not items:
+        raise BandcampError(
+            f"La página de Bandcamp no expone lanzamientos: {url} (status {status})"
+        )
+    return items

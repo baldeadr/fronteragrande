@@ -71,6 +71,7 @@ export interface Preview {
 export interface FeedItem {
   fecha: string | null;
   tipo: string;
+  tipo_bruto?: string;
   fuente: string;
   titulo: string;
   url: string | null;

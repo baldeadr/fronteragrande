@@ -1,9 +1,9 @@
-"""Pruebas del adaptador de lanzamientos de Spotify y su filtro de ventana."""
+"""Pruebas del adaptador de lanzamientos de Spotify y su ingesta sin ventana."""
 
 from datetime import date
 
 from scraper.adapters import spotify
-from scripts.sync_lanzamientos import _dentro_de_ventana
+from scripts.sync_lanzamientos import MAX_ITEMS
 
 
 def test_fecha_lanzamiento_formatos():
@@ -59,9 +59,10 @@ def test_get_artist_releases_normaliza(monkeypatch):
     assert items[1]["imagen"] == ""
 
 
-def test_dentro_de_ventana():
-    hoy = date(2026, 8, 19)
-    assert _dentro_de_ventana(None, hoy) is True
-    assert _dentro_de_ventana(date(2026, 8, 1), hoy) is True
-    assert _dentro_de_ventana(date(2025, 1, 1), hoy) is True
-    assert _dentro_de_ventana(date(2020, 1, 1), hoy) is False
+def test_sync_sin_ventana_temporal():
+    """El sync ingesta todo el historial: no hay filtro por antigüedad."""
+    import scripts.sync_lanzamientos as sync
+
+    assert not hasattr(sync, "_dentro_de_ventana")
+    assert not hasattr(sync, "MESES_MAX")
+    assert MAX_ITEMS >= 20

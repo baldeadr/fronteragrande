@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BotonAtras, useBarrasOcultas } from "@/components/NavegacionMovil";
 
 const enlaces = [
@@ -14,15 +14,46 @@ const enlaces = [
   { href: "/acerca-de", texto: "Acerca de" },
 ];
 
+function IconoBuscar({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="1em"
+      height="1em"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
 export default function Nav() {
   const [abierto, setAbierto] = useState(false);
+  const [buscando, setBuscando] = useState(false);
+  const [q, setQ] = useState("");
   const oculto = useBarrasOcultas();
   const pathname = usePathname();
+  const router = useRouter();
+
+  function buscar(e: React.FormEvent) {
+    e.preventDefault();
+    const texto = q.trim();
+    if (!texto) return;
+    setBuscando(false);
+    router.push(`/artistas?q=${encodeURIComponent(texto)}`);
+  }
 
   return (
     <header className={`relative sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur transition-transform duration-200 ${oculto ? "-translate-y-full" : "translate-y-0"}`}>
       <BotonAtras />
-      <nav className={`mx-auto flex max-w-6xl items-center justify-between px-4 py-3 ${pathname !== "/" ? "pl-14 md:pl-4" : ""}`}>
+      <nav className={`mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 ${pathname !== "/" ? "pl-14 md:pl-4" : ""}`}>
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight transition duration-150 active:scale-[0.98]">
           <Image
             src="/icon.svg"
@@ -47,14 +78,61 @@ export default function Nav() {
           ))}
         </div>
 
-        <button
-          className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
-          onClick={() => setAbierto((v) => !v)}
-          aria-label="Menú"
+        <form
+          onSubmit={buscar}
+          role="search"
+          className="hidden min-w-0 md:block"
         >
-          {abierto ? "✕" : "☰"}
-        </button>
+          <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
+            <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar artistas…"
+              aria-label="Buscar artistas"
+              className="w-40 bg-transparent text-sm outline-none placeholder:text-muted lg:w-48"
+            />
+          </div>
+        </form>
+
+        <div className="flex items-center gap-1">
+          <button
+            className="grid h-9 w-9 place-items-center rounded-lg border border-line text-muted transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
+            onClick={() => setBuscando((v) => !v)}
+            aria-label="Buscar"
+            aria-expanded={buscando}
+          >
+            <IconoBuscar className="h-4 w-4" />
+          </button>
+          <button
+            className="grid h-9 w-9 place-items-center rounded-lg border border-line text-lg transition duration-150 active:scale-90 active:bg-accent-soft md:hidden"
+            onClick={() => setAbierto((v) => !v)}
+            aria-label="Menú"
+          >
+            {abierto ? "✕" : "☰"}
+          </button>
+        </div>
       </nav>
+
+      {buscando && (
+        <form
+          onSubmit={buscar}
+          role="search"
+          className="border-t border-line px-4 py-2 md:hidden"
+        >
+          <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 transition-colors focus-within:border-accent">
+            <IconoBuscar className="h-4 w-4 shrink-0 text-muted" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar artistas…"
+              aria-label="Buscar artistas"
+              autoFocus
+              className="w-full bg-transparent text-sm outline-none placeholder:text-muted"
+            />
+          </div>
+        </form>
+      )}
 
       {abierto && (
         <div className="border-t border-line px-4 py-2 md:hidden">

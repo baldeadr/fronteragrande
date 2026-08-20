@@ -4,7 +4,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import EstadoBadge from "@/components/EstadoBadge";
 import Avatar from "@/components/Avatar";
-import FeedCard from "@/components/FeedCard";
+import ContenidoPerfil from "@/components/ContenidoPerfil";
 import { infoPlataforma } from "@/components/Plataformas";
 import IconoRed from "@/components/IconoRed";
 import IconoVerificado from "@/components/IconoVerificado";
@@ -466,44 +466,11 @@ export default async function PerfilPage({
         </a>
       </p>
 
-      <section>
-        <h2 className="mb-3 text-lg font-bold">
-          Contenido en redes de {artist.nombre}
-        </h2>
-        {artist.feed.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {artist.feed.map((item, i) => (
-              <FeedCard key={i} item={item} enPerfil />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">
-            El artista no ha conectado sus redes todavía. El contenido aparece
-            cuando el propio artista conecta su cuenta y se sincroniza.
-          </p>
-        )}
-      </section>
-
-      {artist.eventos.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-lg font-bold">Eventos</h2>
-          <div className="flex flex-col gap-2">
-            {artist.eventos.map((e, i) => (
-              <div
-                key={i}
-                className="rounded-xl border border-line bg-surface px-4 py-3"
-              >
-                <p className="font-medium">{e.nombre}</p>
-                <p className="text-xs text-muted">
-                  {fechaCorta(e.fecha)}
-                  {e.lugar ? ` · ${e.lugar}` : ""}
-                  {e.ciudad ? ` · ${e.ciudad}` : ""}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <ContenidoPerfil
+        nombre={artist.nombre}
+        feed={artist.feed}
+        eventos={artist.eventos}
+      />
     </div>
   );
 }

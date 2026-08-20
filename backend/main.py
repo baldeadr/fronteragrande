@@ -357,7 +357,7 @@ def artist_detail(
         for _, e in eventos_de_artista(db, artist.nombre).iterrows()
     ]
 
-    feed = feed_df(db, limite=60, artista=artist.nombre)
+    feed = feed_df(db, limite=200, artista=artist.nombre)
     feed_propio = feed.to_dict(orient="records")
     feed_propio = [
         {**f, "preview": preview_feed(f), "fecha": _json_safe(f["fecha"])}

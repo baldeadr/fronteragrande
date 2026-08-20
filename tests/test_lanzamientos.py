@@ -29,7 +29,7 @@ GRID_BANDCAMP = """
 
 def test_bandcamp_ultimos_lanzamientos(monkeypatch):
     monkeypatch.setattr(
-        bandcamp, "_get", lambda url: GRID_BANDCAMP
+        bandcamp, "_get", lambda url: (GRID_BANDCAMP, 200)
     )
     items = bandcamp.ultimos_lanzamientos("https://oxte.bandcamp.com/", 6)
     assert len(items) == 3
@@ -43,7 +43,16 @@ def test_bandcamp_ultimos_lanzamientos(monkeypatch):
 
 
 def test_bandcamp_sin_red_lanza_error(monkeypatch):
-    monkeypatch.setattr(bandcamp, "_get", lambda url: None)
+    monkeypatch.setattr(bandcamp, "_get", lambda url: (None, None))
+    try:
+        bandcamp.ultimos_lanzamientos("https://x.bandcamp.com/", 3)
+        assert False
+    except bandcamp.BandcampError:
+        pass
+
+
+def test_bandcamp_pagina_bloqueada_lanza_error(monkeypatch):
+    monkeypatch.setattr(bandcamp, "_get", lambda url: ("<html>verificación</html>", 200))
     try:
         bandcamp.ultimos_lanzamientos("https://x.bandcamp.com/", 3)
         assert False

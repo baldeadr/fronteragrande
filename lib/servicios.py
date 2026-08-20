@@ -122,6 +122,7 @@ def feed_df(
             {
                 "fecha": fi.fecha or fi.created_at,
                 "tipo": TIPOS_FEED.get(fi.tipo, fi.tipo),
+                "tipo_bruto": fi.tipo,
                 "fuente": fi.fuente,
                 "titulo": fi.titulo,
                 "url": fi.url,
@@ -146,6 +147,7 @@ def feed_df(
             {
                 "fecha": e.fecha,
                 "tipo": TIPOS_FEED["evento"],
+                "tipo_bruto": "evento",
                 "fuente": "escena",
                 "titulo": e.nombre,
                 "url": None,
@@ -165,6 +167,7 @@ def feed_df(
             {
                 "fecha": a.ultimo_lanzamiento,
                 "tipo": TIPOS_FEED["lanzamiento"],
+                "tipo_bruto": "lanzamiento",
                 "fuente": "registro",
                 "titulo": f"{a.nombre} — lanzamiento",
                 "url": None,
@@ -185,6 +188,7 @@ def feed_df(
             {
                 "fecha": c.fecha_chequeo,
                 "tipo": TIPOS_FEED.get("error") if c.resultado == "error" else "🕸️ Chequeo",
+                "tipo_bruto": "chequeo",
                 "fuente": "scraper",
                 "titulo": f"{nombre} — {c.plataforma}" if nombre else c.plataforma,
                 "url": None,
