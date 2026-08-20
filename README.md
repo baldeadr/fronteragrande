@@ -29,6 +29,12 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
   artistas (por ahora es público en modo desarrollo); y **dominio**
   (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan
   `https://fronteragrande.mx`; falta registrar/comprar y apuntar).
+- **Playlist semanal de Spotify:** ✔ `scripts/generar_playlist_semanal.py` crea/actualiza
+  la playlist pública **"Frontera Grande: Descubrimiento Semanal"** (selección aleatoria
+  de canciones de los artistas con Spotify, 1ª canción por artista y relleno hasta ~24;
+  ID estable en `data/playlist_semanal.json`) + workflow `sync-playlist.yml` cada lunes.
+  Pendiente: autorización única del artista (`--auth`) para dejar el refresh token como
+  secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN` y la primera corrida.
 
 Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
 paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
@@ -125,6 +131,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
     ├── actualizar_feed_youtube.py  # Últimos videos de YouTube por RSS (sin API key)
     ├── sync_feed_igfb.py   # Sync automático de posts FB/IG vía Meta Graph API
     ├── actualizar_oyentes_spotify.py # Captura puntual de oyentes públicos (16 perfiles)
+    ├── generar_playlist_semanal.py   # Playlist pública semanal "Descubrimiento Semanal"
     ├── sync_igfb.sh        # Wrapper para cron (sync Meta)
     ├── sync_local.sh       # Reconstruir la BD local desde producción (Neon)
     ├── recalcular_actividad.py  # Recalcula estado_activo (solo BD) con el feed como señal
@@ -157,6 +164,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 
 - **`scripts/spotify_mcp_server.py`** — servidor MCP local de Spotify configurado en `opencode.json` (tools en la conversación: qué suena, recientes, top, búsquedas y stats de artistas). Autorización única del artista: `python scripts/spotify_mcp_server.py --auth` (token en `scripts/.spotify_cache.json`, no versionado). Requiere `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/`SPOTIFY_REDIRECT_URI` en `.env` (ver `.env.example`).
 - **`scripts/escena_local_snapshot.py`** — snapshot de los artistas con perfil de Spotify a `data/escena_local_stats.csv` (serie temporal: followers, popularity, géneros, top tracks). Modo dry-run sin credenciales: `--dry-run`.
+- **`scripts/generar_playlist_semanal.py`** — genera/actualiza la playlist pública **"Frontera Grande: Descubrimiento Semanal"**: una selección aleatoria de canciones de los artistas con Spotify (se prefiere el top track; si la app no recibe top-tracks, primer tema de sus lanzamientos). La playlist es estable entre corridas (ID en `data/playlist_semanal.json`). Workflow `sync-playlist.yml` (cada lunes). Autorización única del artista: `python scripts/generar_playlist_semanal.py --auth` (el refresh token va como secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN`).
 - **Límite 2026 del API:** las apps en modo desarrollo **ya no reciben followers/popularity/géneros/top-tracks** (top-tracks devuelve 403); el snapshot registra **presencia** (quién tiene perfil) con 0/0. Para recuperar los números hace falta **Extended Quota** (revisión de la app en el dashboard de Spotify) — pendiente.
 
 ## Roadmap
@@ -176,6 +184,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 13. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
 14. ◐ **Bios y géneros con fuente:** cadena Bandcamp→SoundCloud→YouTube (sin API key) en `scraper/adapters/` y `scripts/proponer_bios.py` que escribe directo lo claro (con nota de fuente en `notas`) y reporta lo ambiguo en `data/bios_pendientes.md`. Primera corrida 2026-08-16: 3 bios escritas. **Fase 2 hecha:** para artistas conectados, bio desde Meta (`about`/`description` FB + `biography` IG) en `backend/feed_meta.py`, integrada en el sync de 6h. Pendiente: curaduría de los pendientes desde el admin.
 15. ◐ **Sincronización de TikTok (Business API):** seguidores (`followers_tt` → ranking/stats) y videos en el feed vía `user.info.basic` + `video.list`. **Backend y web hechos** (`backend/feed_tiktok.py`, `scripts/sync_feed_tiktok.py`, botón "Conectar TikTok"). Pendiente: crear la app en TikTok for Developers y la **aprobación manual** de `video.list`, luego el cron. [docs/tiktok.md](docs/tiktok.md).
+16. ◐ **Playlist semanal de Spotify "Descubrimiento Semanal":** ✔ script (`scripts/generar_playlist_semanal.py`) + workflow `sync-playlist.yml` (lunes). Pendiente: autorización única del artista (`--auth`) y primera corrida.
 
 Detalle con estado por etapa y dependencias: [docs/roadmap.md](docs/roadmap.md).
 

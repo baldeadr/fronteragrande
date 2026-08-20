@@ -6,6 +6,7 @@ __pycache__/
 # Tokens de servicios (Spotify OAuth)
 .spotify_cache.json
 .spotify_cache*
+.spotify_playlist_cache.json
 .cache
 
 # Base de datos local
