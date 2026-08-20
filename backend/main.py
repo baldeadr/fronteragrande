@@ -45,6 +45,7 @@ from lib.servicios import (
     metricas_artista,
     onboarding_artista,
     ranking_global,
+    recalcular_actividad,
     stats_escena,
 )
 from backend.feed_meta import (
@@ -152,6 +153,29 @@ class EditarArtistaEntrada(BaseModel):
     estado_activo: str | None = None
     estado_registro: str | None = None
     redes: list[RedEntrada] | None = None
+
+
+class EventoEntrada(BaseModel):
+    """Cuerpo de POST/PUT /api/admin/events (alta/edición desde el admin).
+
+    Todos los campos son opcionales salvo `nombre` en el alta: solo se
+    aplican los presentes. `fecha` llega como ISO `YYYY-MM-DD`.
+    """
+
+    nombre: str | None = None
+    fecha: str | None = None
+    lugar: str | None = None
+    ciudad: str | None = None
+    artistas: str | None = None
+    que_demuestra: str | None = None
+    fuente: str | None = None
+
+
+def _fecha_desde(texto: str | None) -> date | None:
+    """Convierte una fecha ISO `YYYY-MM-DD` a `date` (None si está vacía)."""
+    if not texto or not texto.strip():
+        return None
+    return date.fromisoformat(texto.strip())
 
 
 def _json_safe(valor: Any) -> Any:
@@ -475,6 +499,102 @@ def list_events(eventos_repo: EventRepository = Depends(get_event_repo)):
         for e in eventos_repo.todos_fecha_desc()
     ]
     return _json_safe(eventos)
+
+
+def _requiere_admin(x_admin_token: str) -> None:
+    """Levanta 403 si no hay token de admin o no coincide con `ADMIN_PASSWORD`."""
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+
+
+@app.post("/api/admin/events")
+def admin_crear_evento(
+    entrada: EventoEntrada,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+    eventos: EventRepository = Depends(get_event_repo),
+):
+    """Alta de un evento desde el panel de administración.
+
+    Requiere el `X-Admin-Token`. Tras registrar el evento recalcula la
+    actividad de los artistas del cartel (un evento también es señal).
+    """
+    _requiere_admin(x_admin_token)
+    if not entrada.nombre or not entrada.nombre.strip():
+        raise HTTPException(status_code=400, detail="El nombre del evento es obligatorio")
+    try:
+        evento = eventos.crear(
+            nombre=entrada.nombre.strip(),
+            fecha=_fecha_desde(entrada.fecha),
+            lugar=(entrada.lugar or "").strip(),
+            ciudad=(entrada.ciudad or "").strip(),
+            artistas=(entrada.artistas or "").strip(),
+            que_demuestra=(entrada.que_demuestra or "").strip(),
+            fuente=(entrada.fuente or "").strip(),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    db.flush()
+    recalcular_actividad(db)
+    db.commit()
+    return {"ok": True, "id": evento.id}
+
+
+@app.put("/api/admin/events/{evento_id}")
+def admin_editar_evento(
+    evento_id: int,
+    entrada: EventoEntrada,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+    eventos: EventRepository = Depends(get_event_repo),
+):
+    """Edición de un evento desde el panel de administración.
+
+    Requiere el `X-Admin-Token`. Aplica solo los campos presentes; tras
+    guardar recalcula la actividad de los artistas del cartel.
+    """
+    _requiere_admin(x_admin_token)
+    evento = eventos.por_id(evento_id)
+    if evento is None:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    campos = entrada.model_dump(exclude_unset=True)
+    if "fecha" in campos:
+        try:
+            campos["fecha"] = _fecha_desde(campos["fecha"])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+    try:
+        eventos.actualizar(evento, campos)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    db.flush()
+    recalcular_actividad(db)
+    db.commit()
+    return {"ok": True, "id": evento.id}
+
+
+@app.delete("/api/admin/events/{evento_id}")
+def admin_eliminar_evento(
+    evento_id: int,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+    eventos: EventRepository = Depends(get_event_repo),
+):
+    """Elimina un evento desde el panel de administración.
+
+    Requiere el `X-Admin-Token`. Tras borrar recalcula la actividad para que
+    los artistas del cartel no conserven la señal del evento eliminado.
+    """
+    _requiere_admin(x_admin_token)
+    evento = eventos.eliminar(evento_id)
+    if evento is None:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    db.flush()
+    recalcular_actividad(db)
+    db.commit()
+    return {"ok": True}
 
 
 @app.get("/api/stats")

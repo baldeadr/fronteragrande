@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { api } from "@/lib/api";
 import { fechaCorta } from "@/lib/formato";
+import type { Evento } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Eventos de la escena",
@@ -10,8 +11,39 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+function TarjetaEvento({ e }: { e: Evento }) {
+  return (
+    <article className="rounded-xl border border-line bg-surface p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h2 className="font-bold">{e.nombre}</h2>
+        {e.fecha && <span className="text-xs text-accent">{fechaCorta(e.fecha)}</span>}
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        {[e.lugar, e.ciudad].filter(Boolean).join(" · ") || "Lugar por confirmar"}
+      </p>
+      {e.artistas && (
+        <p className="mt-2 text-sm">
+          <span className="text-muted">Cartel: </span>
+          {e.artistas}
+        </p>
+      )}
+      {e.que_demuestra && (
+        <p className="mt-2 text-xs text-muted">{e.que_demuestra}</p>
+      )}
+    </article>
+  );
+}
+
 export default async function EventosPage() {
   const eventos = await api.eventos();
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  const proximos = eventos
+    .filter((e) => e.fecha && e.fecha >= hoy)
+    .sort((a, b) => (a.fecha ?? "").localeCompare(b.fecha ?? ""));
+  const pasados = eventos
+    .filter((e) => !e.fecha || e.fecha < hoy)
+    .sort((a, b) => (b.fecha ?? "").localeCompare(a.fecha ?? ""));
 
   return (
     <div className="flex flex-col gap-5">
@@ -19,14 +51,7 @@ export default async function EventosPage() {
         <h1 className="text-2xl font-bold sm:text-3xl">Eventos</h1>
         <p className="mt-1 text-muted">
           {eventos.length} eventos registrados de la escena de la frontera grande.
-        </p>
-      </div>
-
-      <div className="rounded-xl border border-accent/40 bg-accent-soft p-4 text-sm text-text">
-        <p className="font-semibold">Sección en construcción</p>
-        <p className="mt-1 text-muted">
-          Estamos trabajando para ampliar y mantener actualizado el calendario
-          de eventos de la escena.
+          Un evento en el cartel de un artista cuenta como señal de actividad.
         </p>
       </div>
 
@@ -35,33 +60,35 @@ export default async function EventosPage() {
           Aún no hay eventos registrados.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {eventos.map((e) => (
-            <article
-              key={e.id}
-              className="rounded-xl border border-line bg-surface p-4"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="font-bold">{e.nombre}</h2>
-                <span className="text-xs text-accent">
-                  {fechaCorta(e.fecha)}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                {[e.lugar, e.ciudad].filter(Boolean).join(" · ") || "Lugar por confirmar"}
+        <>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-semibold">
+              Próximos{" "}
+              <span className="text-sm font-normal text-muted">
+                ({proximos.length})
+              </span>
+            </h2>
+            {proximos.length === 0 ? (
+              <p className="rounded-xl border border-line bg-surface p-6 text-center text-sm text-muted">
+                No hay eventos anunciados por ahora.
               </p>
-              {e.artistas && (
-                <p className="mt-2 text-sm">
-                  <span className="text-muted">Cartel: </span>
-                  {e.artistas}
-                </p>
-              )}
-              {e.que_demuestra && (
-                <p className="mt-2 text-xs text-muted">{e.que_demuestra}</p>
-              )}
-            </article>
-          ))}
-        </div>
+            ) : (
+              proximos.map((e) => <TarjetaEvento key={e.id} e={e} />)
+            )}
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-semibold">
+              Pasados{" "}
+              <span className="text-sm font-normal text-muted">
+                ({pasados.length})
+              </span>
+            </h2>
+            {pasados.map((e) => (
+              <TarjetaEvento key={e.id} e={e} />
+            ))}
+          </section>
+        </>
       )}
     </div>
   );

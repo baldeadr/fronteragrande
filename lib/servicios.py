@@ -825,3 +825,42 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
     )
     resultado["estado"] = artista.estado_activo
     return resultado
+
+
+def actualizar_ultimo_evento(session: Session, artista: Artist) -> None:
+    """Pone `ultimo_evento` con la fecha del evento más reciente del cartel.
+
+    Solo avanza la fecha (nunca regresa): si el evento más reciente de la
+    escena en cuyo cartel aparece el artista es posterior a lo registrado, se
+    actualiza; en caso contrario se conserva el valor manual/CSV.
+    """
+    fechas = [
+        e.fecha for e in EventRepository(session).de_artista(artista.nombre)
+        if e.fecha is not None
+    ]
+    if not fechas:
+        return
+    mas_reciente = max(fechas)
+    if artista.ultimo_evento is None or mas_reciente > artista.ultimo_evento:
+        artista.ultimo_evento = mas_reciente
+
+
+def recalcular_actividad(session: Session) -> list[tuple]:
+    """Recomputa `estado_activo` de todos los artistas con su señal más reciente.
+
+    Actualiza primero `ultimo_evento` desde la tabla `events` (los eventos del
+    cartel también son señal de actividad) y luego aplica la regla de
+    `scraper/core.py` tomando la señal más reciente (lanzamiento, evento o
+    feed). Devuelve la lista de cambios `(nombre, antes, después)`.
+    """
+    from scraper.core import estado_activo_recomputado
+
+    cambios = []
+    for artista in ArtistRepository(session).todos():
+        actualizar_ultimo_evento(session, artista)
+        ultimo_feed = ultimo_feed_de_artista(session, artista)
+        nuevo = estado_activo_recomputado(artista, ultimo_feed=ultimo_feed)
+        if nuevo != artista.estado_activo:
+            cambios.append((artista.nombre, artista.estado_activo, nuevo))
+            artista.estado_activo = nuevo
+    return cambios

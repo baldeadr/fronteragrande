@@ -6,7 +6,7 @@ Estado al momento de escribir: agosto 2026. Esta tabla resume qué información 
 
 | Plataforma | Datos obtenidos automáticamente | Modo de obtención | Estado | Limitaciones |
 |------------|----------------------------------|-------------------|--------|--------------|
-| **Facebook / Instagram** | Publicaciones recientes (fecha, texto, enlace, multimedia); **seguidores** (`followers_count`); estado de actividad; biografía o descripción de la página; verificación de que el artista administra la página. | OAuth con Graph API de Meta; sincronización programada vía `scripts/sync_feed_igfb.py`. | Funcional en producción para artistas conectados. | Solo artistas que autorizaron y administren la página registrada. |
+| **Facebook / Instagram** | Publicaciones recientes (fecha, texto, enlace, multimedia); **seguidores** (`followers_count`); estado de actividad; biografía o descripción de la página; verificación de que el artista administra la página; **eventos de la página** (toquines que el artista publica, `pages_events`). | OAuth con Graph API de Meta; sincronización programada vía `scripts/sync_feed_igfb.py` y `scripts/sync_eventos_meta.py`. | Funcional en producción para artistas conectados. | Solo artistas que autorizaron y administren la página registrada; los tokens conectados antes de `pages_events` deben reconectar. |
 | **TikTok** | Videos recientes (fecha, título, miniatura, enlace); seguidores; estadísticas de cuenta; **avatar** (se guarda como foto de perfil). | OAuth del creador con PKCE; sincronización programada vía `scripts/sync_feed_tiktok.py`. | Funcional en sandbox; Apex Ultra ya conectado. | La app aún no está aprobada para producción. Alcance limitado hasta aprobación. |
 | **YouTube** | Videos recientes del canal; miniaturas; títulos; fechas; bio/descripción pública; actividad reciente; **suscriptores/vistas** vía Data API (`YOUTUBE_API_KEY`). | Adaptador `scraper/adapters/youtube.py` (RSS público sin API key + Data API v3 para stats). | Funcional. | El scraping RSS puede romperse ante cambios de UI; las stats requieren la clave configurada. |
 | **Spotify** | Presencia del artista; búsquedas; reproducción actual; historial reciente; tops personales; **lanzamientos propios (álbumes/sencillos)** en el feed. | API oficial + MCP (`scripts/spotify_mcp_server.py`); `scripts/sync_lanzamientos.py` para el feed. | Funcional: `/artists/{id}/albums` responde en modo dev. | Apps en modo desarrollo reciben `0`, `None` o `403` en followers/popularity/géneros/top-tracks hasta obtener Extended Quota. |
@@ -36,10 +36,10 @@ A partir de los datos anteriores, el sistema calcula sin intervención manual:
 | Dato | Estado actual | Nota |
 |------|---------------|------|
 | **Métricas útiles de Spotify para todos los artistas** | Limitado | Requiere Extended Quota para followers/popularity/top-tracks. |
-| **Eventos futuros** | Parcialmente manual | `data/eventos.csv` y panel admin; sin ingesta automática aún. |
+| **Eventos futuros** | Parcialmente manual | `data/eventos.csv`, **CRUD del panel admin** e ingesta automática de los eventos que los artistas conectados publican en su página de Facebook (`pages_events`). |
 | **Artistas no conectados a Meta/TikTok** | Sin actividad social automática | Solo se muestran datos semilla + feed de YouTube/lanzamientos si aplica. |
 | **Datos privados o restringidos por plataforma** | No accesibles | Respetamos los límites de cada API y el modo sandbox/producción. |
 
 ---
 
-Última actualización: 2026-08-19.
+Última actualización: 2026-08-20.

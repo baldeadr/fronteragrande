@@ -125,6 +125,62 @@ class EventRepository:
             if nombre_bajo and nombre_bajo in (e.artistas or "").lower()
         ]
 
+    def por_id(self, evento_id: int) -> Event | None:
+        return self.session.execute(
+            select(Event).where(Event.id == evento_id)
+        ).scalar_one_or_none()
+
+    def por_fuente(self, fuente: str) -> Event | None:
+        """Evento ya registrado desde una fuente externa (desduplicación)."""
+        if not fuente:
+            return None
+        return self.session.execute(
+            select(Event).where(Event.fuente == fuente)
+        ).scalar_one_or_none()
+
+    def crear(
+        self,
+        nombre: str,
+        fecha: date | None,
+        lugar: str,
+        ciudad: str,
+        artistas: str,
+        que_demuestra: str,
+        fuente: str,
+    ) -> Event:
+        evento = Event(
+            nombre=nombre,
+            fecha=fecha,
+            lugar=lugar,
+            ciudad=ciudad,
+            artistas=artistas,
+            que_demuestra=que_demuestra,
+            fuente=fuente,
+        )
+        self.session.add(evento)
+        return evento
+
+    def actualizar(self, evento: Event, campos: dict) -> Event:
+        """Aplica los campos presentes del dict al evento (sin pisar los ausentes)."""
+        for campo in (
+            "nombre",
+            "fecha",
+            "lugar",
+            "ciudad",
+            "artistas",
+            "que_demuestra",
+            "fuente",
+        ):
+            if campo in campos and campos[campo] is not None:
+                setattr(evento, campo, campos[campo])
+        return evento
+
+    def eliminar(self, evento_id: int) -> Event | None:
+        evento = self.por_id(evento_id)
+        if evento is not None:
+            self.session.delete(evento)
+        return evento
+
 
 class FeedRepository:
     """Consultas y alta de elementos del feed (`feed_items`).

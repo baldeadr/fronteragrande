@@ -18,6 +18,7 @@ import {
   editarArtista,
   eliminarArtista,
 } from "@/lib/api";
+import PanelEventos from "@/components/PanelEventos";
 import type { AdminArtist, LinkAdmin } from "@/lib/types";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"];
@@ -57,6 +58,7 @@ export default function PanelAdmin() {
     return "";
   });
   const [autenticado, setAutenticado] = useState(false);
+  const [pestana, setPestana] = useState<"artistas" | "eventos">("artistas");
   const [artistas, setArtistas] = useState<AdminArtist[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -158,70 +160,99 @@ export default function PanelAdmin() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <form
-        className="flex max-w-xl flex-col gap-2 rounded-xl border border-line bg-surface p-4"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setAvisoEstado("");
-          try {
-            const resultado = await broadcastPush(token, {
-              titulo: avisoTitulo,
-              cuerpo: avisoCuerpo,
-              url: avisoUrl,
-            });
-            setAvisoEstado(`Aviso enviado a ${resultado.enviadas} suscriptores.`);
-            setAvisoTitulo("");
-            setAvisoCuerpo("");
-          } catch (e) {
-            setAvisoEstado(e instanceof Error ? e.message : "No se pudo enviar el aviso.");
-          }
-        }}
-      >
-        <h2 className="font-semibold">Enviar aviso</h2>
-        <p className="text-sm text-muted">Notifica a quienes activaron las notificaciones.</p>
-        <input
-          required
-          value={avisoTitulo}
-          onChange={(e) => setAvisoTitulo(e.target.value)}
-          placeholder="Título"
-          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <textarea
-          required
-          value={avisoCuerpo}
-          onChange={(e) => setAvisoCuerpo(e.target.value)}
-          placeholder="Mensaje"
-          rows={2}
-          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <input
-          value={avisoUrl}
-          onChange={(e) => setAvisoUrl(e.target.value)}
-          placeholder="Ruta al tocar el aviso, por ejemplo /feed"
-          className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
-        />
+      <div className="flex gap-1 rounded-xl border border-line bg-surface p-1">
         <button
-          type="submit"
-          className="self-start rounded-lg bg-accent px-3 py-2 text-sm font-medium text-bg hover:opacity-90"
+          onClick={() => setPestana("artistas")}
+          className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            pestana === "artistas"
+              ? "bg-accent text-bg"
+              : "text-muted hover:text-text"
+          }`}
         >
-          Enviar aviso
+          Artistas
         </button>
-        {avisoEstado && <p className="text-sm text-muted">{avisoEstado}</p>}
-      </form>
-
-      <SettingsPanel token={token} />
-
-      <div className="flex flex-col gap-2">
-        {artistas.map((a) => (
-          <FilaArtista
-            key={a.slug}
-            artista={a}
-            token={token}
-            editarInicial={editarSlug === a.slug}
-            onGuardado={() => cargar(token)}
-          />
-        ))}
+        <button
+          onClick={() => setPestana("eventos")}
+          className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            pestana === "eventos"
+              ? "bg-accent text-bg"
+              : "text-muted hover:text-text"
+          }`}
+        >
+          Eventos
+        </button>
       </div>
+
+      {pestana === "eventos" ? (
+        <PanelEventos token={token} />
+      ) : (
+        <>
+          <form
+            className="flex max-w-xl flex-col gap-2 rounded-xl border border-line bg-surface p-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setAvisoEstado("");
+              try {
+                const resultado = await broadcastPush(token, {
+                  titulo: avisoTitulo,
+                  cuerpo: avisoCuerpo,
+                  url: avisoUrl,
+                });
+                setAvisoEstado(`Aviso enviado a ${resultado.enviadas} suscriptores.`);
+                setAvisoTitulo("");
+                setAvisoCuerpo("");
+              } catch (e) {
+                setAvisoEstado(e instanceof Error ? e.message : "No se pudo enviar el aviso.");
+              }
+            }}
+          >
+            <h2 className="font-semibold">Enviar aviso</h2>
+            <p className="text-sm text-muted">Notifica a quienes activaron las notificaciones.</p>
+            <input
+              required
+              value={avisoTitulo}
+              onChange={(e) => setAvisoTitulo(e.target.value)}
+              placeholder="Título"
+              className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+            <textarea
+              required
+              value={avisoCuerpo}
+              onChange={(e) => setAvisoCuerpo(e.target.value)}
+              placeholder="Mensaje"
+              rows={2}
+              className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+            <input
+              value={avisoUrl}
+              onChange={(e) => setAvisoUrl(e.target.value)}
+              placeholder="Ruta al tocar el aviso, por ejemplo /feed"
+              className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+            <button
+              type="submit"
+              className="self-start rounded-lg bg-accent px-3 py-2 text-sm font-medium text-bg hover:opacity-90"
+            >
+              Enviar aviso
+            </button>
+            {avisoEstado && <p className="text-sm text-muted">{avisoEstado}</p>}
+          </form>
+
+          <SettingsPanel token={token} />
+
+          <div className="flex flex-col gap-2">
+            {artistas.map((a) => (
+              <FilaArtista
+                key={a.slug}
+                artista={a}
+                token={token}
+                editarInicial={editarSlug === a.slug}
+                onGuardado={() => cargar(token)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

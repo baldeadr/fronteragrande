@@ -210,6 +210,28 @@ YouTube Data API si hay `YOUTUBE_API_KEY`. El avatar de TikTok se actualiza en
 responde, cae a la cadena de scraping `og:image` (jerarquía en
 `scraper/jerarquias.py`).
 
+### Eventos: CRUD en el admin e ingesta desde Meta (fase 2026-08)
+
+El calendario de eventos tiene dos vías de alimentación:
+
+- **Panel de administración:** alta, edición y baja desde `/admin` (pestaña
+  "Eventos") vía `POST/PUT/DELETE /api/admin/events` (protegidos por
+  `X-Admin-Token`). La lógica vive en `EventRepository` (`lib/repository.py`).
+- **Ingesta automática desde Meta:** los artistas conectados que otorgaron el
+  permiso `pages_events` publican sus toquines como eventos de página;
+  `scripts/sync_eventos_meta.py` los registra en `events` (sin duplicar por
+  fuente `Facebook (página del artista) · {evento_id}`, con el artista como
+  promotor del cartel). El workflow `sync-eventos-meta.yml` lo corre cada 6 h.
+  Los tokens conectados antes de añadir `pages_events` al scope necesitan
+  **reconectar** Meta desde el perfil para concederlo (el sync los omite con
+  un aviso, sin fallar).
+
+**Eventos como señal de actividad:** `lib/servicios.recalcular_actividad`
+actualiza `artista.ultimo_evento` con el evento más reciente en cuyo cartel
+aparece el artista (solo avanza la fecha, nunca la regresa, para no pisar el
+valor curado del CSV), y con eso aplica la regla de actividad. Lo llaman los
+scripts de sync y los endpoints del admin tras cada cambio.
+
 ## 4. El feed como señal de actividad
 
 El **feed del perfil** no es solo un escaparate: es la **bitácora de señales
@@ -223,7 +245,7 @@ activo?"*. Cada elemento del feed es evidencia de actividad.
 | Video nuevo | YouTube, Instagram, TikTok | adaptador RSS de YT (onboarding) / sync Meta Graph API |
 | Post nuevo | Instagram, Facebook, TikTok | sync Meta Graph API (artista conectado) |
 | Lanzamiento | Spotify, Bandcamp, SoundCloud, Apple | campo `ultimo_lanzamiento` del artista |
-| Evento | escena | CSV de eventos |
+| Evento | escena | CRUD del admin / eventos de página Meta (`pages_events`) |
 
 **No cuenta** como señal: solo "presencia" del perfil o reacciones a contenido
 ajeno.

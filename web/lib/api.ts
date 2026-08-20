@@ -77,6 +77,65 @@ export async function eliminarArtista(slug: string, token: string): Promise<void
   }
 }
 
+export type EventoBody = {
+  nombre?: string;
+  fecha?: string;
+  lugar?: string;
+  ciudad?: string;
+  artistas?: string;
+  que_demuestra?: string;
+  fuente?: string;
+};
+
+export async function adminCrearEvento(
+  token: string,
+  body: EventoBody,
+): Promise<{ id: number }> {
+  const res = await fetch(`${API_URL}/api/admin/events`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token,
+    },
+    body: JSON.stringify(body),
+  });
+  const datos = (await res.json()) as { detail?: string; id?: number };
+  if (!res.ok) {
+    throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  }
+  return { id: datos.id ?? 0 };
+}
+
+export async function adminEditarEvento(
+  token: string,
+  id: number,
+  body: EventoBody,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/api/admin/events/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token,
+    },
+    body: JSON.stringify(body),
+  });
+  const datos = (await res.json()) as { detail?: string };
+  if (!res.ok) {
+    throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  }
+}
+
+export async function adminEliminarEvento(token: string, id: number): Promise<void> {
+  const res = await fetch(`${API_URL}/api/admin/events/${id}`, {
+    method: "DELETE",
+    headers: { "X-Admin-Token": token },
+  });
+  const datos = (await res.json()) as { detail?: string };
+  if (!res.ok) {
+    throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  }
+}
+
 export async function suscribirPush(subscription: PushSubscription): Promise<void> {
   const datos = subscription.toJSON();
   const res = await fetch(`${API_URL}/api/push/subscribe`, {

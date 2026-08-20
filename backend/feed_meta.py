@@ -41,7 +41,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 OWNER_COOKIE = "fg_meta_owner"
 OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
-SCOPES = "pages_show_list,pages_read_engagement,instagram_basic"
+SCOPES = "pages_show_list,pages_read_engagement,instagram_basic,pages_events"
 GRAF_API = f"https://graph.facebook.com/{API_VERSION}"
 AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
@@ -256,6 +256,39 @@ def ig_seguidores(ig_user_id: str, page_token: str) -> int | None:
         {"access_token": page_token, "fields": "followers_count"},
     )
     return _followers_count(datos)
+
+
+def pagina_eventos(page_id: str, page_token: str, limite: int = 25) -> list[dict]:
+    """Eventos de una página de Facebook (normalizados para el registro).
+
+    Requiere el permiso `pages_events` en el token (se pide al conectar).
+    Devuelve `{id, nombre, fecha, lugar, descripcion}`; sin fecha se omite
+    el evento.
+    """
+    datos = _grafo(
+        f"{page_id}/events",
+        {
+            "access_token": page_token,
+            "fields": "id,name,start_time,place,description",
+            "limit": limite,
+        },
+    )
+    items = []
+    for e in datos.get("data", []):
+        fecha = _fecha_meta(e.get("start_time"))
+        if fecha is None:
+            continue
+        lugar = (e.get("place") or {}).get("name") or ""
+        items.append(
+            {
+                "id": e.get("id", ""),
+                "nombre": (e.get("name") or "").strip(),
+                "fecha": fecha,
+                "lugar": lugar,
+                "descripcion": (e.get("description") or "").strip(),
+            }
+        )
+    return items
 
 
 @router.get("/login")
