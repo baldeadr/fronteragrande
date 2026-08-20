@@ -25,6 +25,33 @@
   **monetización futura** (AdSense/patrocinios) entendida como **medio** para
   sostener el proyecto, no como objetivo en sí.
 
+## Aspiración de profesionalización
+
+Frontera Grande aspira a contribuir a que la escena musical de la región sea
+vista y tratada con mayor seriedad. La plataforma no solo documenta proyectos:
+busca construir una base de información, confianza y relaciones que facilite
+mejores oportunidades para artistas, venues, promotores, medios y marcas.
+
+Esta aspiración se desarrollará gradualmente mediante:
+
+- **Datos confiables:** perfiles verificados, estado de actividad, fuentes y
+  estadísticas con fechas claras.
+- **Presentación profesional:** perfiles, materiales, eventos y contenido que
+  permitan descubrir y contratar proyectos con mayor facilidad.
+- **Estándares de eventos:** reglas públicas, producción cuidada, pagos o
+  condiciones claras y trato equitativo para los participantes.
+- **Reconocimiento de la escena:** awards, showcases y encuentros que valoren
+  tanto a artistas como a venues, técnicos, promotores y otros colaboradores.
+- **Puente con empresas:** información útil para que patrocinadores evalúen
+  audiencias, ciudades, formatos y resultados sin depender de promesas vagas.
+- **Evidencia de impacto:** reportes de asistencia, alcance, participación y
+  resultados que permitan mejorar cada edición y justificar nuevos apoyos.
+
+La profesionalización no significa favorecer únicamente a los proyectos con más
+seguidores. Significa crear procesos más transparentes, oportunidades mejor
+organizadas y condiciones que hagan visible el valor cultural y económico de la
+escena regional.
+
 ## Qué no es
 
 - **No es una plataforma de streaming**: no aloja contenido. Los previews
@@ -49,6 +76,14 @@
 - **No cierra el alcance**: la frontera grande de Tamaulipas es el foco actual;
   el modelo de datos y las decisiones (ciudad base única, categorías, géneros)
   están pensados para expandirse a otras regiones y disciplinas.
+
+## Decisión pendiente
+
+- **Contenido al desvincular una red `[PENDIENTE]`**: definir con los artistas si
+  las publicaciones sincronizadas de Meta deben conservarse como histórico,
+  ocultarse mientras la cuenta esté desvinculada o eliminarse de forma
+  permanente. Mientras se decide, la aplicación conserva las publicaciones ya
+  sincronizadas y detiene únicamente la sincronización de contenido nuevo.
 
 ## Cómo crece
 
