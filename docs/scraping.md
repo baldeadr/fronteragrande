@@ -107,6 +107,8 @@ El feed previsualiza el contenido de cada plataforma así (ver el registro
 | TikTok | miniatura + botón de play (o embed) | miniatura/título vía **oEmbed** (sin API key) |
 | Instagram | iframe embebible | `/p/{código}/embed/captioned/` (carga en el navegador, sin token) |
 | Facebook | iframe embebible | `/plugins/post.php` (carga en el navegador, sin token) |
+| Spotify | reproductor embebido | `/embed/{album\|track\|playlist}/…` |
+| SoundCloud | reproductor embebido | widget `w.soundcloud.com/player/?url=…` (sin API key, funciona con pistas, sets y perfiles) |
 | Mixcloud | miniatura de portada o widget embebible | vía **oEmbed** público (sin API key); Beatport sin preview (texto/portada) |
 
 **Importante:** Instagram, Facebook y TikTok **bloquean bots**, así que no se

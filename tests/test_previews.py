@@ -74,6 +74,20 @@ def test_preview_spotify_cae_a_texto_sin_url_valida():
     assert preview["tipo"] == "texto"
 
 
+def test_preview_soundcloud():
+    preview = preview_feed(
+        {
+            "url": "https://soundcloud.com/artista/cancion-ejemplo?in=artista",
+            "fuente": "soundcloud",
+            "imagen": "https://i1.sndcdn.com/x-large.jpg",
+        }
+    )
+    assert preview["tipo"] == "soundcloud"
+    assert preview["embed_url"].startswith("https://w.soundcloud.com/player/?url=")
+    assert "soundcloud.com%2Fartista%2Fcancion-ejemplo" in preview["embed_url"]
+    assert preview["thumbnail"] == "https://i1.sndcdn.com/x-large.jpg"
+
+
 def test_preview_mixcloud(monkeypatch):
     monkeypatch.setattr(
         "lib.plataformas.mixcloud_oembed",

@@ -11,6 +11,7 @@ Cada previewer recibe `(url, imagen_raw)` y devuelve el dict de preview o
 
 import re
 from typing import Callable
+from urllib.parse import quote
 
 from db.models import ArtistLink
 from lib.helpers import (
@@ -34,6 +35,7 @@ FUENTES_DETECTADAS = {
     "facebook.com": "fb",
     "tiktok.com": "tt",
     "youtu": "yt",
+    "soundcloud.com": "soundcloud",
     "beatport.com": "beatport",
     "mixcloud.com": "mixcloud",
 }
@@ -48,6 +50,7 @@ FUENTE_CANONICA = {
     "tt": "tt",
     "tiktok": "tt",
     "spotify": "spotify",
+    "soundcloud": "soundcloud",
     "beatport": "beatport",
     "mixcloud": "mixcloud",
 }
@@ -59,6 +62,7 @@ MARCA_URL_A_PLATAFORMA = [
     ("facebook.com", "fb"),
     ("tiktok.com", "tt"),
     ("spotify.com", "spotify"),
+    ("soundcloud.com", "soundcloud"),
     ("beatport.com", "beatport"),
     ("mixcloud.com", "mixcloud"),
 ]
@@ -165,6 +169,24 @@ def _preview_spotify(url: str, imagen_raw: str) -> dict | None:
     }
 
 
+def _preview_soundcloud(url: str, imagen_raw: str) -> dict | None:
+    m = re.search(r"soundcloud\.com/[^/?#]+", url)
+    if not m:
+        return None
+    base = url.split("?")[0].rstrip("/")
+    embed_url = (
+        "https://w.soundcloud.com/player/?url="
+        + quote(base, safe="")
+        + "&color=%23ff5500&auto_play=false&hide_related=true"
+        + "&show_comments=false&show_user=true&show_reposts=false"
+    )
+    return {
+        "tipo": "soundcloud",
+        "embed_url": embed_url,
+        "thumbnail": imagen_raw,
+    }
+
+
 def _preview_mixcloud(url: str, imagen_raw: str) -> dict | None:
     datos = mixcloud_oembed(url)
     if datos:
@@ -186,6 +208,7 @@ PREVIEWS: dict[str, Callable[[str, str], dict | None]] = {
     "fb": _preview_facebook,
     "tt": _preview_tiktok,
     "spotify": _preview_spotify,
+    "soundcloud": _preview_soundcloud,
     "mixcloud": _preview_mixcloud,
 }
 
@@ -195,7 +218,8 @@ def preview_feed(fila) -> dict:
 
     YouTube y TikTok muestran miniatura con botón de play; Instagram y
     Facebook se incrustan como iframe oficial (no se puede leer su miniatura
-    sin credenciales). El resto solo imagen o texto.
+    sin credenciales); Spotify y SoundCloud incrustan su reproductor. El resto
+    solo imagen o texto.
     """
     url = fila.get("url")
     if isinstance(url, float) and url != url:  # NaN
