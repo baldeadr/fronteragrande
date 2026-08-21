@@ -266,8 +266,13 @@ class FeedRepository:
     ) -> list[dict]:
         """Conteo de ítems por mes, opcionalmente excluyendo fuentes."""
         columna = func.coalesce(FeedItem.fecha, FeedItem.created_at)
+        mes = (
+            func.to_char(columna, "YYYY-MM")
+            if self.session.bind.dialect.name == "postgresql"
+            else func.strftime("%Y-%m", columna)
+        )
         consulta = select(
-            func.strftime("%Y-%m", columna).label("mes"),
+            mes.label("mes"),
             func.count().label("conteo"),
         )
         if excluir_fuentes:
