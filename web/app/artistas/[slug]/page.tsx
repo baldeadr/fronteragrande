@@ -85,6 +85,7 @@ export async function generateMetadata({
         title: `${artist.nombre} · Frontera Grande`,
         description: `${artist.segmento} de ${artist.ciudad} en la escena de la frontera grande.`,
         type: "profile",
+        images: [`/artistas/${slug}/opengraph-image.png`],
       },
     };
   } catch {
