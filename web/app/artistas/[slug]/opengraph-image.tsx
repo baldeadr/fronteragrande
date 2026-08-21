@@ -17,7 +17,12 @@ const TEXT = "#ececf1";
 const MUTED = "#8a8a9a";
 const ACCENT = "#9d4edd";
 const ACCENT_SOFT = "#2a1a33";
-const ACTIVO = "#76b041";
+
+const ETIQUETAS_ESTADO: Record<string, string> = {
+  activo: "Activo",
+  en_duda: "En duda",
+  inactivo: "Inactivo",
+};
 
 async function fetchArtist(slug: string): Promise<ArtistDetail | null> {
   try {
@@ -51,6 +56,59 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
+function IconoVerificado({ size }: { size: number }) {
+  // Réplica del IconoVerificado.tsx de la web: círculo morado con paloma.
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      style={{ display: "flex", flexShrink: 0 }}
+      fill="none"
+    >
+      <circle cx="12" cy="12" r="10.5" fill={ACCENT} />
+      <path
+        d="m7.5 12.2 2.9 2.9 6.1-6.2"
+        stroke="#fff"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function EstadoBadge({ estado, color }: { estado: string; color: string }) {
+  // Réplica del EstadoBadge.tsx de la web: pastilla con punto de color.
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        borderRadius: 999,
+        border: `2px solid ${LINE}`,
+        background: SURFACE,
+        padding: "12px 26px",
+        fontSize: 26,
+        fontWeight: 500,
+        color: TEXT,
+      }}
+    >
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 999,
+          background: color,
+          display: "flex",
+        }}
+      />
+      {ETIQUETAS_ESTADO[estado] ?? estado}
+    </div>
+  );
+}
+
 export default async function Image({
   params,
 }: {
@@ -62,23 +120,14 @@ export default async function Image({
   const nombre = artist?.nombre ?? "Frontera Grande";
   const segmento = artist?.segmento ?? "Artista de la escena";
   const ciudad = artist?.ciudad ?? "";
-  const generos = artist?.generos?.slice(0, 4) ?? [];
+  const generos = (artist?.generos ?? []).slice(0, 4);
   const rawImagen = artist?.imagen_perfil ?? null;
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
+  const estadoActivo = artist?.estado_activo ?? "";
+  const colorEstado = artist?.color_estado ?? "#888888";
 
   const archivoBlack = base64ToArrayBuffer(ARCHIVO_BLACK_B64);
-  const fonts = [
-    {
-      name: "Archivo Black",
-      data: archivoBlack,
-      style: "normal" as const,
-      weight: 400 as const,
-    },
-  ];
-
-  const brandFont = "Archivo Black";
-  const bodyFont = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
 
   return new ImageResponse(
     (
@@ -87,163 +136,148 @@ export default async function Image({
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
           background: BG,
           color: TEXT,
-          padding: 56,
-          fontFamily: bodyFont,
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
         }}
       >
+        {imagen ? (
+          <img
+            src={imagen}
+            alt={nombre}
+            width={1200}
+            height={630}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: SURFACE2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 300,
+              fontWeight: 700,
+              color: ACCENT,
+            }}
+          >
+            {nombre.charAt(0).toUpperCase()}
+          </div>
+        )}
+
         <div
           style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
             display: "flex",
-            flex: 1,
-            borderRadius: 32,
-            border: `1px solid ${LINE}`,
-            background: `linear-gradient(135deg, ${ACCENT_SOFT} 0%, ${SURFACE} 100%)`,
-            padding: 56,
-            gap: 48,
-            alignItems: "center",
+            background: imagen
+              ? `linear-gradient(to top, ${BG} 0%, ${BG} 30%, rgba(11, 11, 16, 0.72) 55%, rgba(11, 11, 16, 0.15) 80%, rgba(11, 11, 16, 0) 100%)`
+              : `linear-gradient(to top, ${BG} 0%, rgba(11, 11, 16, 0.55) 60%, rgba(27, 27, 36, 0.3) 100%)`,
+          }}
+        />
+
+        {artist && (
+          <div style={{ position: "absolute", top: 44, right: 56, display: "flex" }}>
+            <EstadoBadge estado={estadoActivo} color={colorEstado} />
+          </div>
+        )}
+
+        <div
+          style={{
+            position: "absolute",
+            left: 56,
+            right: 56,
+            bottom: 48,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 16,
           }}
         >
-          {imagen ? (
-            <img
-              src={imagen}
-              alt={nombre}
-              width={260}
-              height={260}
+          <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+            <span
               style={{
-                borderRadius: 28,
-                objectFit: "cover",
-                border: `4px solid ${LINE}`,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 260,
-                height: 260,
-                borderRadius: 28,
-                background: SURFACE2,
-                border: `4px solid ${LINE}`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: brandFont,
-                fontSize: 96,
-                color: ACCENT,
+                fontSize: 74,
+                fontWeight: 700,
+                lineHeight: 1.05,
+                letterSpacing: "-0.01em",
               }}
             >
-              {nombre.charAt(0).toUpperCase()}
+              {nombre}
+            </span>
+            {verificado && <IconoVerificado size={54} />}
+          </div>
+
+          <div style={{ fontSize: 32, color: MUTED, display: "flex" }}>
+            {segmento}
+            {ciudad ? ` · ${ciudad}` : ""}
+          </div>
+
+          {generos.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {generos.map((g) => (
+                <span
+                  key={g}
+                  style={{
+                    display: "flex",
+                    background: ACCENT_SOFT,
+                    color: ACCENT,
+                    fontSize: 25,
+                    fontWeight: 600,
+                    padding: "8px 22px",
+                    borderRadius: 999,
+                  }}
+                >
+                  #{g.replace(/\s+/g, "")}
+                </span>
+              ))}
             </div>
           )}
 
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: 18,
-              flex: 1,
-              minWidth: 0,
+              alignItems: "baseline",
+              gap: 14,
+              marginTop: 8,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-              <span
-                style={{
-                  fontFamily: brandFont,
-                  fontSize: 68,
-                  fontWeight: 400,
-                  lineHeight: 1.05,
-                  color: TEXT,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {nombre}
-              </span>
-              {verificado && (
-                <span
-                  style={{
-                    background: ACTIVO,
-                    color: BG,
-                    fontSize: 20,
-                    fontWeight: 700,
-                    padding: "8px 16px",
-                    borderRadius: 999,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  Verificado
-                </span>
-              )}
-            </div>
-
             <span
               style={{
-                fontSize: 32,
-                color: MUTED,
-                fontWeight: 500,
+                fontFamily: "Archivo Black",
+                fontSize: 28,
+                color: TEXT,
               }}
             >
-              {segmento}
-              {ciudad ? ` · ${ciudad}` : ""}
+              Frontera Grande
             </span>
-
-            {generos.length > 0 && (
-              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                {generos.map((g) => (
-                  <span
-                    key={g}
-                    style={{
-                      background: ACCENT_SOFT,
-                      color: ACCENT,
-                      fontSize: 22,
-                      fontWeight: 600,
-                      padding: "8px 16px",
-                      borderRadius: 999,
-                    }}
-                  >
-                    #{g.replace(/\s+/g, "")}
-                  </span>
-                ))}
-              </div>
-            )}
+            <span style={{ fontSize: 23, color: MUTED, display: "flex" }}>
+              · fronteragrande.mx · La escena musical de la frontera grande
+            </span>
           </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingTop: 32,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: brandFont,
-              fontSize: 30,
-              fontWeight: 400,
-              color: ACCENT,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Frontera Grande
-          </span>
-          <span
-            style={{
-              fontSize: 22,
-              color: MUTED,
-            }}
-          >
-            Base de datos de la escena musical
-          </span>
         </div>
       </div>
     ),
     {
       ...size,
-      fonts,
+      fonts: [
+        {
+          name: "Archivo Black",
+          data: archivoBlack,
+          style: "normal" as const,
+          weight: 400 as const,
+        },
+      ],
     },
   );
 }
