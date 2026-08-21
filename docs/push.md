@@ -21,22 +21,30 @@ cuando el proyecto se verifica mediante OAuth (Meta o TikTok).
 ## Diagnóstico
 
 Si al activar notificaciones el navegador muestra "Registration failed - push
-service error", revisar:
+service error", "Load failed" o un error de CORS, revisar:
 
 1. Que `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en Vercel sea **exactamente igual** a
    `VAPID_PUBLIC_KEY` en Render (mismos caracteres, sin comillas ni espacios).
 2. Que ambas variables correspondan al mismo par generado por
    `scripts/generar_vapid.py` (la pública y la privada deben emparejar).
 3. Que la URL de la PWA sea HTTPS (los navegadores rechazan push en HTTP).
+4. Que `CORS_ORIGINS` en Render incluya el dominio desde el que se sirve la
+   web. Si se cambia de dominio (p. ej. de `*.vercel.app` a `fronteragrande.mx`),
+   hay que agregar el nuevo dominio; de lo contrario el navegador bloquea el
+   `POST /api/push/subscribe`. Verificar con:
+   ```bash
+   curl -I -H "Origin: https://fronteragrande.mx" \
+     https://fronteragrande-api.onrender.com/api/push/vapid-config
+   ```
+   Debe devolver `access-control-allow-origin: https://fronteragrande.mx`.
 
 El endpoint `GET /api/push/vapid-config` indica si la API tiene la clave pública
 configurada y si es válida criptográficamente. No expone la clave privada.
 
 ## Mejoras técnicas del registro
 
-- El service worker se registra con `scope: "/"` y `updateViaCache: "none"` para
-  evitar que el navegador use una versión obsoleta al suscribirse.
 - `/sw.js` se sirve con `Content-Type: application/javascript; charset=utf-8` y
   `Cache-Control: public, max-age=0, must-revalidate`.
-- Antes de suscribirse se desuscribe cualquier registro previo para evitar que
-  una clave VAPID anterior bloquee el registro nuevo.
+- El service worker se registra en `layout.tsx` de forma simple y confiable.
+- La decodificación de la clave VAPID y el manejo de errores vive en
+  `web/lib/push.ts`, compartido por los componentes de notificaciones.
