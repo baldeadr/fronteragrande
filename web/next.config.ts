@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/artistas/:slug/opengraph-image.png",
+        destination: "/artistas/:slug/opengraph-image",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
