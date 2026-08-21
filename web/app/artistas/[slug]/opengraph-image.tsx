@@ -7,6 +7,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx";
 
 const BG = "#0b0b10";
 const SURFACE = "#14141b";
@@ -43,6 +44,26 @@ async function imageToBase64(url: string): Promise<string | null> {
   }
 }
 
+async function loadFont(): Promise<ArrayBuffer | null> {
+  // Satori (el motor de @vercel/og) solo acepta TTF/OTF: el WOFF2 de Google
+  // Fonts producía PNG que Facebook marcaba como dañado. La fuente vive en
+  // /public/fonts; el fallback al CDN cubre builds locales sin dominio.
+  const urls = [
+    `${SITE_URL}/fonts/ArchivoBlack-Regular.ttf`,
+    "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/archivoblack/ArchivoBlack-Regular.ttf",
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      return await res.arrayBuffer();
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export default async function Image({
   params,
 }: {
@@ -59,7 +80,21 @@ export default async function Image({
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
 
-  const brandFont = "Arial Black, Arial Bold, sans-serif";
+  const archivoBlack = await loadFont();
+  const fonts = archivoBlack
+    ? [
+        {
+          name: "Archivo Black",
+          data: archivoBlack,
+          style: "normal" as const,
+          weight: 400 as const,
+        },
+      ]
+    : [];
+
+  const brandFont = archivoBlack
+    ? "Archivo Black"
+    : "Arial Black, Arial Bold, sans-serif";
   const bodyFont = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
 
   return new ImageResponse(
@@ -225,6 +260,7 @@ export default async function Image({
     ),
     {
       ...size,
+      fonts,
     },
   );
 }
