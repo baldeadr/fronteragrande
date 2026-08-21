@@ -118,13 +118,14 @@ export default async function Image() {
 
           <span
             style={{
-              fontSize: 33,
+              fontSize: 30,
               color: MUTED,
               textAlign: "center",
               display: "flex",
+              letterSpacing: "0.01em",
             }}
           >
-            La base de datos de la escena musical de la frontera grande
+            La escena musical de la frontera de Tamaulipas
           </span>
         </div>
 
