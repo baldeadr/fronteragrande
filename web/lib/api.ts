@@ -3,15 +3,34 @@ import type { AdminArtist, ArtistaPendiente, ArtistCard, ArtistDetail, Evento, F
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
-async function get<T>(path: string): Promise<T> {
-  // Los datos públicos cambian por sincronizaciones, no por cada visita.
-  // Mantenerlos unos minutos evita esperar a Render en cada navegación.
-  const res = await fetch(`${API_URL}${path}`, {
-    next: { revalidate: 300 },
-  });
-  if (!res.ok) {
-    throw new Error(`Error de API ${res.status} en ${path}`);
+function esperar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getConReintentos(path: string, intentos = 3): Promise<Response> {
+  // Los datos públicos cambian por sincronizaciones, no por cada visita:
+  // se cachean 5 min (revalidate). El free tier de Render duerme la API a los
+  // 15 min y el primer request la despierta (~50 s); reintentar con espera
+  // evita que un cold start rompa el build/prerender en Vercel.
+  let ultimo: Response | null = null;
+  for (let i = 0; i < intentos; i += 1) {
+    if (i > 0) await esperar(i === 1 ? 8000 : 20000);
+    try {
+      const res = await fetch(`${API_URL}${path}`, {
+        next: { revalidate: 300 },
+      });
+      if (res.ok) return res;
+      ultimo = res;
+    } catch {
+      ultimo = null;
+    }
   }
+  const status = ultimo ? ultimo.status : 0;
+  throw new Error(`Error de API ${status} en ${path}`);
+}
+
+async function get<T>(path: string): Promise<T> {
+  const res = await getConReintentos(path);
   return res.json() as Promise<T>;
 }
 
