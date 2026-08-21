@@ -45,10 +45,21 @@ export function vapidPublicKeyValida(): boolean {
   return limpia.length >= 80 && limpia.length <= 100;
 }
 
+function detalleError(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}`;
+  }
+  return String(error);
+}
+
 /**
  * Traduce los errores comunes de `pushManager.subscribe()` a mensajes útiles.
+ * Conserva el detalle técnico para facilitar el diagnóstico remoto.
  */
 export function mensajeErrorPush(error: unknown): string {
+  const detalle = detalleError(error);
+  console.error("[Push] error completo:", error);
+
   if (error instanceof DOMException) {
     const nombre = error.name;
     const mensaje = error.message.toLowerCase();
@@ -57,7 +68,7 @@ export function mensajeErrorPush(error: unknown): string {
       return "Permiso de notificaciones bloqueado en el navegador.";
     }
     if (nombre === "AbortError") {
-      return "La solicitud fue cancelada. Intenta de nuevo.";
+      return `La solicitud fue cancelada (${detalle}). Intenta de nuevo.`;
     }
     if (nombre === "InvalidStateError") {
       return "El service worker aún no está listo. Recarga la página e intenta de nuevo.";
@@ -82,7 +93,20 @@ export function mensajeErrorPush(error: unknown): string {
     }
     return error.message;
   }
-  return "No se pudieron activar las notificaciones.";
+  return `No se pudieron activar las notificaciones (${detalle}).`;
+}
+
+/** Registra el service worker si aún no lo está. */
+export async function asegurarServiceWorker(): Promise<ServiceWorkerRegistration> {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Service Worker no soportado.");
+  }
+  const registro = await navigator.serviceWorker.register("/sw.js", {
+    scope: "/",
+    updateViaCache: "none",
+  });
+  await navigator.serviceWorker.ready;
+  return registro;
 }
 
 /** Devuelve el service worker registration listo para usar push. */
@@ -101,7 +125,7 @@ export async function suscribirNavegador(): Promise<PushSubscription> {
   if (!vapidPublicKeyValida()) {
     throw new Error("La clave pública de notificaciones no está configurada correctamente.");
   }
-  const registration = await obtenerRegistroPush();
+  const registration = await asegurarServiceWorker();
   const anterior = await registration.pushManager.getSubscription();
   if (anterior) {
     // Si ya hay una suscripción con otra clave VAPID, el push service puede
