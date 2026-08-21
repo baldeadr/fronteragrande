@@ -64,10 +64,7 @@ export default function RootLayout({
           {`
             if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
               addEventListener("load", () => {
-                navigator.serviceWorker.register("/sw.js", {
-                  scope: "/",
-                  updateViaCache: "none",
-                }).catch((err) => { console.error("[SW] registro falló:", err); });
+                navigator.serviceWorker.register("/sw.js").catch(() => {});
               });
             }
           `}

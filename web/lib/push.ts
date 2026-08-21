@@ -96,19 +96,6 @@ export function mensajeErrorPush(error: unknown): string {
   return `No se pudieron activar las notificaciones (${detalle}).`;
 }
 
-/** Registra el service worker si aún no lo está. */
-export async function asegurarServiceWorker(): Promise<ServiceWorkerRegistration> {
-  if (!("serviceWorker" in navigator)) {
-    throw new Error("Service Worker no soportado.");
-  }
-  const registro = await navigator.serviceWorker.register("/sw.js", {
-    scope: "/",
-    updateViaCache: "none",
-  });
-  await navigator.serviceWorker.ready;
-  return registro;
-}
-
 /** Devuelve el service worker registration listo para usar push. */
 export async function obtenerRegistroPush(): Promise<ServiceWorkerRegistration> {
   if (!("serviceWorker" in navigator)) {
@@ -125,13 +112,7 @@ export async function suscribirNavegador(): Promise<PushSubscription> {
   if (!vapidPublicKeyValida()) {
     throw new Error("La clave pública de notificaciones no está configurada correctamente.");
   }
-  const registration = await asegurarServiceWorker();
-  const anterior = await registration.pushManager.getSubscription();
-  if (anterior) {
-    // Si ya hay una suscripción con otra clave VAPID, el push service puede
-    // rechazar el registro. La removemos primero y reintentamos.
-    await anterior.unsubscribe();
-  }
+  const registration = await obtenerRegistroPush();
   return registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
