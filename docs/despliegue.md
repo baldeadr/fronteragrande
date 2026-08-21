@@ -115,11 +115,11 @@ git push -u origin main
 3. Render detecta `render.yaml` y crea el servicio `fronteragrande-api`.
 4. En el servicio, entra a **Environment** y define:
    - `DATABASE_URL` = la connection string de Neon.
-   - `CORS_ORIGINS` = `https://fronteragrande.vercel.app` (el dominio que te
-     asigne Vercel; **sin** `https://` duplicado, separado por comas si hay
-     varios).
+   - `CORS_ORIGINS` = `https://fronteragrande.mx` (dominio final de la web;
+     **sin** `https://` duplicado, separado por comas si hay varios, p. ej.
+     `https://fronteragrande.mx,https://www.fronteragrande.mx`).
    - `META_REDIRECT_URI` y `WEB_URL` solo cuando quieras el login de Meta
-     (ver paso 6). Si no, dejar vacío es válido.
+      (ver paso 6). Si no, dejar vacío es válido.
 5. Espera el deploy y anota la URL del servicio: `https://fronteragrande-api.onrender.com`.
 6. Verifica: `curl https://fronteragrande-api.onrender.com/api/health` →
    `{"estado":"ok"}`.
@@ -127,10 +127,10 @@ git push -u origin main
 > Si el build usa el entorno de la API, Render instala `requirements-prod.txt`
 > (rápido). El `startCommand` corre `uvicorn backend.main:app`.
 >
-> **Estado actual:** el servicio está arriba con `CORS_ORIGINS` **vacío**
-> (las páginas se renderizan en el servidor y no lo necesitan). Conviene
-> definirlo a `https://fronteragrande.vercel.app` para que los fetch del
-> navegador (formulario de alta, conexión Meta) funcionen.
+> **Importante:** `CORS_ORIGINS` debe incluir el dominio final desde el que se
+> sirve la web (`https://fronteragrande.mx`), de lo contrario los fetch del
+> navegador (formulario de alta, conexión Meta, suscripción push) serán
+> bloqueados por el navegador.
 
 ## 4. Cargar los datos semilla en Neon
 
