@@ -125,7 +125,7 @@ export default async function Image() {
               letterSpacing: "0.01em",
             }}
           >
-            La escena musical de la frontera de Tamaulipas
+            La base de datos de la escena musical del norte de Tamaulipas
           </span>
         </div>
 
