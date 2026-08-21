@@ -173,40 +173,32 @@ export default async function Image({
               minWidth: 0,
             }}
           >
-            <div
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 18,
-                flexWrap: "wrap",
-                maxWidth: "100%",
+                fontSize: 66,
+                fontWeight: 700,
+                lineHeight: 1.08,
+                letterSpacing: "-0.01em",
               }}
             >
-              <span
+              {nombre}
+            </span>
+
+            {verificado && (
+              <div
                 style={{
-                  fontSize: 66,
-                  fontWeight: 700,
-                  lineHeight: 1.08,
-                  letterSpacing: "-0.01em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginTop: -8,
                 }}
               >
-                {nombre}
-              </span>
-              {verificado && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                  }}
-                >
-                  <IconoVerificado size={40} />
-                  <span style={{ fontSize: 27, fontWeight: 600, color: MUTED }}>
-                    Verificado
-                  </span>
-                </div>
-              )}
-            </div>
+                <IconoVerificado size={38} />
+                <span style={{ fontSize: 27, fontWeight: 600, color: MUTED }}>
+                  Verificado
+                </span>
+              </div>
+            )}
 
             <div style={{ display: "flex", fontSize: 31, color: MUTED }}>
               {segmento}
