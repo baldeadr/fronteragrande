@@ -3,19 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { suscribirPush } from "@/lib/api";
+import {
+  VAPID_PUBLIC_KEY,
+  mensajeErrorPush,
+  pushSoportado,
+  suscribirNavegador,
+} from "@/lib/push";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 const LS_KEY = "fg_push_banner";
 const DIAS_RECORDARIO = 7;
-
-function clavePublicaBytes(clave: string): ArrayBuffer {
-  const padding = "=".repeat((4 - (clave.length % 4)) % 4);
-  const base64 = (clave + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const bytes = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i);
-  return bytes.buffer as ArrayBuffer;
-}
 
 function puedeMostrar(): boolean {
   if (!VAPID_PUBLIC_KEY) return false;
@@ -32,16 +28,22 @@ export default function BannerNotificaciones() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!VAPID_PUBLIC_KEY || !("serviceWorker" in navigator)) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (typeof window === "undefined" || !pushSoportado()) {
+      setCargando(false);
+      return;
+    }
 
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     const esIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIos(esIos);
 
-    if (esIos && !standalone) return;
+    if (esIos && !standalone) {
+      setCargando(false);
+      return;
+    }
 
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
@@ -53,6 +55,7 @@ export default function BannerNotificaciones() {
       })
       .catch(() => {})
       .finally(() => setCargando(false));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   function recordarDespues() {
@@ -70,16 +73,12 @@ export default function BannerNotificaciones() {
         setCargando(false);
         return;
       }
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: clavePublicaBytes(VAPID_PUBLIC_KEY),
-      });
+      const subscription = await suscribirNavegador();
       await suscribirPush(subscription);
       localStorage.setItem(LS_KEY, String(Date.now()));
       setVisible(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo activar.");
+      setError(mensajeErrorPush(e));
     } finally {
       setCargando(false);
     }

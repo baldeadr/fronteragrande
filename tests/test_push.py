@@ -34,3 +34,14 @@ def test_broadcast_push_requiere_admin_y_devuelve_enviadas(client, monkeypatch):
     )
     assert respuesta.status_code == 200
     assert respuesta.json() == {"ok": True, "enviadas": 3}
+
+
+def test_vapid_config_indica_si_esta_configurado(client, monkeypatch):
+    monkeypatch.setenv("VAPID_PUBLIC_KEY", "BGf4d8i6lQ2ovnLOQ6dbHqPtj7NYvKOooLp7-X03NbCGTwbLbsNN9nSiRR-lYMkZpXmATfOJyfhxUo4IqawygcA")
+    respuesta = client.get("/api/push/vapid-config")
+    assert respuesta.status_code == 200
+    datos = respuesta.json()
+    assert datos["configurado"] is True
+    assert datos["valida"] is True
+    assert "public_key" in datos
+    assert "private_key" not in datos

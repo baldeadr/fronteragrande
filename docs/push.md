@@ -17,3 +17,26 @@ La web registra suscripciones en `POST /api/push/subscribe`. El panel admin
 puede enviar avisos generales desde `/admin`; los posts nuevos de Meta generan
 avisos automáticos; las altas de artistas **solo** generan avisos automáticos
 cuando el proyecto se verifica mediante OAuth (Meta o TikTok).
+
+## Diagnóstico
+
+Si al activar notificaciones el navegador muestra "Registration failed - push
+service error", revisar:
+
+1. Que `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en Vercel sea **exactamente igual** a
+   `VAPID_PUBLIC_KEY` en Render (mismos caracteres, sin comillas ni espacios).
+2. Que ambas variables correspondan al mismo par generado por
+   `scripts/generar_vapid.py` (la pública y la privada deben emparejar).
+3. Que la URL de la PWA sea HTTPS (los navegadores rechazan push en HTTP).
+
+El endpoint `GET /api/push/vapid-config` indica si la API tiene la clave pública
+configurada y si es válida criptográficamente. No expone la clave privada.
+
+## Mejoras técnicas del registro
+
+- El service worker se registra con `scope: "/"` y `updateViaCache: "none"` para
+  evitar que el navegador use una versión obsoleta al suscribirse.
+- `/sw.js` se sirve con `Content-Type: application/javascript; charset=utf-8` y
+  `Cache-Control: public, max-age=0, must-revalidate`.
+- Antes de suscribirse se desuscribe cualquier registro previo para evitar que
+  una clave VAPID anterior bloquee el registro nuevo.

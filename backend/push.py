@@ -6,8 +6,10 @@
 - `POST /api/push/broadcast`    aviso a todos (requiere `X-Admin-Token`).
 """
 
+import base64
 import os
 
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -19,6 +21,7 @@ from lib.repository import PushSubscriptionRepository
 router = APIRouter(prefix="/api/push", tags=["push"])
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
 
 
 class SuscripcionEntrada(BaseModel):
@@ -87,3 +90,26 @@ def aviso_general(
     enviadas = notificar_todos(repo, entrada.titulo, entrada.cuerpo, entrada.url)
     db.commit()
     return {"ok": True, "enviadas": enviadas}
+
+
+@router.get("/vapid-config")
+def config_vapid():
+    """Devuelve la clave pública VAPID y validez básica (sin exponer la privada)."""
+    clave = VAPID_PUBLIC_KEY.strip()
+    valida = False
+    if clave:
+        try:
+            padding = "=" * ((4 - len(clave) % 4) % 4)
+            base64_std = (clave + padding).replace("-", "+").replace("_", "/")
+            raw = base64.b64decode(base64_std)
+            if len(raw) == 65 and raw[0] == 0x04:
+                ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), raw)
+                valida = True
+        except Exception:
+            valida = False
+    return {
+        "configurado": bool(clave),
+        "public_key": clave,
+        "valida": valida,
+        "subject": os.getenv("VAPID_SUBJECT", "mailto:hola@fronteragrande.mx"),
+    }

@@ -1,19 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { desuscribirPush, suscribirPush } from "@/lib/api";
 import Link from "next/link";
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
-
-function clavePublicaBytes(clave: string): ArrayBuffer {
-  const padding = "=".repeat((4 - (clave.length % 4)) % 4);
-  const base64 = (clave + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const bytes = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i);
-  return bytes.buffer as ArrayBuffer;
-}
+import { desuscribirPush, suscribirPush } from "@/lib/api";
+import {
+  VAPID_PUBLIC_KEY,
+  mensajeErrorPush,
+  pushSoportado,
+  suscribirNavegador,
+} from "@/lib/push";
 
 export default function Notificaciones() {
   const [cargando, setCargando] = useState(true);
@@ -27,19 +22,15 @@ export default function Notificaciones() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (typeof window === "undefined") return;
+
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const puede =
-      Boolean(VAPID_PUBLIC_KEY) &&
-      "serviceWorker" in navigator &&
-      "PushManager" in window &&
-      "Notification" in window;
+    const puede = pushSoportado();
 
-    // Estas señales solo existen en el navegador y sincronizan el estado con
-    // la capacidad real de la PWA después de hidratar.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInstalada(standalone);
     setIosSinInstalar(ios && !standalone);
     setSoportada(puede);
@@ -55,6 +46,7 @@ export default function Notificaciones() {
       .then((subscription) => setSuscrita(Boolean(subscription)))
       .catch(() => setError("No se pudo consultar el estado de notificaciones."))
       .finally(() => setCargando(false));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   async function activar() {
@@ -67,15 +59,11 @@ export default function Notificaciones() {
         setError("El permiso de notificaciones no fue concedido.");
         return;
       }
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: clavePublicaBytes(VAPID_PUBLIC_KEY),
-      });
+      const subscription = await suscribirNavegador();
       await suscribirPush(subscription);
       setSuscrita(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron activar las notificaciones.");
+      setError(mensajeErrorPush(e));
     } finally {
       setCargando(false);
     }
@@ -94,7 +82,7 @@ export default function Notificaciones() {
       }
       setSuscrita(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron desactivar las notificaciones.");
+      setError(mensajeErrorPush(e));
     } finally {
       setCargando(false);
     }
@@ -111,7 +99,14 @@ export default function Notificaciones() {
     );
   }
 
-  if (!soportada) return null;
+  if (!soportada) {
+    if (!VAPID_PUBLIC_KEY) return null;
+    return (
+      <p className="mt-2 max-w-sm text-center text-sm text-muted">
+        Tu navegador no soporta notificaciones push.
+      </p>
+    );
+  }
 
   return (
     <div className="mt-3 flex flex-col items-center gap-1">
