@@ -248,14 +248,19 @@ class FeedRepository:
     def ultimo_contenido_de_artista(
         self, artist_id: int
     ) -> FeedItem | None:
-        """Elemento de contenido más reciente de un artista (sin chequeos)."""
+        """Elemento de contenido más reciente de un artista (sin chequeos).
+
+        Se ordena por la fecha de publicación (con fallback a la de creación)
+        y no por `created_at`: si un respaldo inserta elementos viejos después
+        de los nuevos, el recálculo de actividad no debe tomarlos como señal.
+        """
         return self.session.execute(
             select(FeedItem)
             .where(
                 FeedItem.artist_id == artist_id,
                 FeedItem.tipo.in_(["video", "lanzamiento", "post", "evento"]),
             )
-            .order_by(FeedItem.created_at.desc())
+            .order_by(func.coalesce(FeedItem.fecha, FeedItem.created_at).desc())
             .limit(1)
         ).scalar_one_or_none()
 

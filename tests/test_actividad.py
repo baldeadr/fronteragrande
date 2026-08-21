@@ -93,3 +93,51 @@ def test_ultimo_referencia():
     solo_evento = _artista(ultimo_evento=date(2026, 2, 1))
     assert ultimo_referencia(solo_evento) == date(2026, 2, 1)
     assert ultimo_referencia(_artista()) is None
+
+
+def test_ultimo_feed_por_fecha_publicacion(session):
+    """Un elemento viejo insertado tarde no gana a uno reciente.
+
+    Regresión (caso Cada Martes, 2026-08): `ultimo_contenido_de_artista`
+    ordenaba por `created_at`, así que un respaldo que insertaba
+    publicaciones viejas al final dejaba artistas activos como inactivo.
+    """
+    from datetime import datetime
+
+    from db.models import FeedItem
+    from lib.repository import ArtistRepository, FeedRepository
+    from lib.servicios import ultimo_feed_de_artista
+
+    artista = ArtistRepository(session).todos()[0]
+    insercion = datetime(2026, 8, 20, 12, 0, 0)
+    items = [
+        FeedItem(
+            artist_id=artista.id,
+            fuente="spotify",
+            tipo="lanzamiento",
+            titulo="reciente",
+            url="https://test/regresion/reciente",
+            fecha=datetime(2026, 8, 14),
+            created_at=insercion,
+        ),
+        FeedItem(
+            artist_id=artista.id,
+            fuente="soundcloud",
+            tipo="lanzamiento",
+            titulo="viejo",
+            url="https://test/regresion/viejo",
+            fecha=datetime(2024, 10, 17),
+            created_at=insercion.replace(hour=13),
+        ),
+    ]
+    session.add_all(items)
+    session.commit()
+    try:
+        senal = ultimo_feed_de_artista(session, artista)
+        assert senal == items[0].fecha.date()
+        elegido = FeedRepository(session).ultimo_contenido_de_artista(artista.id)
+        assert elegido.url == "https://test/regresion/reciente"
+    finally:
+        for it in items:
+            session.delete(it)
+        session.commit()
