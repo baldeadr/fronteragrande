@@ -7,14 +7,14 @@ function esperar(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function getConReintentos(path: string, intentos = 3): Promise<Response> {
+async function getConReintentos(path: string, intentos = 4): Promise<Response> {
   // Los datos públicos cambian por sincronizaciones, no por cada visita:
-  // se cachean 5 min (revalidate). El free tier de Render duerme la API a los
-  // 15 min y el primer request la despierta (~50 s); reintentar con espera
-  // evita que un cold start rompa el build/prerender en Vercel.
+  // se cachean 5 min (revalidate). El free tier de Render duerme la API y
+  // Neon suspende la BD; mientras despiertan responden 500. Reintentar con
+  // esperas crecientes (10/20/30 s) cubre ese arranque en frío.
   let ultimo: Response | null = null;
   for (let i = 0; i < intentos; i += 1) {
-    if (i > 0) await esperar(i === 1 ? 8000 : 20000);
+    if (i > 0) await esperar(i * 10000);
     try {
       const res = await fetch(`${API_URL}${path}`, {
         next: { revalidate: 300 },
