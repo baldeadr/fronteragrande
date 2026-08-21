@@ -16,8 +16,6 @@ export const metadata: Metadata = {
     "Indicadores de la escena de la frontera grande: actividad en el tiempo, ranking de alcance, huella por red, categorías, ciudades y estados.",
 };
 
-export const dynamic = "force-dynamic";
-
 const ETIQUETA_ESTADO: Record<string, string> = {
   activo: "Activos",
   en_duda: "En duda",
@@ -25,8 +23,7 @@ const ETIQUETA_ESTADO: Record<string, string> = {
 };
 
 export default async function StatsPage() {
-  const stats = await api.stats();
-  const artistas = await api.artists();
+  const [stats, artistas] = await Promise.all([api.stats(), api.artists()]);
 
   const total = stats.total;
   const activos = stats.estados["activo"] ?? 0;

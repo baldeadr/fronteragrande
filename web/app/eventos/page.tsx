@@ -9,8 +9,6 @@ export const metadata: Metadata = {
     "Eventos, toquines y fiestas de la escena de la frontera grande: fechas, lugares y carteles.",
 };
 
-export const dynamic = "force-dynamic";
-
 function TarjetaEvento({ e }: { e: Evento }) {
   return (
     <article className="rounded-xl border border-line bg-surface p-4">

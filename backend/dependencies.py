@@ -1,7 +1,7 @@
 """Dependencias de FastAPI.
 
-Fuente única de la sesión de BD y las factorías de repositorios, para que los
-routers dependan de abstracciones y no de `SessionLocal` directamente.
+Fuente única de la sesión de BD, repositorios y caché, para que los routers
+dependan de abstracciones y no de implementaciones concretas directamente.
 """
 
 from collections.abc import Generator
@@ -10,6 +10,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from db.database import SessionLocal
+from lib.cache import MemoryCache, get_cache
 from lib.repository import (
     ArtistRepository,
     EventRepository,
@@ -25,6 +26,11 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def get_cache_dependency() -> MemoryCache:
+    """Devuelve la caché compartida de la aplicación."""
+    return get_cache()
 
 
 def get_artist_repo(session: Session = Depends(get_db)) -> ArtistRepository:

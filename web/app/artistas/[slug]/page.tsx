@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { api } from "@/lib/api";
 import EstadoBadge from "@/components/EstadoBadge";
 import Avatar from "@/components/Avatar";
@@ -69,8 +70,6 @@ function etiquetaMetricaCompleta(plataforma: string, tipo: string) {
   return tipoStat(tipo);
 }
 
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata({
   params,
 }: {
@@ -91,6 +90,23 @@ export async function generateMetadata({
   } catch {
     return { title: "Artista" };
   }
+}
+
+function SeccionFeed({
+  nombre,
+  feed,
+  eventos,
+}: {
+  nombre: string;
+  feed: Awaited<ReturnType<typeof api.artist>>["feed"];
+  eventos: Awaited<ReturnType<typeof api.artist>>["eventos"];
+}) {
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-4 sm:p-6">
+      <h2 className="mb-3 text-lg font-bold">Contenido reciente</h2>
+      <ContenidoPerfil nombre={nombre} feed={feed} eventos={eventos} />
+    </section>
+  );
 }
 
 export default async function PerfilPage({
@@ -466,11 +482,22 @@ export default async function PerfilPage({
         </a>
       </p>
 
-      <ContenidoPerfil
-        nombre={artist.nombre}
-        feed={artist.feed}
-        eventos={artist.eventos}
-      />
+      <Suspense
+        fallback={
+          <div className="rounded-2xl border border-line bg-surface p-4 sm:p-6">
+            <h2 className="mb-3 text-lg font-bold">Contenido reciente</h2>
+            <div className="flex min-h-[8rem] items-center justify-center">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-accent" />
+            </div>
+          </div>
+        }
+      >
+        <SeccionFeed
+          nombre={artist.nombre}
+          feed={artist.feed}
+          eventos={artist.eventos}
+        />
+      </Suspense>
     </div>
   );
 }
