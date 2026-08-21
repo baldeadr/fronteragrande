@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+
+const TAMANO_LOTE = 6;
 import FeedCard from "@/components/FeedCard";
 import { fechaCorta } from "@/lib/formato";
 import type { EventoArtista, FeedItem } from "@/lib/types";
@@ -79,6 +81,7 @@ export default function ContenidoPerfil({
   eventos: EventoArtista[];
 }) {
   const [pestana, setPestana] = useState<PestanaId>("todo");
+  const [visible, setVisible] = useState(TAMANO_LOTE);
 
   const porTipo = (bruto: string) =>
     feed.filter((i) => i.tipo_bruto === bruto);
@@ -103,6 +106,11 @@ export default function ContenidoPerfil({
       ? "No hay eventos registrados todavía."
       : "No hay contenido de este tipo todavía. El contenido aparece cuando el propio artista conecta su cuenta y se sincroniza.";
 
+  const cambiarPestana = (id: PestanaId) => {
+    setPestana(id);
+    setVisible(TAMANO_LOTE);
+  };
+
   return (
     <section>
       <h2 className="mb-3 text-lg font-bold">
@@ -115,7 +123,7 @@ export default function ContenidoPerfil({
           return (
             <button
               key={p.id}
-              onClick={() => setPestana(p.id)}
+              onClick={() => cambiarPestana(p.id)}
               aria-pressed={activo}
               className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
                 activo
@@ -140,7 +148,7 @@ export default function ContenidoPerfil({
       ) : (
         <div className="flex flex-col gap-3">
           {pestana === "eventos" ? (
-            eventos.map((e, i) => (
+            eventos.slice(0, visible).map((e, i) => (
               <div
                 key={i}
                 className="rounded-xl border border-line bg-surface px-4 py-3"
@@ -163,9 +171,18 @@ export default function ContenidoPerfil({
                       ? "video"
                       : "lanzamiento",
                 )
-            ).map((item, i) => (
-              <FeedCard key={i} item={item} enPerfil />
-            ))
+            )
+              .slice(0, visible)
+              .map((item, i) => <FeedCard key={i} item={item} enPerfil />)
+          )}
+          {conteos[pestana] > visible && (
+            <button
+              type="button"
+              onClick={() => setVisible((v) => v + TAMANO_LOTE)}
+              className="mx-auto rounded-lg border border-line px-4 py-2 text-sm text-muted transition-colors hover:text-text"
+            >
+              Cargar más
+            </button>
           )}
         </div>
       )}
