@@ -6,11 +6,11 @@ orquesta: el conocimiento de plataformas vive en `lib/plataformas`.
 """
 
 import os
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 import pandas as pd
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from backend.dependencies import (
     get_artist_repo,
+    get_cache_dependency,
     get_db,
     get_event_repo,
 )
@@ -33,7 +34,7 @@ from lib.plataformas import (
     link_con_metadatos,
     preview_feed,
 )
-from lib.notificaciones import notificar_todos
+from lib.cache import MemoryCache
 from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository, SettingsRepository
 from lib.servicios import (
     artistas_df,
@@ -46,7 +47,9 @@ from lib.servicios import (
     onboarding_artista,
     ranking_global,
     recalcular_actividad,
+    registrar_alta,
     stats_escena,
+    verificar_limite_altas,
 )
 from backend.feed_meta import (
     ADMIN_PASSWORD,
@@ -178,6 +181,14 @@ def _fecha_desde(texto: str | None) -> date | None:
     return date.fromisoformat(texto.strip())
 
 
+def invalidate_public_cache(cache: MemoryCache) -> None:
+    """Invalida las claves de caché públicas tras escrituras."""
+    cache.delete_pattern("artists:")
+    cache.delete_pattern("feed:")
+    cache.delete_pattern("stats:")
+    cache.delete_pattern("ranking:")
+
+
 def _json_safe(valor: Any) -> Any:
     """Convierte valores no serializables a JSON (fechas, NaN, numpy)."""
     if isinstance(valor, dict):
@@ -198,6 +209,16 @@ def health():
     return {"estado": "ok"}
 
 
+def _cache_key_artists(
+    segmento: str | None,
+    ciudad: str | None,
+    genero: str | None,
+    estado: str | None,
+    q: str | None,
+) -> str:
+    return f"artists:list:{segmento}:{ciudad}:{genero}:{estado}:{q}"
+
+
 @app.get("/api/artists")
 def list_artists(
     segmento: str | None = None,
@@ -207,13 +228,25 @@ def list_artists(
     q: str | None = None,
     db: Session = Depends(get_db),
     artistas: ArtistRepository = Depends(get_artist_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Listado de artistas (tarjetas para el directorio)."""
+    cache_key = _cache_key_artists(segmento, ciudad, genero, estado, q)
+    cache_key_ranking = "ranking:global"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     df = artistas_df(db)
     if df.empty:
         return []
 
-    ranking, menciones = ranking_global(df)
+    ranking = cache.get(cache_key_ranking)
+    if ranking is None:
+        ranking, menciones = ranking_global(df)
+        cache.set(cache_key_ranking, (ranking, menciones), ttl=300)
+    else:
+        ranking, menciones = ranking
 
     if q:
         q = q.lower()
@@ -230,9 +263,10 @@ def list_artists(
     if genero:
         df = df[df["generos"].str.lower().str.contains(genero.lower(), na=False)]
 
+    artistas_cargados = {a.id: a for a in artistas.todos(con_links=True)}
     tarjetas = []
     for _, fila in df.iterrows():
-        artist = artistas.por_id(fila["id"])
+        artist = artistas_cargados.get(fila["id"])
         tarjetas.append(
             {
                 "slug": fila["slug"],
@@ -283,38 +317,51 @@ def list_artists(
                 ],
             }
         )
-    return _json_safe(tarjetas)
+    resultado = _json_safe(tarjetas)
+    cache.set(cache_key, resultado, ttl=300)
+    return resultado
+
+
+def _ip_cliente(request: Request) -> str:
+    """IP real del solicitante, respetando el proxy de Render/Vercel."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else ""
 
 
 @app.post("/api/artists", status_code=201)
 def crear_artista_endpoint(
     entrada: AltaArtistaEntrada,
+    request: Request,
     db: Session = Depends(get_db),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
-    """Alta de un artista nuevo desde el formulario web (modo desarrollo).
+    """Alta de un artista nuevo desde el formulario web.
 
-    Crea el registro y sus enlaces, y dispara un onboarding *best-effort*:
-    foto de perfil desde las redes, último feed de YouTube (si hay canal) y
-    recalculo de `estado_activo`. Las fallas de red no impiden la creación.
+    Exige al menos un enlace, rechaza URLs duplicadas, aplica rate-limit por
+    IP (5 altas/24 h, cooldown 10 min) y no envía notificación push: ésta se
+    dispara solo cuando el artista verifica el proyecto vía OAuth.
     """
+    ip = _ip_cliente(request)
+    try:
+        verificar_limite_altas(db, ip)
+    except ValueError as exc:
+        raise HTTPException(status_code=429, detail=str(exc))
+
     try:
         artista = crear_artista(db, entrada.model_dump())
     except ValueError as exc:
+        detalle = str(exc).lower()
+        if "ya está vinculada" in detalle:
+            raise HTTPException(status_code=409, detail=str(exc))
         raise HTTPException(status_code=400, detail=str(exc))
 
     db.flush()  # asigna artista.id antes del onboarding (snapshots/feed lo usan)
     resumen = onboarding_artista(db, artista)
+    registrar_alta(db, ip)
     db.commit()
-    try:
-        notificar_todos(
-            PushSubscriptionRepository(db),
-            "Nuevo proyecto en Frontera Grande",
-            f"{artista.nombre} se sumó a la escena.",
-            f"/artistas/{artista.slug}",
-        )
-        db.commit()
-    except Exception:
-        db.rollback()
+    invalidate_public_cache(cache)
     return {
         "slug": artista.slug,
         "nombre": artista.nombre,
@@ -327,8 +374,14 @@ def artist_detail(
     slug: str,
     db: Session = Depends(get_db),
     artistas: ArtistRepository = Depends(get_artist_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Perfil completo de un artista: datos, redes, eventos y feed propio."""
+    cache_key = f"artists:detail:{slug}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     artist = artistas.por_slug(slug)
     if artist is None:
         raise HTTPException(status_code=404, detail="Artista no encontrado")
@@ -336,7 +389,13 @@ def artist_detail(
     df = artistas_df(db)
     fila = df[df["slug"] == slug].iloc[0] if not df.empty else None
 
-    ranking, menciones = ranking_global(df)
+    cache_key_ranking = "ranking:global"
+    ranking_cacheado = cache.get(cache_key_ranking)
+    if ranking_cacheado is None:
+        ranking, menciones = ranking_global(df)
+        cache.set(cache_key_ranking, (ranking, menciones), ttl=300)
+    else:
+        ranking, menciones = ranking_cacheado
     analisis = analisis_artista(
         metricas_artista(fila) if fila is not None else {},
         artist.fecha_captura,
@@ -456,12 +515,22 @@ def artist_detail(
         perfil["stats"]["spotify"]["fecha_captura"] = _json_safe(
             artist.fecha_oyentes_spotify
         )
-    return _json_safe(perfil)
+    resultado = _json_safe(perfil)
+    cache.set(cache_key, resultado, ttl=300)
+    return resultado
 
 
 @app.get("/api/feed")
-def get_feed(db: Session = Depends(get_db)):
+def get_feed(
+    db: Session = Depends(get_db),
+    cache: MemoryCache = Depends(get_cache_dependency),
+):
     """Feed unificado con previews de contenido."""
+    cache_key = "feed:global"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     feed = feed_df(db, limite=80)
     if feed.empty:
         return []
@@ -480,7 +549,9 @@ def get_feed(db: Session = Depends(get_db)):
         }
         for f in feed.to_dict(orient="records")
     ]
-    return _json_safe(filas)
+    resultado = _json_safe(filas)
+    cache.set(cache_key, resultado, ttl=300)
+    return resultado
 
 
 @app.get("/api/events")
@@ -501,6 +572,21 @@ def list_events(eventos_repo: EventRepository = Depends(get_event_repo)):
     return _json_safe(eventos)
 
 
+@app.get("/api/stats")
+def get_stats(
+    db: Session = Depends(get_db),
+    cache: MemoryCache = Depends(get_cache_dependency),
+):
+    """Indicadores de la escena."""
+    cache_key = "stats:global"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    resultado = _json_safe(stats_escena(db))
+    cache.set(cache_key, resultado, ttl=300)
+    return resultado
+
+
 def _requiere_admin(x_admin_token: str) -> None:
     """Levanta 403 si no hay token de admin o no coincide con `ADMIN_PASSWORD`."""
     if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
@@ -515,6 +601,7 @@ def admin_crear_evento(
     x_admin_token: str = Header(default=""),
     db: Session = Depends(get_db),
     eventos: EventRepository = Depends(get_event_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Alta de un evento desde el panel de administración.
 
@@ -539,6 +626,7 @@ def admin_crear_evento(
     db.flush()
     recalcular_actividad(db)
     db.commit()
+    invalidate_public_cache(cache)
     return {"ok": True, "id": evento.id}
 
 
@@ -549,6 +637,7 @@ def admin_editar_evento(
     x_admin_token: str = Header(default=""),
     db: Session = Depends(get_db),
     eventos: EventRepository = Depends(get_event_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Edición de un evento desde el panel de administración.
 
@@ -572,6 +661,7 @@ def admin_editar_evento(
     db.flush()
     recalcular_actividad(db)
     db.commit()
+    invalidate_public_cache(cache)
     return {"ok": True, "id": evento.id}
 
 
@@ -581,6 +671,7 @@ def admin_eliminar_evento(
     x_admin_token: str = Header(default=""),
     db: Session = Depends(get_db),
     eventos: EventRepository = Depends(get_event_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Elimina un evento desde el panel de administración.
 
@@ -594,13 +685,8 @@ def admin_eliminar_evento(
     db.flush()
     recalcular_actividad(db)
     db.commit()
+    invalidate_public_cache(cache)
     return {"ok": True}
-
-
-@app.get("/api/stats")
-def stats(db: Session = Depends(get_db)):
-    """Indicadores de la escena para el panel público."""
-    return _json_safe(stats_escena(db))
 
 
 @app.delete("/api/artists/{slug}")
@@ -608,6 +694,7 @@ def eliminar_artista_endpoint(
     slug: str,
     x_admin_token: str = Header(default=""),
     db: Session = Depends(get_db),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Elimina un artista y todo su contenido (solo administración).
 
@@ -629,6 +716,7 @@ def eliminar_artista_endpoint(
     )
     db.delete(artista)  # cascada ORM: enlaces y chequeos
     db.commit()
+    invalidate_public_cache(cache)
     return {"ok": True}
 
 
@@ -677,12 +765,53 @@ def admin_list_artists(
     return _json_safe(lista)
 
 
+@app.get("/api/admin/artists/pending")
+def admin_artistas_pendientes(
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Proyectos registrados desde el formulario que aún no se verifican.
+
+    Incluye solo los que tienen más de 60 días sin verificar, para que el
+    administrador decida si eliminarlos manualmente.
+    """
+    if not ADMIN_PASSWORD or x_admin_token != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=403, detail="Acción restringida al administrador"
+        )
+    corte = date.today() - timedelta(days=60)
+    lista = []
+    for a in ArtistRepository(db).todos():
+        if a.estado_registro != "registrado (formulario, sin conectar)":
+            continue
+        if (a.fecha_registro or date.today()) > corte:
+            continue
+        dias = (date.today() - (a.fecha_registro or date.today())).days
+        lista.append(
+            {
+                "slug": a.slug,
+                "nombre": a.nombre,
+                "segmento": a.segmento,
+                "ciudad": a.ciudad,
+                "fecha_registro": a.fecha_registro,
+                "dias_sin_verificar": dias,
+                "links": [
+                    {"plataforma": l.plataforma, "url": l.url}
+                    for l in a.links
+                    if not l.es_busqueda
+                ],
+            }
+        )
+    return _json_safe(lista)
+
+
 @app.put("/api/artists/{slug}")
 def editar_artista_endpoint(
     slug: str,
     entrada: EditarArtistaEntrada,
     x_admin_token: str = Header(default=""),
     db: Session = Depends(get_db),
+    cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Edita un artista (solo administración).
 
@@ -704,6 +833,7 @@ def editar_artista_endpoint(
     if artista is None:
         raise HTTPException(status_code=404, detail="Artista no encontrado")
     db.commit()
+    invalidate_public_cache(cache)
     return {"ok": True, "slug": artista.slug, "nombre": artista.nombre}
 
 

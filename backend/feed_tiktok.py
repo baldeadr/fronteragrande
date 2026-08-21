@@ -162,6 +162,10 @@ def callback(code: str, state: str):
             )
             session.commit()
             ok = bool(artista.tt_refresh_token)
+            if ok:
+                from lib.notificaciones import notificar_verificacion_artista
+
+                notificar_verificacion_artista(session, artista.nombre)
     except Exception as exc:
         session.rollback()
         logger.exception("Error al conectar TikTok para el artista %s: %s", slug, exc)

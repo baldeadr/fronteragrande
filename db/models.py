@@ -240,3 +240,17 @@ class PushSubscription(Base):
     keys_p256dh: Mapped[str] = mapped_column(String(200))
     keys_auth: Mapped[str] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AltaRegistro(Base):
+    """Intentos de alta de proyecto desde el formulario público.
+
+    Guarda un hash de la IP para rate-limit sin conservar la IP en claro.
+    Se purgan automáticamente registros mayores a 7 días.
+    """
+
+    __tablename__ = "alta_registros"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ip_hash: Mapped[str] = mapped_column(String(64), index=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -25,7 +25,7 @@ debe conseguir.
 | 5 | ✔→✘ Ingesta asistida de posts (eliminada) | Se implementó como puente manual (`POST /api/artists/{slug}/feed` + botón "+ Añadir post") y luego **se eliminó** en el pivote a **registro voluntario del artista**: el contenido del feed solo llega por el artista que conecta su página FB/IG (sync Meta) o el feed de YouTube del onboarding. No reintroducir. |
 | 6 | ✔ Stats de redes | Seguidores FB/IG y reproducciones Spotify por plataforma (datos con fuente). |
 | 7 | ✔ **Ranking de alcance** | Índice global 0-100 = 55% audiencia + 45% consumo, con señales `log10` normalizadas por métrica. YouTube divide su peso 30% suscriptores / 70% vistas; Spotify separa seguidores de oyentes/reproducciones. Muestra índices de audiencia, consumo y global (`lib/helpers.py`); menciones especiales para el Top 3 por género/ciudad/segmento. |
-| 8 | ✔ Directorio pulido + registro desde la web | Taxonomía de categoría (Banda/Solista/DJ/Colectivo/Covers/Tributo; MC y Productor como Solista), ciudades base única con dropdown (Tamaulipas + Valle de Río Grande + "Otro"), filtros con etiqueta y "Todas", géneros en chips; `POST /api/artists` ("Suma tu proyecto") con onboarding (foto, ultimos videos YT, `estado_activo`). El artista **verifica** su perfil conectando la página FB/IG. |
+| 8 | ✔ Directorio pulido + registro desde la web | Taxonomía de categoría (Banda/Solista/DJ/Colectivo/Covers/Tributo; MC y Productor como Solista), ciudades base única con dropdown (Tamaulipas + Valle de Río Grande + "Otro"), filtros con etiqueta y "Todas", géneros en chips; `POST /api/artists` ("Suma tu proyecto") con validaciones (mínimo 1 red, máximo 6, rechazo de URLs duplicadas, rate-limit 5/IP/24h + cooldown 10min), onboarding (foto, últimos videos YT, `estado_activo`) y leyenda de que los proyectos sin verificar pueden ser eliminados. El artista **verifica** su perfil conectando la página FB/IG/TikTok; notificaciones push solo tras verificación. |
 | 9 | ✔ Identidad **Frontera Grande** + Acerca de | Renombrado en toda la web; `docs/vision.md` (fuente única de qué es/qué no es); página **Acerca de** (historia, "cómo explorar", actividad y regla del ranking con fórmula en LaTeX); feed mejorado (foto real, fecha relativa, "Cargar más", H1 "Actividad de la escena"). |
 | 10 | ✔ **Panel de stats interactivo** | `GET /api/stats` ampliado (`feed_serie`, `altas_por_mes`, `seguidores`/`reproducciones`, `cobertura`, `posts_90dias`, `por_ciudad`, `eventos_proximos`) + gráficas SVG caseras interactivas (actividad temporal, ranking desglosable por red, ecosistema de redes, ciudades apiladas con leyenda, dona por categoría) — sin dependencias de cliente. |
 | 11 | ✔ **Panel de administración en la web (CRUD con auth)** | `/admin` protegido por `ADMIN_PASSWORD` (`X-Admin-Token`): login en sesión, listado con `GET /api/admin/artists`, edición (`PUT /api/artists/{slug}`: nombre, ciudad, categoría, géneros, bio, notas, logros, estado de actividad y redes) y eliminación (`DELETE /api/artists/{slug}`) con confirmación. Pendiente el disparador del scraper. |
@@ -75,7 +75,7 @@ Plan de lanzamiento orgánico definido el 2026-08-16. Detalle completo en
 | 5 | Script `generar_tarjeta.py` (Pillow, cuadrado + story, verificados + activos) | `[PENDIENTE]` |
 | 6 | Completar perfiles de FB/IG (bio, portada) | `[PENDIENTE]` |
 | 7 | Preparar contenido base (3-4 posts) | `[PENDIENTE]` |
-| 8 | Actualizar `/ayuda-artistas` con beneficios de verificación | `[PENDIENTE]` |
+| 8 | Actualizar `/ayuda-artistas` con beneficios de verificación | ✔ Añadida la leyenda de que los proyectos sin verificar pueden ser eliminados. |
 | 9 | Crear cuenta de TikTok (cross-posting) | `[PENDIENTE]` |
 
 ### Fase 1: Sembrado (1-2 semanas)
@@ -100,7 +100,7 @@ Plan de lanzamiento orgánico definido el 2026-08-16. Detalle completo en
 | Ítem | Estado |
 |------|--------|
 | **Dominio** | Decisión tomada: **`fronteragrande.mx`** (2026-08). Metadatos/sitemap/robots ya usan `https://fronteragrande.mx`. Pendiente: registrar/comprar el dominio y apuntarlo al despliegue. |
-| **Permisos del registro** | El formulario hoy es público (modo desarrollo); requiere auth cuando se decida. |
+| **Permisos del registro** | El formulario sigue público pero ahora tiene rate-limit, validación de URLs duplicadas y advertencia de eliminación; auth más estricta (CAPTCHA/cuenta) queda pendiente de decisión. |
 | **Sync de Meta** | Workflow de GitHub Actions activo cada 6 horas; primera sincronización confirmada con Apex Ultra. Pendiente conectar al resto de artistas. |
 | **Finanzas** | Análisis inicial en `docs/finanzas.md`: audiencia de nicho, costos casi nulos en free tier, patrocinio local antes que APIs premium y AdSense como complemento. |
 

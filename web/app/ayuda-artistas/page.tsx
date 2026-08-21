@@ -67,6 +67,7 @@ export default function AyudaArtistasPage() {
           <li>✓ Tus publicaciones de <b className="text-text">Facebook e Instagram</b> se sincronizan automáticamente.</li>
           <li>✓ Tu <b className="text-text">foto de perfil</b> se actualiza desde tus redes.</li>
           <li>✓ <b className="text-text">Mayor visibilidad</b> en el directorio de Frontera Grande.</li>
+          <li>✓ <b className="text-text">Evitas la eliminación:</b> los proyectos que no se verifican pueden ser borrados después de un período de revisión.</li>
         </ul>
       </section>
 

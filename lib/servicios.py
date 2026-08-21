@@ -5,13 +5,15 @@ feed unificado, métricas por plataforma y ranking de alcance. No tocan SQL
 directo: delegan en `lib.repository`.
 """
 
+import hashlib
 from collections import Counter
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pandas as pd
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from db.models import ESTADOS_ACTIVO, Artist, ActivityCheck
+from db.models import ESTADOS_ACTIVO, Artist, ActivityCheck, AltaRegistro
 from lib.helpers import TIPOS_FEED, conteo_generos, youtube_thumbnail
 from lib.repository import (
     ArtistRepository,
@@ -62,7 +64,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "imagen_perfil": a.imagen_perfil,
             "imagen_origen": a.imagen_origen,
         }
-        for a in ArtistRepository(session).todos()
+        for a in ArtistRepository(session).todos(con_links=False)
     ]
     return pd.DataFrame(filas)
 
@@ -90,14 +92,10 @@ def ultimo_feed_de_artista(session: Session, artist: Artist) -> date | None:
     chequeos ni errores. Usa la fecha de publicación; si no la tiene,
     la de creación del registro.
     """
-    fechas = [
-        (fi.fecha or fi.created_at).date()
-        for fi in FeedRepository(session).de_artista(artist.id)
-        if fi.tipo in TIPOS_FEED_CONTENIDO
-    ]
-    if not fechas:
+    item = FeedRepository(session).ultimo_contenido_de_artista(artist.id)
+    if item is None:
         return None
-    return max(fechas)
+    return (item.fecha or item.created_at).date()
 
 
 def feed_df(
@@ -106,12 +104,23 @@ def feed_df(
     """Feed unificado: contenido scrapeado + eventos + lanzamientos + chequeos.
 
     Con `artista` se filtra todo a ese proyecto (feed del perfil); sin él,
-    es el feed global. El tope `limite` solo aplica al resultado final, no
-    por artista.
+    es el feed global. El tope `limite` aplica al resultado final.
     """
+    feed_repo = FeedRepository(session)
+    artist_repo = ArtistRepository(session)
+    artista_id: int | None = None
+    if artista is not None:
+        artista_encontrado = artist_repo.por_nombre(artista)
+        artista_id = artista_encontrado.id if artista_encontrado else None
+
     filas = []
 
-    for fi in FeedRepository(session).todos_desc():
+    feed_items = (
+        feed_repo.de_artista_desc(artista_id, limite=limite * 2)
+        if artista_id is not None
+        else feed_repo.todos_desc(limite=limite * 2)
+    )
+    for fi in feed_items:
         nombre_art = fi.artist.nombre if fi.artist else ""
         if artista is not None and nombre_art != artista:
             continue
@@ -135,10 +144,13 @@ def feed_df(
             }
         )
 
-    for e in EventRepository(session).todos_fecha_desc():
+    eventos = (
+        EventRepository(session).de_artista(artista)
+        if artista is not None
+        else EventRepository(session).todos_fecha_desc()
+    )
+    for e in eventos:
         if e.fecha is None:
-            continue
-        if artista is not None and artista.lower() not in (e.artistas or "").lower():
             continue
         detalle = " · ".join(
             parte for parte in (e.lugar, e.artistas, e.que_demuestra) if parte
@@ -160,9 +172,12 @@ def feed_df(
             }
         )
 
-    for a in ArtistRepository(session).con_lanzamiento():
-        if artista is not None and a.nombre != artista:
-            continue
+    artistas_con_lanzamiento = (
+        [a for a in artist_repo.todos(con_links=False) if a.nombre == artista]
+        if artista is not None
+        else artist_repo.con_lanzamiento()
+    )
+    for a in artistas_con_lanzamiento:
         filas.append(
             {
                 "fecha": a.ultimo_lanzamiento,
@@ -180,10 +195,13 @@ def feed_df(
             }
         )
 
-    for c in ChecksRepository(session).ultimos(30):
+    chequeos = (
+        ChecksRepository(session).ultimos_de_artista(artista_id, limite=30)
+        if artista_id is not None
+        else ChecksRepository(session).ultimos(30)
+    )
+    for c in chequeos:
         nombre = c.artist.nombre if c.artist else ""
-        if artista is not None and nombre != artista:
-            continue
         filas.append(
             {
                 "fecha": c.fecha_chequeo,
@@ -464,6 +482,7 @@ def stats_escena(session: Session) -> dict:
     cobertura (% de proyectos con cada red), la actividad mensual del feed,
     las altas por mes y los eventos próximos. Caller: `GET /api/stats`.
     """
+    feed_repo = FeedRepository(session)
     df = artistas_df(session)
     if df.empty:
         return {
@@ -516,25 +535,10 @@ def stats_escena(session: Session) -> dict:
             reproducciones[clave] = suma
         cobertura[clave] = round(int((serie > 0).sum()) / total * 100, 1)
 
-    feed = feed_df(session, limite=3000)
-    if feed.empty:
-        feed_serie: list[dict] = []
-        posts_90dias = 0
-    else:
-        sin_chequeos = feed[feed["fuente"] != "scraper"]
-        publicaciones = feed[~feed["fuente"].isin(["scraper", "escena", "registro"])]
-        feed_serie = (
-            _serie_mensual(sin_chequeos["fecha"]) if not sin_chequeos.empty else []
-        )
-        posts_90dias = int(
-            (
-                publicaciones["fecha"]
-                >= pd.Timestamp.today() - pd.Timedelta(days=90)
-            ).sum()
-        )
+    feed_serie = feed_repo.serie_mensual(excluir_fuentes=["scraper"])
+    posts_90dias = feed_repo.conteo_reciente(dias=90, excluir_fuentes=["scraper", "escena", "registro"])
 
-    altas = df["fecha_registro"].fillna(df["fecha_creacion"])
-    altas_por_mes = _serie_mensual(altas)
+    altas_por_mes = _serie_mensual(df["fecha_registro"].fillna(df["fecha_creacion"]))
 
     por_ciudad: list[dict] = []
     for ciudad, grupo in df.groupby("ciudad"):
@@ -549,12 +553,8 @@ def stats_escena(session: Session) -> dict:
         )
     por_ciudad.sort(key=lambda x: x["total"], reverse=True)
 
-    hoy = date.today()
-    proximos = [
-        e
-        for e in EventRepository(session).todos_fecha_asc()
-        if e.fecha and e.fecha >= hoy
-    ]
+    eventos_repo = EventRepository(session)
+    proximos = eventos_repo.proximos(desde=date.today())
     ciudad_proxima = None
     if proximos:
         agrupado = Counter(e.ciudad for e in proximos if e.ciudad)
@@ -575,7 +575,7 @@ def stats_escena(session: Session) -> dict:
 
     verificados = sum(
         1
-        for a in ArtistRepository(session).todos()
+        for a in ArtistRepository(session).todos(con_links=False)
         if a.fb_page_token and a.estado_registro
     )
 
@@ -685,6 +685,49 @@ def _reemplazar_redes(session: Session, artista: Artist, redes: list[dict]) -> N
         )
 
 
+MAX_ALTAS_POR_DIA = 5
+COOLDOWN_ALTAS_MINUTOS = 10
+
+
+def _hash_ip(ip: str) -> str:
+    return hashlib.sha256(ip.encode()).hexdigest()
+
+
+def verificar_limite_altas(session: Session, ip: str) -> None:
+    """Levanta ValueError si la IP excede el límite de altas recientes."""
+    if not ip:
+        raise ValueError("No se pudo determinar la dirección del solicitante")
+    ahora = datetime.utcnow()
+    desde = ahora - timedelta(hours=24)
+    recientes = session.execute(
+        select(AltaRegistro)
+        .where(AltaRegistro.ip_hash == _hash_ip(ip))
+        .where(AltaRegistro.creado_en >= desde)
+        .order_by(AltaRegistro.creado_en.desc())
+    ).scalars().all()
+
+    if len(recientes) >= MAX_ALTAS_POR_DIA:
+        raise ValueError(
+            f"Límite alcanzado: máximo {MAX_ALTAS_POR_DIA} proyectos "
+            "por dirección cada 24 h"
+        )
+
+    ultima = recientes[0] if recientes else None
+    if ultima is not None:
+        cooldown_hasta = ultima.creado_en + timedelta(minutes=COOLDOWN_ALTAS_MINUTOS)
+        if ahora < cooldown_hasta:
+            restante = int((cooldown_hasta - ahora).total_seconds() // 60) + 1
+            raise ValueError(
+                f"Espera {restante} min antes de registrar otro proyecto"
+            )
+
+
+def registrar_alta(session: Session, ip: str) -> None:
+    """Registra un intento exitoso de alta para rate-limit futuro."""
+    if ip:
+        session.add(AltaRegistro(ip_hash=_hash_ip(ip)))
+
+
 def crear_artista(session: Session, datos: dict) -> Artist:
     """Alta de artista nuevo desde el formulario (registro voluntario).
 
@@ -719,6 +762,26 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     if len(bio) > 500:
         raise ValueError("La bio puede tener como máximo 500 caracteres")
 
+    redes_limpias = [
+        {"plataforma": (r.get("plataforma") or "").strip().lower(),
+         "url": (r.get("url") or "").strip()}
+        for r in (datos.get("redes") or [])
+        if (r.get("url") or "").strip()
+    ]
+    if not redes_limpias:
+        raise ValueError("Debes incluir al menos un enlace a una red o plataforma")
+    if len(redes_limpias) > 6:
+        raise ValueError("Puedes incluir como máximo 6 enlaces")
+
+    links_repo = LinkRepository(session)
+    for red in redes_limpias:
+        existente = links_repo.url_ya_vinculada(red["url"])
+        if existente is not None:
+            nombre_duplicado = existente.artist.nombre if existente.artist else "otro proyecto"
+            raise ValueError(
+                f"La URL {red['url']} ya está vinculada a '{nombre_duplicado}'"
+            )
+
     repos = ArtistRepository(session)
     artista = repos.crear(
         slug=_slug_unico(session, nombre),
@@ -732,12 +795,9 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     )
     artista.bio = bio
 
-    links_repo = LinkRepository(session)
-    for red in datos.get("redes") or []:
-        url = (red.get("url") or "").strip()
-        if not url:
-            continue
-        declarada = (red.get("plataforma") or "").strip().lower()
+    for red in redes_limpias:
+        url = red["url"]
+        declarada = red["plataforma"]
         plataforma = detectar_plataforma(url) or declarada or "otro"
         es_busqueda = "/results?" in url or "/search?" in url
         links_repo.crear_para_artista(

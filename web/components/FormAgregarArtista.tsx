@@ -109,6 +109,15 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return;
+    const redesValidas = redes.filter((r) => r.url.trim());
+    if (redesValidas.length === 0) {
+      setError("Incluye al menos un enlace a una red o plataforma.");
+      return;
+    }
+    if (redesValidas.length > 6) {
+      setError("Puedes incluir como máximo 6 enlaces.");
+      return;
+    }
     setCargando(true);
     setError(null);
     try {
@@ -162,6 +171,11 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                 <p className="text-sm text-green-600">
                   &quot;{creado.nombre}&quot; registrado ({creado.slug}). El
                   onboarding se ejecutó en el servidor: revisa su perfil.
+                </p>
+                <p className="text-xs text-amber-500">
+                  Conecta tu página de Facebook, Instagram o TikTok desde el
+                  perfil para verificar el proyecto. Los proyectos sin verificar
+                  pueden ser eliminados.
                 </p>
                 <div className="flex gap-2">
                   <Link
@@ -290,6 +304,11 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
 
                 <div className="flex flex-col gap-2">
                   <p className="text-xs text-muted">Redes</p>
+                  <p className="text-xs text-amber-500">
+                    Incluye al menos un enlace. Tu proyecto quedará registrado,
+                    pero sin verificar.{" "}
+                    <b>Los proyectos sin verificar pueden ser eliminados.</b>
+                  </p>
                   {redes.map((r, i) => (
                     <div key={i} className="flex gap-2">
                       <select

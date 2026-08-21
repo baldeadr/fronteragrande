@@ -14,5 +14,6 @@ pantalla de inicio.
    sincronización de Meta debe notificar nuevos posts.
 
 La web registra suscripciones en `POST /api/push/subscribe`. El panel admin
-puede enviar avisos generales desde `/admin`; las altas de artistas y los
-posts nuevos de Meta generan avisos automáticos.
+puede enviar avisos generales desde `/admin`; los posts nuevos de Meta generan
+avisos automáticos; las altas de artistas **solo** generan avisos automáticos
+cuando el proyecto se verifica mediante OAuth (Meta o TikTok).

@@ -388,3 +388,26 @@ def slugificar(nombre: str) -> str:
     texto = unicodedata.normalize("NFKD", nombre or "").encode("ascii", "ignore").decode()
     texto = re.sub(r"[^a-zA-Z0-9]+", "_", texto.lower()).strip("_")
     return texto or "sin_nombre"
+
+
+def normalizar_url_para_duplicados(url: str) -> str:
+    """Devuelve una forma canónica de una URL para detectar duplicados.
+
+    Quita espacios, fuerza `https://` si no tiene esquema, normaliza el host
+    a minúsculas, elimina `www.`, elimina querystring y fragmento, y quita la
+    barra final del path. Esto cubre variantes comunes de un mismo perfil
+    social (ej. `instagram.com/user/`, `www.instagram.com/user?igsh=...`).
+    """
+    from urllib.parse import urlparse, urlunparse
+
+    url = (url or "").strip()
+    if not url:
+        return ""
+    if "://" not in url:
+        url = "https://" + url
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    path = parsed.path.rstrip("/")
+    return urlunparse((parsed.scheme.lower(), host, path, "", "", ""))

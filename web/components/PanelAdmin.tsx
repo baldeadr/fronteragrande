@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   adminArtistas,
+  adminArtistasPendientes,
   adminGetSettings,
   adminPutSettings,
   broadcastPush,
@@ -19,7 +20,7 @@ import {
   eliminarArtista,
 } from "@/lib/api";
 import PanelEventos from "@/components/PanelEventos";
-import type { AdminArtist, LinkAdmin } from "@/lib/types";
+import type { AdminArtist, ArtistaPendiente, LinkAdmin } from "@/lib/types";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"];
 
@@ -58,8 +59,9 @@ export default function PanelAdmin() {
     return "";
   });
   const [autenticado, setAutenticado] = useState(false);
-  const [pestana, setPestana] = useState<"artistas" | "eventos">("artistas");
+  const [pestana, setPestana] = useState<"artistas" | "eventos" | "revision">("artistas");
   const [artistas, setArtistas] = useState<AdminArtist[]>([]);
+  const [pendientes, setPendientes] = useState<ArtistaPendiente[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [avisoTitulo, setAvisoTitulo] = useState("");
@@ -74,8 +76,12 @@ export default function PanelAdmin() {
     setCargando(true);
     setError("");
     try {
-      const datos = await adminArtistas(clave);
+      const [datos, pend] = await Promise.all([
+        adminArtistas(clave),
+        adminArtistasPendientes(clave),
+      ]);
       setArtistas(datos);
+      setPendientes(pend);
       setAutenticado(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Clave de administrador incorrecta");
@@ -172,6 +178,21 @@ export default function PanelAdmin() {
           Artistas
         </button>
         <button
+          onClick={() => setPestana("revision")}
+          className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            pestana === "revision"
+              ? "bg-accent text-bg"
+              : "text-muted hover:text-text"
+          }`}
+        >
+          Sin verificar
+          {pendientes.length > 0 && (
+            <span className="ml-1 rounded-full bg-inactivo px-1.5 py-0.5 text-[10px] text-bg">
+              {pendientes.length}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setPestana("eventos")}
           className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             pestana === "eventos"
@@ -185,6 +206,12 @@ export default function PanelAdmin() {
 
       {pestana === "eventos" ? (
         <PanelEventos token={token} />
+      ) : pestana === "revision" ? (
+        <PanelRevision
+          token={token}
+          pendientes={pendientes}
+          onCambio={() => cargar(token)}
+        />
       ) : (
         <>
           <form
@@ -619,5 +646,93 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
         }`}
       />
     </button>
+  );
+}
+
+function PanelRevision({
+  token,
+  pendientes,
+  onCambio,
+}: {
+  token: string;
+  pendientes: ArtistaPendiente[];
+  onCambio: () => void;
+}) {
+  const [borrando, setBorrando] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  async function borrar(slug: string) {
+    setBorrando(slug);
+    setError("");
+    try {
+      await eliminarArtista(slug, token);
+      onCambio();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo eliminar");
+      setBorrando(null);
+    }
+  }
+
+  if (pendientes.length === 0) {
+    return (
+      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+        No hay proyectos pendientes de verificación desde hace más de 60 días.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted">
+        Proyectos registrados desde el formulario que aún no se verifican y
+        tienen más de 60 días. Revisa cada caso antes de eliminar.
+      </p>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+      {pendientes.map((a) => (
+        <div
+          key={a.slug}
+          className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-medium">
+                <Link
+                  href={`/artistas/${a.slug}`}
+                  className="hover:underline"
+                >
+                  {a.nombre}
+                </Link>
+              </p>
+              <p className="text-xs text-muted">
+                {a.segmento} · {a.ciudad} · {a.dias_sin_verificar} días sin verificar
+              </p>
+            </div>
+            <button
+              onClick={() => void borrar(a.slug)}
+              disabled={borrando === a.slug}
+              className="rounded-lg border border-line px-3 py-1.5 text-sm text-muted transition-colors hover:border-inactivo hover:text-inactivo disabled:opacity-50"
+            >
+              {borrando === a.slug ? "Eliminando…" : "Eliminar"}
+            </button>
+          </div>
+          {a.links.length > 0 && (
+            <ul className="flex flex-wrap gap-2 text-xs text-muted">
+              {a.links.map((l) => (
+                <li key={l.url}>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-text"
+                  >
+                    {l.plataforma}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

@@ -6,10 +6,10 @@ constructor: la inyecta `backend/dependencies.py` en la API, o la crea el
 propio script cuando se usa desde línea de comandos.
 """
 
-from datetime import date
+from datetime import date, datetime, timedelta
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 
 from db.models import (
     ActivityCheck,
@@ -29,10 +29,11 @@ class ArtistRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def todos(self) -> list[Artist]:
-        return self.session.execute(
-            select(Artist).order_by(Artist.nombre)
-        ).scalars().all()
+    def todos(self, con_links: bool = False) -> list[Artist]:
+        consulta = select(Artist).order_by(Artist.nombre)
+        if con_links:
+            consulta = consulta.options(selectinload(Artist.links))
+        return self.session.execute(consulta).scalars().all()
 
     def por_slug(self, slug: str) -> Artist | None:
         return self.session.execute(
@@ -41,6 +42,11 @@ class ArtistRepository:
 
     def por_id(self, artist_id: int) -> Artist | None:
         return self.session.get(Artist, artist_id)
+
+    def por_nombre(self, nombre: str) -> Artist | None:
+        return self.session.execute(
+            select(Artist).where(Artist.nombre == nombre)
+        ).scalar_one_or_none()
 
     def crear(
         self,
@@ -120,10 +126,13 @@ class EventRepository:
     def de_artista(self, nombre: str) -> list[Event]:
         """Eventos de la escena en cuyo cartel aparece el artista."""
         nombre_bajo = (nombre or "").lower()
-        return [
-            e for e in self.todos_fecha_desc()
-            if nombre_bajo and nombre_bajo in (e.artistas or "").lower()
-        ]
+        if not nombre_bajo:
+            return []
+        return self.session.execute(
+            select(Event)
+            .where(func.lower(Event.artistas).like(f"%{nombre_bajo}%"))
+            .order_by(Event.fecha.desc())
+        ).scalars().all()
 
     def por_id(self, evento_id: int) -> Event | None:
         return self.session.execute(
@@ -181,6 +190,14 @@ class EventRepository:
             self.session.delete(evento)
         return evento
 
+    def proximos(self, desde: date) -> list[Event]:
+        """Eventos con fecha >= desde, ordenados cronológicamente."""
+        return self.session.execute(
+            select(Event)
+            .where(Event.fecha >= desde)
+            .order_by(Event.fecha)
+        ).scalars().all()
+
 
 class FeedRepository:
     """Consultas y alta de elementos del feed (`feed_items`).
@@ -198,6 +215,26 @@ class FeedRepository:
             consulta = consulta.limit(limite)
         return self.session.execute(consulta).scalars().all()
 
+    def de_artista_desc(
+        self,
+        artist_id: int,
+        limite: int | None = None,
+        desde: date | None = None,
+    ) -> list[FeedItem]:
+        """Feed de un artista, filtrado y ordenado en la base de datos."""
+        consulta = (
+            select(FeedItem)
+            .where(FeedItem.artist_id == artist_id)
+            .order_by(FeedItem.created_at.desc())
+        )
+        if desde is not None:
+            consulta = consulta.where(
+                func.coalesce(FeedItem.fecha, FeedItem.created_at) >= desde
+            )
+        if limite:
+            consulta = consulta.limit(limite)
+        return self.session.execute(consulta).scalars().all()
+
     def por_url(self, url: str) -> FeedItem | None:
         return self.session.execute(
             select(FeedItem).where(FeedItem.url == url)
@@ -207,6 +244,67 @@ class FeedRepository:
         return self.session.execute(
             select(FeedItem).where(FeedItem.artist_id == artist_id)
         ).scalars().all()
+
+    def ultimo_contenido_de_artista(
+        self, artist_id: int
+    ) -> FeedItem | None:
+        """Elemento de contenido más reciente de un artista (sin chequeos)."""
+        return self.session.execute(
+            select(FeedItem)
+            .where(
+                FeedItem.artist_id == artist_id,
+                FeedItem.tipo.in_(["video", "lanzamiento", "post", "evento"]),
+            )
+            .order_by(FeedItem.created_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+    def serie_mensual(
+        self,
+        meses: int = 12,
+        excluir_fuentes: list[str] | None = None,
+    ) -> list[dict]:
+        """Conteo de ítems por mes, opcionalmente excluyendo fuentes."""
+        columna = func.coalesce(FeedItem.fecha, FeedItem.created_at)
+        consulta = select(
+            func.strftime("%Y-%m", columna).label("mes"),
+            func.count().label("conteo"),
+        )
+        if excluir_fuentes:
+            consulta = consulta.where(FeedItem.fuente.notin_(excluir_fuentes))
+        consulta = consulta.group_by("mes").order_by("mes")
+        filas = self.session.execute(consulta).all()
+        return self._completar_serie(filas, meses)
+
+    def conteo_reciente(
+        self,
+        dias: int,
+        excluir_fuentes: list[str] | None = None,
+    ) -> int:
+        """Cantidad de ítems de los últimos N días."""
+        columna = func.coalesce(FeedItem.fecha, FeedItem.created_at)
+        desde = datetime.utcnow() - timedelta(days=dias)
+        consulta = select(func.count()).where(columna >= desde)
+        if excluir_fuentes:
+            consulta = consulta.where(FeedItem.fuente.notin_(excluir_fuentes))
+        return self.session.execute(consulta).scalar() or 0
+
+    @staticmethod
+    def _completar_serie(filas, meses: int) -> list[dict]:
+        desde = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        periodos = []
+        for i in range(meses - 1, -1, -1):
+            mes = desde.month - i
+            anio = desde.year
+            while mes <= 0:
+                mes += 12
+                anio -= 1
+            periodos.append(datetime(anio, mes, 1))
+        datos = {fila.mes: fila.conteo for fila in filas}
+        return [
+            {"mes": p.strftime("%Y-%m"), "año": p.year, "conteo": datos.get(p.strftime("%Y-%m"), 0)}
+            for p in periodos
+        ]
 
     def existe_url(self, url: str) -> bool:
         return self.por_url(url) is not None
@@ -273,6 +371,30 @@ class LinkRepository:
             .order_by(ArtistLink.plataforma)
         ).scalars().all()
 
+    def url_ya_vinculada(
+        self, url: str, excluir_artist_id: int | None = None
+    ) -> ArtistLink | None:
+        """Devuelve el primer enlace cuya URL canónica coincida con `url`.
+
+        Ignora enlaces de búsqueda (`es_busqueda`). Se puede excluir un
+        artista para permitir re-editar sus propios enlaces.
+        """
+        from lib.helpers import normalizar_url_para_duplicados
+
+        canon = normalizar_url_para_duplicados(url)
+        if not canon:
+            return None
+        stmt = select(ArtistLink).where(
+            ArtistLink.es_busqueda.is_(False),
+            ArtistLink.url != "",
+        )
+        if excluir_artist_id is not None:
+            stmt = stmt.where(ArtistLink.artist_id != excluir_artist_id)
+        for link in self.session.execute(stmt).scalars().all():
+            if normalizar_url_para_duplicados(link.url) == canon:
+                return link
+        return None
+
     def crear_para_artista(
         self,
         artista: Artist,
@@ -325,6 +447,16 @@ class ChecksRepository:
     def ultimos(self, limite: int = 30) -> list[ActivityCheck]:
         return self.session.execute(
             select(ActivityCheck).order_by(ActivityCheck.fecha_chequeo.desc()).limit(limite)
+        ).scalars().all()
+
+    def ultimos_de_artista(
+        self, artist_id: int, limite: int = 30
+    ) -> list[ActivityCheck]:
+        return self.session.execute(
+            select(ActivityCheck)
+            .where(ActivityCheck.artist_id == artist_id)
+            .order_by(ActivityCheck.fecha_chequeo.desc())
+            .limit(limite)
         ).scalars().all()
 
 

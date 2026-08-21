@@ -77,11 +77,20 @@ def test_artists_links_no_busqueda(client):
 
 # --- Alta desde el formulario (POST /api/artists) ---------------------------
 
+from datetime import date, datetime, timedelta
+
 import pytest
 from sqlalchemy import delete, select
 
 from db.database import SessionLocal
-from db.models import Artist, ArtistLink
+from db.models import AltaRegistro, Artist, ArtistLink
+
+
+@pytest.fixture(autouse=True)
+def _limpieza_test():
+    """Limpia altas de prueba y registros de rate-limit antes de cada test."""
+    _limpiar_altas()
+    yield
 
 
 @pytest.fixture(autouse=True)
@@ -107,6 +116,25 @@ _SLUGS_PRUEBA = (
 )
 
 
+class _FakeDatetime:
+    _now = datetime.utcnow()
+
+    @classmethod
+    def utcnow(cls):
+        return cls._now
+
+    @classmethod
+    def avanzar(cls, minutos: int):
+        cls._now += timedelta(minutes=minutos)
+
+
+@pytest.fixture
+def tiempo_congelado(monkeypatch):
+    _FakeDatetime._now = datetime.utcnow()
+    monkeypatch.setattr("lib.servicios.datetime", _FakeDatetime)
+    return _FakeDatetime
+
+
 def _limpiar_altas():
     sesion = SessionLocal()
     try:
@@ -116,6 +144,7 @@ def _limpiar_altas():
             ))
         )
         sesion.execute(delete(Artist).where(Artist.slug.in_(_SLUGS_PRUEBA)))
+        sesion.execute(delete(AltaRegistro))
         sesion.commit()
     finally:
         sesion.close()
@@ -151,9 +180,15 @@ def test_crear_artista_formulario(client):
 
 
 def test_crear_artista_slug_unico(client):
-    for nombre in ("Equipo Doble", "Equipo Doble"):
+    for i, nombre in enumerate(("Equipo Doble", "Equipo Doble")):
         respuesta = client.post(
-            "/api/artists", json={"nombre": nombre, "categoria": "Solista"}
+            "/api/artists",
+            json={
+                "nombre": nombre,
+                "categoria": "Solista",
+                "redes": [{"plataforma": "ig", "url": f"https://www.instagram.com/equipodoble{i}/"}],
+            },
+            headers={"X-Forwarded-For": f"198.51.100.{10 + i}"},
         )
         assert respuesta.status_code == 201
 
@@ -169,9 +204,35 @@ def test_crear_artista_validaciones(client):
     assert "nombre" in sin_nombre.json()["detail"].lower()
 
     mala_categoria = client.post(
-        "/api/artists", json={"nombre": "X", "categoria": "NoExiste"}
+        "/api/artists",
+        json={
+            "nombre": "X",
+            "categoria": "NoExiste",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/x/"}],
+        },
     )
     assert mala_categoria.status_code == 400
+
+    sin_redes = client.post(
+        "/api/artists",
+        json={"nombre": "Sin Redes", "categoria": "Banda", "redes": []},
+    )
+    assert sin_redes.status_code == 400
+    assert "enlace" in sin_redes.json()["detail"].lower()
+
+    demasiadas_redes = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Muchas Redes",
+            "categoria": "Banda",
+            "redes": [
+                {"plataforma": "ig", "url": f"https://www.instagram.com/m{i}/"}
+                for i in range(7)
+            ],
+        },
+    )
+    assert demasiadas_redes.status_code == 400
+    assert "máximo" in demasiadas_redes.json()["detail"].lower()
 
     _limpiar_altas()
 
@@ -179,7 +240,12 @@ def test_crear_artista_validaciones(client):
 def test_eliminar_artista_requiere_admin(client):
     """Borrar un artista exige el token de administrador (403 sin él)."""
     alta = client.post(
-        "/api/artists", json={"nombre": "Banda a Borrar", "categoria": "Banda"}
+        "/api/artists",
+        json={
+            "nombre": "Banda a Borrar",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/borrar/"}],
+        },
     )
     assert alta.status_code == 201
     slug = alta.json()["slug"]
@@ -196,7 +262,12 @@ def test_eliminar_artista_requiere_admin(client):
 def test_editar_artista_requiere_admin(client):
     """Editar un artista exige el token de administrador (403 sin él)."""
     alta = client.post(
-        "/api/artists", json={"nombre": "Banda a Editar", "categoria": "Banda"}
+        "/api/artists",
+        json={
+            "nombre": "Banda a Editar",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/editar/"}],
+        },
     )
     assert alta.status_code == 201
     slug = alta.json()["slug"]
@@ -215,6 +286,39 @@ def test_admin_list_requiere_admin(client):
     """El listado de administración exige el token (403 sin él)."""
     respuesta = client.get("/api/admin/artists")
     assert respuesta.status_code == 403
+
+
+def test_admin_pendientes_requiere_admin(client):
+    """El endpoint de proyectos sin verificar exige token de admin."""
+    assert client.get("/api/admin/artists/pending").status_code == 403
+
+
+def test_admin_pendientes_muestra_no_verificados_viejos(client, session):
+    """El panel de revisión lista solo proyectos no verificados >60 días."""
+    headers = {"X-Forwarded-For": "203.0.113.77"}
+    alta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Proyecto Viejo",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/viejo/"}],
+        },
+        headers=headers,
+    )
+    assert alta.status_code == 201
+
+    # Forzar fecha de registro a 61 días atrás para que aparezca en revisión.
+    from lib.repository import ArtistRepository
+    artista = ArtistRepository(session).por_slug("proyecto_viejo")
+    artista.fecha_registro = date.today() - timedelta(days=61)
+    session.commit()
+
+    token = {"X-Admin-Token": "clave_admin_test"}
+    respuesta = client.get("/api/admin/artists/pending", headers=token)
+    assert respuesta.status_code == 200
+    datos = respuesta.json()
+    assert any(a["slug"] == "proyecto_viejo" for a in datos)
+    _limpiar_altas()
 
 
 def test_editar_artista_con_token(client):
@@ -263,7 +367,12 @@ def test_editar_artista_con_token(client):
 def test_editar_artista_validaciones(client):
     """La edición valida nombre, categoría y estado con el token de admin."""
     alta = client.post(
-        "/api/artists", json={"nombre": "Banda a Validar", "categoria": "Banda"}
+        "/api/artists",
+        json={
+            "nombre": "Banda a Validar",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/validar/"}],
+        },
     )
     assert alta.status_code == 201
     slug = alta.json()["slug"]
@@ -316,4 +425,95 @@ def test_crear_artista_con_spotify(client, monkeypatch):
 
     detalle = client.get(f"/api/artists/{slug}").json()
     assert any(l["plataforma"] == "spotify" for l in detalle["links"])
+    _limpiar_altas()
+
+
+def test_crear_artista_rechaza_url_duplicada(client, tiempo_congelado):
+    """No se puede dar de alta un enlace que ya pertenece a otro artista."""
+    url = "https://www.instagram.com/duplicado/"
+    ip = "203.0.113.10"
+    headers = {"X-Forwarded-For": ip}
+    primera = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Primero",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": url}],
+        },
+        headers=headers,
+    )
+    assert primera.status_code == 201
+
+    tiempo_congelado.avanzar(11)
+    segunda = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Segundo",
+            "categoria": "Solista",
+            "redes": [{"plataforma": "ig", "url": url + "?utm_source=test"}],
+        },
+        headers=headers,
+    )
+    assert segunda.status_code == 409
+    assert "ya está vinculada" in segunda.json()["detail"].lower()
+    _limpiar_altas()
+
+
+def test_crear_artista_rate_limit_por_ip(client, tiempo_congelado):
+    """Después de 5 altas la IP se bloquea con 429."""
+    ip = "203.0.113.42"
+    headers = {"X-Forwarded-For": ip}
+    for i in range(5):
+        respuesta = client.post(
+            "/api/artists",
+            json={
+                "nombre": f"Rate Limit {i}",
+                "categoria": "Banda",
+                "redes": [{"plataforma": "ig", "url": f"https://www.instagram.com/rl{i}/"}],
+            },
+            headers=headers,
+        )
+        assert respuesta.status_code == 201, f"falló en alta {i}: {respuesta.json()}"
+        tiempo_congelado.avanzar(11)
+
+    sexta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Rate Limit 5",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/rl5/"}],
+        },
+        headers=headers,
+    )
+    assert sexta.status_code == 429
+    _limpiar_altas()
+
+
+def test_crear_artista_cooldown_entre_altas(client, tiempo_congelado):
+    """La misma IP debe esperar 10 min entre altas consecutivas."""
+    ip = "203.0.113.99"
+    headers = {"X-Forwarded-For": ip}
+    primera = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Cooldown 1",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/cd1/"}],
+        },
+        headers=headers,
+    )
+    assert primera.status_code == 201
+
+    tiempo_congelado.avanzar(1)
+    segunda = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Cooldown 2",
+            "categoria": "Banda",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/cd2/"}],
+        },
+        headers=headers,
+    )
+    assert segunda.status_code == 429
+    assert "espera" in segunda.json()["detail"].lower()
     _limpiar_altas()

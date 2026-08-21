@@ -232,3 +232,13 @@ export interface AdminArtist {
   verificado: boolean;
   links: LinkAdmin[];
 }
+
+export interface ArtistaPendiente {
+  slug: string;
+  nombre: string;
+  segmento: string;
+  ciudad: string;
+  fecha_registro: string | null;
+  dias_sin_verificar: number;
+  links: LinkAdmin[];
+}

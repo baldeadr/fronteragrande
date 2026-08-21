@@ -1,10 +1,14 @@
-import type { AdminArtist, ArtistCard, ArtistDetail, Evento, FeedItem, ResultadoAlta, Stats } from "./types";
+import type { AdminArtist, ArtistaPendiente, ArtistCard, ArtistDetail, Evento, FeedItem, ResultadoAlta, Stats } from "./types";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+  // Los datos públicos cambian por sincronizaciones, no por cada visita.
+  // Mantenerlos unos minutos evita esperar a Render en cada navegación.
+  const res = await fetch(`${API_URL}${path}`, {
+    next: { revalidate: 300 },
+  });
   if (!res.ok) {
     throw new Error(`Error de API ${res.status} en ${path}`);
   }
@@ -34,6 +38,18 @@ export async function adminArtistas(token: string): Promise<AdminArtist[]> {
   }
   return datos;
 }
+
+export async function adminArtistasPendientes(token: string): Promise<ArtistaPendiente[]> {
+  const res = await fetch(`${API_URL}/api/admin/artists/pending`, {
+    headers: { "X-Admin-Token": token },
+  });
+  const datos = (await res.json()) as ArtistaPendiente[] & { detail?: string };
+  if (!res.ok) {
+    throw new Error(datos.detail ?? `Error de API ${res.status}`);
+  }
+  return datos;
+}
+
 
 export async function editarArtista(
   slug: string,

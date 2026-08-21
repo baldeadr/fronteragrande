@@ -385,7 +385,9 @@ def callback(code: str, state: str):
             ok = True
             if intencion == "conectar":
                 owner_cookie = _crear_sesion_propietario(slug)
-                _notificar_verificacion(session, artista.nombre)
+                from lib.notificaciones import notificar_verificacion_artista
+
+                notificar_verificacion_artista(session, artista.nombre)
     except Exception as exc:
         session.rollback()
         logger.exception("Error al gestionar Meta para el artista %s: %s", slug, exc)
@@ -466,23 +468,3 @@ def ig_media(ig_user_id: str, page_token: str, limite: int = 10) -> list[dict]:
         )
     return items
 
-
-def _notificar_verificacion(session, nombre_artista: str) -> None:
-    """Envía notificación push si hay artista verificado y el toggle está activo."""
-    try:
-        from lib.notificaciones import notificar_todos
-        from lib.repository import PushSubscriptionRepository, SettingsRepository
-
-        if not SettingsRepository(session).obtener_bool("notificar_auto_verificacion"):
-            return
-        enviadas = notificar_todos(
-            PushSubscriptionRepository(session),
-            f"{nombre_artista} se verificó",
-            "Un nuevo artista se conectó en Frontera Grande.",
-            "/",
-        )
-        session.commit()
-        if enviadas:
-            print(f"Aviso de verificación enviado a {enviadas} suscriptores")
-    except Exception as exc:
-        logger.warning("No se pudo notificar verificación: %s", exc)

@@ -106,3 +106,27 @@ def notificar_todos(
         except SubscriptionGoneError:
             repo.eliminar(sub.endpoint)
     return enviadas
+
+
+def notificar_verificacion_artista(session, nombre_artista: str) -> None:
+    """Envía notificación push cuando un artista verifica su proyecto.
+
+    Respeta el toggle `notificar_auto_verificacion` de SettingsRepository.
+    No rompe el flujo si falla el envío.
+    """
+    try:
+        from lib.repository import PushSubscriptionRepository, SettingsRepository
+
+        if not SettingsRepository(session).obtener_bool("notificar_auto_verificacion"):
+            return
+        enviadas = notificar_todos(
+            PushSubscriptionRepository(session),
+            f"{nombre_artista} se verificó",
+            "Un nuevo artista se conectó en Frontera Grande.",
+            "/",
+        )
+        session.commit()
+        if enviadas:
+            logger.info("Aviso de verificación enviado a %s suscriptores", enviadas)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("No se pudo notificar verificación: %s", exc)
