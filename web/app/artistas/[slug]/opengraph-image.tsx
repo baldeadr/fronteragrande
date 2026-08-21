@@ -231,7 +231,21 @@ export default async function Image({
               >
                 {nombre}
               </span>
-              {verificado && <IconoVerificado size={46} />}
+              {verificado && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconoVerificado size={40} />
+                  <span style={{ fontSize: 27, fontWeight: 600, color: MUTED }}>
+                    Perfil verificado
+                  </span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: "flex", fontSize: 31, color: MUTED }}>
