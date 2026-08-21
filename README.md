@@ -27,8 +27,8 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
   pendiente el disparador del scraper); monitor UptimeRobot para mantener la API
   despierta; auth y permisos adicionales para el registro de
   artistas (ahora tiene rate-limit y validaciones; sigue público salvo que se decida reforzar); y **dominio**
-  (decisión tomada: `fronteragrande.mx`; metadatos/sitemap/robots ya usan
-  `https://fronteragrande.mx`; falta registrar/comprar y apuntar).
+  (`fronteragrande.mx` ya está registrado en Cloudflare, conectado a Vercel y
+  vence el 2027-08-20).
 - **Playlist semanal de Spotify:** ✔ `scripts/generar_playlist_semanal.py` actualiza
   la playlist pública **"Frontera Grande: Descubrimiento Semanal"** (selección aleatoria
   de canciones de los artistas con Spotify, 1ª canción por artista y relleno hasta ~24;
@@ -40,8 +40,9 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
 Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
 paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
 La configuración de notificaciones Web Push está en [docs/push.md](docs/push.md).
-El **dominio** quedó decidido como **`fronteragrande.mx`** (metadatos, sitemap
-y robots ya lo usan por defecto).
+El **dominio** público es **`fronteragrande.mx`**, registrado en Cloudflare por
+$30.70 USD durante un año, con vencimiento el 2027-08-20. Metadatos, sitemap y
+robots ya lo usan por defecto.
 
 ## Stack
 
@@ -182,7 +183,7 @@ Adaptadores por fuente en `scraper/adapters/` y jerarquías de plataforma centra
 10. `[PROPUESTA]` **Canales oficiales de comunicación:** crear página de Facebook y cuenta de Instagram de Frontera Grande para publicar artistas, eventos, lanzamientos, datos de la escena y reels con fuentes o autorización; enlazar al sitio, definir calendario editorial y medir el tráfico generado.
 11. ✔ **Panel de administración en la web (CRUD con auth):** `/admin` protegido por `ADMIN_PASSWORD` (`X-Admin-Token`) con login en sesión, listado (`GET /api/admin/artists`), edición (`PUT /api/artists/{slug}`: datos, bio, notas, logros, estado y redes) y eliminación con confirmación. Pendiente el disparador del scraper.
 12. **Mapa de artistas por origen** (PostGIS) para ver la geografía de la escena.
-13. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.vercel.app`) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas, el **dominio** (`fronteragrande.mx`, decisión tomada 2026-08) + AdSense/patrocinios (la estructura ya lo soporta).
+13. ✔ **Producción y monetización (en línea, agosto 2026):** web en Vercel (`fronteragrande.mx`, con `fronteragrande.vercel.app` como alternativa) + API en Render (`fronteragrande-api.onrender.com`) + PostgreSQL en Neon, deploy automático desde GitHub; Meta ya sincroniza publicaciones mediante GitHub Actions. [docs/despliegue.md](docs/despliegue.md) tiene la arquitectura y el checklist. Pendiente: UptimeRobot, conectar más artistas y AdSense/patrocinios (la estructura ya lo soporta).
 14. ◐ **Bios y géneros con fuente:** cadena Bandcamp→SoundCloud→YouTube (sin API key) en `scraper/adapters/` y `scripts/proponer_bios.py` que escribe directo lo claro (con nota de fuente en `notas`) y reporta lo ambiguo en `data/bios_pendientes.md`. Primera corrida 2026-08-16: 3 bios escritas. **Fase 2 hecha:** para artistas conectados, bio desde Meta (`about`/`description` FB + `biography` IG) en `backend/feed_meta.py`, integrada en el sync de 6h. Pendiente: curaduría de los pendientes desde el admin.
 15. ◐ **Sincronización de TikTok (Business API):** seguidores (`followers_tt` → ranking/stats) y videos en el feed vía `user.info.basic` + `video.list`. **Backend y web hechos** (`backend/feed_tiktok.py`, `scripts/sync_feed_tiktok.py`, botón "Conectar TikTok"). Pendiente: crear la app en TikTok for Developers y la **aprobación manual** de `video.list`, luego el cron. [docs/tiktok.md](docs/tiktok.md).
 16. ◐ **Playlist semanal de Spotify "Descubrimiento Semanal":** ✔ script (`scripts/generar_playlist_semanal.py`) + workflow `sync-playlist.yml` (lunes). Pendiente: autorización única del artista (`--auth`) y primera corrida.

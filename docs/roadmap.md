@@ -92,14 +92,14 @@ Plan de lanzamiento orgánico definido el 2026-08-16. Detalle completo en
 ### Fase 3: Crecimiento continuo
 
 - Posts regulares (2-3/semana). "Artista de la Semana" semanal.
-- Medir métricas 90 días. Decisión de dominio (50+ visitas/semana → `fronteragrande.mx`).
+- Medir métricas 90 días. El dominio `fronteragrande.mx` ya está registrado y conectado.
 - Patrocinios directos a locales de la zona (bares, escuelas, tiendas).
 
 ## Pendiente de producto
 
 | Ítem | Estado |
 |------|--------|
-| **Dominio** | Decisión tomada: **`fronteragrande.mx`** (2026-08). Metadatos/sitemap/robots ya usan `https://fronteragrande.mx`. Pendiente: registrar/comprar el dominio y apuntarlo al despliegue. |
+| **Dominio** | ✔ **`fronteragrande.mx`** registrado en Cloudflare por $30.70 USD por un año; conectado a Vercel y con vencimiento el 2027-08-20. Metadatos/sitemap/robots usan `https://fronteragrande.mx`. |
 | **Permisos del registro** | El formulario sigue público pero ahora tiene rate-limit, validación de URLs duplicadas y advertencia de eliminación; auth más estricta (CAPTCHA/cuenta) queda pendiente de decisión. |
 | **Sync de Meta** | Workflow de GitHub Actions activo cada 6 horas; primera sincronización confirmada con Apex Ultra. Pendiente conectar al resto de artistas. |
 | **Finanzas** | Análisis inicial en `docs/finanzas.md`: audiencia de nicho, costos casi nulos en free tier, patrocinio local antes que APIs premium y AdSense como complemento. |

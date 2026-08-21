@@ -30,7 +30,7 @@ relación con su actividad.
 | Neon | PostgreSQL | $0* |
 | GitHub Actions | Sincronización Meta | $0 dentro del uso disponible |
 | UptimeRobot | Monitor de salud | $0 en el plan gratuito |
-| Dominio `fronteragrande.mx` | Identidad pública | Pendiente de registrar |
+| Dominio `fronteragrande.mx` | Identidad pública | $30.70 USD por un año; vence 2027-08-20 |
 | AdSense | Monetización | Sin costo fijo de alta |
 
 \* Los niveles gratuitos tienen límites de uso, almacenamiento, suspensión o

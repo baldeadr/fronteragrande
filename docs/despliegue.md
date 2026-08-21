@@ -1,11 +1,10 @@
 # Despliegue en línea (free tier) — Frontera Grande
 
-Guía para llevar el sitio a internet **gratis o casi gratis**, con el dominio
-final (`fronteragrande.mx`) pendiente. Para la prueba con artistas se usa el
-dominio gratuito de cada plataforma y el dominio se apunta después.
+Guía para llevar el sitio a internet **gratis o casi gratis**. El dominio
+final `fronteragrande.mx` ya está registrado en Cloudflare y apunta a Vercel.
 
 > **Estado: ✔ DESPLEGADO en línea (2026-08).** La web y la API están públicas
-> bajo los dominios de prueba (ver tabla). La conexión con Meta ya está activa
+> bajo `fronteragrande.mx` y `fronteragrande-api.onrender.com` (ver tabla). La conexión con Meta ya está activa
 > en producción y Apex Ultra quedó verificado. Falta programar la sincronización
 > automática de publicaciones.
 
@@ -17,10 +16,10 @@ Checklist de despliegue (✔ = hecho, ☐ = pendiente):
 | 2. Neon con datos semilla | ✔ 29 artistas, 11 eventos |
 | 3. API en Render | ✔ `fronteragrande-api` (health `{"estado":"ok"}`) |
 | 4. Fotos y feed de YouTube | ✔ 20 con foto · 64 videos |
-| 5. Web en Vercel | ✔ `fronteragrande.vercel.app` |
+| 5. Web en Vercel | ✔ `fronteragrande.mx` (`fronteragrande.vercel.app` como alternativa) |
 | 6. Conexión Meta (verificado) | ✔ app configurada; Apex Ultra verificado |
 | 7. UptimeRobot (mantener API despierta) | ☐ pendiente de crear monitor |
-| 8. Dominio `fronteragrande.mx` | ☐ sin registrar |
+| 8. Dominio `fronteragrande.mx` | ✔ registrado en Cloudflare y conectado a Vercel; vence el 2027-08-20 |
 
 ## Cómo están conectados los servicios
 
@@ -237,11 +236,16 @@ horas. GitHub puede retrasar unos minutos los workflows programados.
 > **Pendiente:** con la misma cuenta de UptimeRobot se crea el monitor para
 > `https://fronteragrande-api.onrender.com/api/health`.
 
-## 9. Dominio `fronteragrande.mx` (después)
+## 9. Dominio `fronteragrande.mx`
 
-Cuando se registre, en Vercel **Settings → Domains** se apunta
-`fronteragrande.mx`, se actualiza `NEXT_PUBLIC_SITE_URL` y el
-`CORS_ORIGINS` de Render pasa a `https://fronteragrande.mx`.
+El dominio se registró en Cloudflare el 2026-08-20 por **$30.70 USD por
+un año**. Su vencimiento es el **2027-08-20**. En Vercel, `fronteragrande.mx`
+está conectado al entorno de producción y los DNS se mantienen administrados
+por Cloudflare.
+
+La web usa `https://fronteragrande.mx` como URL pública principal; el dominio
+gratuito `fronteragrande.vercel.app` continúa disponible como dirección
+alternativa.
 
 ---
 
@@ -251,5 +255,5 @@ Cuando se registre, en Vercel **Settings → Domains** se apunta
 curl -s https://fronteragrande-api.onrender.com/api/health        # {"estado":"ok"}
 curl -s https://fronteragrande-api.onrender.com/api/artists        # lista JSON
 curl -s https://fronteragrande-api.onrender.com/api/feed           # feed
-curl -s https://fronteragrande.vercel.app                          # HTML de la portada
+curl -s https://fronteragrande.mx                                  # HTML de la portada
 ```
