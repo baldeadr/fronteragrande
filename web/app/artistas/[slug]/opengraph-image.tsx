@@ -1,6 +1,6 @@
 import { ImageResponse } from "@vercel/og";
 import type { ArtistDetail } from "@/lib/types";
-import { ARCHIVO_BLACK_B64 } from "./fuente-archivo-black";
+import { ARCHIVO_BLACK_B64 } from "@/lib/fuente-archivo-black";
 
 export const runtime = "edge";
 export const alt = "Perfil de artista en Frontera Grande";
