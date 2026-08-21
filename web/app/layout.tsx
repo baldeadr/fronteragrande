@@ -11,8 +11,6 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fronteragrande.mx"
 
 export const viewport: Viewport = {
   themeColor: "#0b0b10",
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export const metadata: Metadata = {

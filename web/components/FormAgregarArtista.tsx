@@ -163,7 +163,7 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
           onClick={() => !cargando && cerrar()}
         >
           <div
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-surface p-5"
+            className="max-h-[85dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-line bg-surface p-5 pb-8 fg-scroll-touch"
             onClick={(e) => e.stopPropagation()}
           >
             {creado ? (

@@ -97,3 +97,7 @@ body {
 .fg-anim-mini-esconder {
   animation: fg-mini-esconder 140ms ease-in both;
 }
+
+.fg-scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
