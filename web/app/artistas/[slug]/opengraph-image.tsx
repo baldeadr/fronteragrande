@@ -20,6 +20,19 @@ async function fetchArtist(slug: string): Promise<ArtistDetail | null> {
   }
 }
 
+async function imageToBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const contentType = res.headers.get("content-type") ?? "image/png";
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
 export default async function Image({
   params,
 }: {
@@ -32,7 +45,8 @@ export default async function Image({
   const segmento = artist?.segmento ?? "Artista de la escena";
   const ciudad = artist?.ciudad ?? "";
   const generos = artist?.generos?.slice(0, 4) ?? [];
-  const imagen = artist?.imagen_perfil ?? null;
+  const rawImagen = artist?.imagen_perfil ?? null;
+  const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
 
   return new ImageResponse(
