@@ -17,12 +17,6 @@ const MUTED = "#8a8a9a";
 const ACCENT = "#9d4edd";
 const ACCENT_SOFT = "#2a1a33";
 
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  activo: "Activo",
-  en_duda: "En duda",
-  inactivo: "Inactivo",
-};
-
 async function fetchArtist(slug: string): Promise<ArtistDetail | null> {
   try {
     const res = await fetch(`${API_URL}/api/artists/${slug}`, {
@@ -74,38 +68,6 @@ function IconoVerificado({ size }: { size: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-function EstadoBadge({ estado, color }: { estado: string; color: string }) {
-  // Réplica del EstadoBadge.tsx (size lg): pastilla con punto de color.
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        borderRadius: 999,
-        border: `2px solid ${LINE}`,
-        background: SURFACE,
-        padding: "14px 30px",
-        fontSize: 28,
-        fontWeight: 500,
-        color: TEXT,
-      }}
-    >
-      <span
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 999,
-          background: color,
-          display: "flex",
-          flexShrink: 0,
-        }}
-      />
-      {ETIQUETAS_ESTADO[estado] ?? estado}
-    </div>
   );
 }
 
@@ -170,8 +132,6 @@ export default async function Image({
   const rawImagen = artist?.imagen_perfil ?? null;
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
-  const estadoActivo = artist?.estado_activo ?? "";
-  const colorEstado = artist?.color_estado ?? "#888888";
 
   const archivoBlack = base64ToArrayBuffer(ARCHIVO_BLACK_B64);
 
@@ -281,12 +241,6 @@ export default async function Image({
               </div>
             )}
           </div>
-
-          {artist && (
-            <div style={{ display: "flex", alignSelf: "flex-start" }}>
-              <EstadoBadge estado={estadoActivo} color={colorEstado} />
-            </div>
-          )}
         </div>
 
         <div
