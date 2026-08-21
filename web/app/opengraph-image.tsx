@@ -54,6 +54,33 @@ function Chip({ children }: { children: string }) {
   );
 }
 
+function Logo({ size }: { size: number }) {
+  // Réplica exacta de app/icon.svg: iniciales FG sobre la línea fronteriza.
+  return (
+    <svg
+      viewBox="0 0 512 512"
+      width={size}
+      height={size}
+      style={{ display: "flex" }}
+      role="img"
+    >
+      <rect x="0" y="0" width="512" height="512" rx="78" fill={BG} />
+      <path
+        d="M 97.28,184.64 H 219.6 v 36.3 h -73.7 v 25.96 h 63.36 v 34.76 H 97.28 Z M 340.13996,182 q 21.78,0 39.16,6.6 17.38,6.6 27.5,19.58 10.34,12.76 10.34,31.24 h -46.42 q 0,-9.46 -8.36,-15.18 -8.36,-5.94 -20.24,-5.94 -17.16,0 -25.96,9.24 -8.8,9.02 -8.8,25.74 v 14.08 q 0,16.72 8.8,25.96 8.8,9.02 25.96,9.02 11.88,0 20.24,-5.5 8.36,-5.72 8.36,-14.52 h -34.32 v -30.8 h 80.74 V 336 h -25.08 l -4.84,-14.96 q -20.68,17.6 -54.12,17.6 -37.62,0 -56.54,-19.58 -18.92,-19.8 -18.92,-58.74 0,-38.5 21.34,-58.3 21.56,-20.02 61.16,-20.02 z"
+        fill="#ffffff"
+        transform="matrix(0.9,0,0,1.05,25,-45)"
+      />
+      <path
+        d="M80 372h130c14 0 18-18 32-18s18 18 32 18h158"
+        fill="none"
+        stroke={ACCENT}
+        strokeLinecap="round"
+        strokeWidth="30"
+      />
+    </svg>
+  );
+}
+
 export default async function Image() {
   const stats = await fetchStats();
 
@@ -93,9 +120,11 @@ export default async function Image() {
             border: `2px solid ${LINE}`,
             background: `linear-gradient(135deg, ${ACCENT_SOFT} 0%, ${SURFACE} 100%)`,
             padding: "48px 60px",
-            gap: 34,
+            gap: 30,
           }}
         >
+          <Logo size={168} />
+
           <span
             style={{
               fontFamily: "Archivo Black",
