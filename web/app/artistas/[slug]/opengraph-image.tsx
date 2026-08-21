@@ -43,18 +43,6 @@ async function imageToBase64(url: string): Promise<string | null> {
   }
 }
 
-async function loadFont(): Promise<ArrayBuffer | null> {
-  try {
-    const res = await fetch(
-      "https://fonts.gstatic.com/s/archivoblack/v17/HTxqL289pzCG_oHzNe8ox_6pRw.woff2",
-    );
-    if (!res.ok) return null;
-    return await res.arrayBuffer();
-  } catch {
-    return null;
-  }
-}
-
 export default async function Image({
   params,
 }: {
@@ -71,12 +59,7 @@ export default async function Image({
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
 
-  const archivoBlack = await loadFont();
-  const fonts = archivoBlack
-    ? [{ name: "Archivo Black", data: archivoBlack, style: "normal" as const, weight: 400 as const }]
-    : [];
-
-  const brandFont = "Archivo Black, Arial Black, sans-serif";
+  const brandFont = "Arial Black, Arial Bold, sans-serif";
   const bodyFont = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
 
   return new ImageResponse(
@@ -115,7 +98,6 @@ export default async function Image({
                 borderRadius: 28,
                 objectFit: "cover",
                 border: `4px solid ${LINE}`,
-                boxShadow: `0 24px 64px ${ACCENT_SOFT}`,
               }}
             />
           ) : (
@@ -243,7 +225,6 @@ export default async function Image({
     ),
     {
       ...size,
-      fonts,
     },
   );
 }
