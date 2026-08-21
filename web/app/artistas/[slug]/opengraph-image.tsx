@@ -8,6 +8,16 @@ export const contentType = "image/png";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
+const BG = "#0b0b10";
+const SURFACE = "#14141b";
+const SURFACE2 = "#1b1b24";
+const LINE = "#262633";
+const TEXT = "#ececf1";
+const MUTED = "#8a8a9a";
+const ACCENT = "#9d4edd";
+const ACCENT_SOFT = "#2a1a33";
+const ACTIVO = "#76b041";
+
 async function fetchArtist(slug: string): Promise<ArtistDetail | null> {
   try {
     const res = await fetch(`${API_URL}/api/artists/${slug}`, {
@@ -33,6 +43,18 @@ async function imageToBase64(url: string): Promise<string | null> {
   }
 }
 
+async function loadFont(): Promise<ArrayBuffer | null> {
+  try {
+    const res = await fetch(
+      "https://fonts.gstatic.com/s/archivoblack/v17/HTxqL289pzCG_oHzNe8ox_6pRw.woff2",
+    );
+    if (!res.ok) return null;
+    return await res.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 export default async function Image({
   params,
 }: {
@@ -49,6 +71,14 @@ export default async function Image({
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;
   const verificado = artist?.verificado ?? false;
 
+  const archivoBlack = await loadFont();
+  const fonts = archivoBlack
+    ? [{ name: "Archivo Black", data: archivoBlack, style: "normal" as const, weight: 400 as const }]
+    : [];
+
+  const brandFont = "Archivo Black, Arial Black, sans-serif";
+  const bodyFont = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+
   return new ImageResponse(
     (
       <div
@@ -57,45 +87,51 @@ export default async function Image({
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: "linear-gradient(135deg, #0b0b10 0%, #15151f 100%)",
-          color: "#f4f4f5",
-          padding: 64,
-          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+          background: BG,
+          color: TEXT,
+          padding: 56,
+          fontFamily: bodyFont,
         }}
       >
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 40,
             flex: 1,
+            borderRadius: 32,
+            border: `1px solid ${LINE}`,
+            background: `linear-gradient(135deg, ${ACCENT_SOFT} 0%, ${SURFACE} 100%)`,
+            padding: 56,
+            gap: 48,
+            alignItems: "center",
           }}
         >
           {imagen ? (
             <img
               src={imagen}
               alt={nombre}
-              width={240}
-              height={240}
+              width={260}
+              height={260}
               style={{
-                borderRadius: 24,
+                borderRadius: 28,
                 objectFit: "cover",
-                border: "4px solid #2a2a35",
+                border: `4px solid ${LINE}`,
+                boxShadow: `0 24px 64px ${ACCENT_SOFT}`,
               }}
             />
           ) : (
             <div
               style={{
-                width: 240,
-                height: 240,
-                borderRadius: 24,
-                background: "#2a2a35",
+                width: 260,
+                height: 260,
+                borderRadius: 28,
+                background: SURFACE2,
+                border: `4px solid ${LINE}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 80,
-                fontWeight: 700,
-                color: "#76B041",
+                fontFamily: brandFont,
+                fontSize: 96,
+                color: ACCENT,
               }}
             >
               {nombre.charAt(0).toUpperCase()}
@@ -106,17 +142,20 @@ export default async function Image({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 16,
+              gap: 18,
               flex: 1,
+              minWidth: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
               <span
                 style={{
-                  fontSize: 64,
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  color: "#ffffff",
+                  fontFamily: brandFont,
+                  fontSize: 68,
+                  fontWeight: 400,
+                  lineHeight: 1.05,
+                  color: TEXT,
+                  letterSpacing: "-0.02em",
                 }}
               >
                 {nombre}
@@ -124,12 +163,14 @@ export default async function Image({
               {verificado && (
                 <span
                   style={{
-                    background: "#76B041",
-                    color: "#0b0b10",
-                    fontSize: 18,
+                    background: ACTIVO,
+                    color: BG,
+                    fontSize: 20,
                     fontWeight: 700,
-                    padding: "6px 12px",
+                    padding: "8px 16px",
                     borderRadius: 999,
+                    display: "flex",
+                    alignItems: "center",
                   }}
                 >
                   Verificado
@@ -140,7 +181,7 @@ export default async function Image({
             <span
               style={{
                 fontSize: 32,
-                color: "#a1a1aa",
+                color: MUTED,
                 fontWeight: 500,
               }}
             >
@@ -154,8 +195,8 @@ export default async function Image({
                   <span
                     key={g}
                     style={{
-                      background: "rgba(118, 176, 65, 0.15)",
-                      color: "#76B041",
+                      background: ACCENT_SOFT,
+                      color: ACCENT,
                       fontSize: 22,
                       fontWeight: 600,
                       padding: "8px 16px",
@@ -175,15 +216,15 @@ export default async function Image({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderTop: "1px solid #2a2a35",
             paddingTop: 32,
           }}
         >
           <span
             style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#76B041",
+              fontFamily: brandFont,
+              fontSize: 30,
+              fontWeight: 400,
+              color: ACCENT,
               letterSpacing: "-0.02em",
             }}
           >
@@ -192,7 +233,7 @@ export default async function Image({
           <span
             style={{
               fontSize: 22,
-              color: "#71717a",
+              color: MUTED,
             }}
           >
             Base de datos de la escena musical
@@ -202,6 +243,7 @@ export default async function Image({
     ),
     {
       ...size,
+      fonts,
     },
   );
 }
