@@ -118,7 +118,7 @@ export default async function Image() {
 
           <span
             style={{
-              fontSize: 30,
+              fontSize: 26,
               color: MUTED,
               textAlign: "center",
               display: "flex",
