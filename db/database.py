@@ -51,6 +51,9 @@ def _asegurar_columnas_extra():
         if "artists" in inspector.get_table_names():
             with engine.begin() as conn:
                 conn.execute(
+                    text("ALTER TABLE artists ALTER COLUMN imagen_perfil TYPE TEXT")
+                )
+                conn.execute(
                     text(
                         "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
                         "oyentes_mensuales_spotify INTEGER"

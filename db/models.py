@@ -99,7 +99,7 @@ class Artist(Base):
     bio: Mapped[str] = mapped_column(Text, default="")
     notas: Mapped[str] = mapped_column(Text, default="")
 
-    imagen_perfil: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    imagen_perfil: Mapped[str | None] = mapped_column(Text, nullable=True)
     imagen_origen: Mapped[str | None] = mapped_column(String(30), nullable=True)
     imagen_actualizada: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     imagen_candidatas: Mapped[dict | None] = mapped_column(JSON, nullable=True)
