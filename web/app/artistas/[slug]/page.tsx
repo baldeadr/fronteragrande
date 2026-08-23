@@ -60,7 +60,7 @@ function etiquetaMetrica(plataforma: string, tipo: string) {
   if (tipo === "seguidores") return "seg.";
   if (tipo === "vistas") return "vistas";
   if (tipo === "reproducciones") return "reprod.";
-  if (tipo === "oyentes_mensuales") return "oyentes";
+  if (tipo === "oyentes_mensuales") return "oyentes/mes";
   return tipo;
 }
 
