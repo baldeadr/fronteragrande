@@ -70,16 +70,18 @@ En **Facebook Login for Business** → **Configuración** (o "Use cases"):
 La app solicita estos permisos (ya configurados en
 `backend/feed_meta.py`, `SCOPES`):
 
-| Permiso | Para qué |
-|---------|----------|
-| `pages_show_list` | listar las páginas que administra el usuario |
-| `pages_read_engagement` | leer los posts de la página |
-| `instagram_basic` | leer media y metadatos de la cuenta IG de negocio |
+| Permiso | Para qué | Estado |
+|---------|----------|--------|
+| `pages_show_list` | listar las páginas que administra el usuario | verificado |
+| `pages_read_engagement` | leer los posts de la página | verificado |
+| `instagram_basic` | leer media y metadatos de la cuenta IG de negocio | verificado |
+| `pages_events` | leer eventos de la página (ingesta opcional) | **opcional — solo tras aprobación**: pedirlo sin aprobación bloquea a usuarios no-admin con `Invalid Scope: pages_events`. Por eso el login normal no lo pide; se usa `con_eventos=1` (`SCOPES_EVENTOS` en `backend/feed_meta.py`) solo tras App Review. |
 
 - **Modo desarrollo:** como **admin de la app**, puedes autorizar sin pasar
-  revisión.
+  revisión (por eso Apex Ultra sí conectó con `pages_events`).
 - **Producción:** para usarla con cualquier usuario necesitas solicitar la
   **revisión de la app** (Business Verification) para estos permisos.
+  Hasta entonces, **no pedir `pages_events` en el login por defecto**.
 
 ## 6. Configurar `.env`
 
@@ -136,5 +138,11 @@ Reinicia la API después de cambiar el `.env`:
   (`/tmp/api.log`).
 - **"El usuario no administra ninguna página":** la cuenta autorizada no es
   admin de ninguna página FB.
+- **`Invalid Scope: pages_events`:** la app pidió `pages_events` sin tener
+  aprobación de Meta. **No es un error de mayúsculas**: es que el permiso
+  aún no está aprobado para usuarios externos. Solución: el login normal
+  (`/api/feed/igfb/login?slug=X`) ya no lo pide; si necesitas eventos,
+  usa `?con_eventos=1` solo tras App Review, o deja los eventos por CRUD
+  del admin (`POST /api/admin/events`).
 - **Seguridad:** los tokens se guardan solo en la BD y **nunca** se exponen
   por la API (`/api/artists/{slug}` solo reporta el estado de conexión).

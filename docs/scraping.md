@@ -130,7 +130,8 @@ Meta permite automatizar la ingesta (sin copiar contenido, solo enlaces):
 
 - **Credenciales** en `.env`: `META_APP_ID`, `META_APP_SECRET` y
   `META_REDIRECT_URI` (deben registrarse en developers.facebook.com con los
-  permisos `pages_show_list`, `pages_read_engagement`, `instagram_basic`).
+  permisos `pages_show_list`, `pages_read_engagement`, `instagram_basic`;
+  `pages_events` es **opcional** y solo tras App Review — ver nota abajo).
 - **Flujo:** `GET /api/feed/igfb/login?slug={slug}` → diálogo de Facebook →
   `GET /api/feed/igfb/callback` canjea el código y guarda el **token de
   página** (larga duración, no expira salvo revocación) más el id de la
@@ -138,7 +139,9 @@ Meta permite automatizar la ingesta (sin copiar contenido, solo enlaces):
   `estado_registro` pasa a `confirmado (artista, YYYY-MM-DD)`. La app valida
   que la cuenta autorizada administre la página **registrada** del artista
   (compara con su URL de Facebook); si administra otra página, falla. Los
-  tokens **nunca** se exponen en la API.
+  tokens **nunca** se exponen en la API. El login por defecto **no pide**
+  `pages_events` para no bloquear a usuarios no-admin con `Invalid Scope:
+  pages_events`; para eventos usar `?con_eventos=1` tras aprobación.
 - **Sync:** `scripts/sync_feed_igfb.py` trae los últimos posts de la página FB
   (`/{page}/posts`) y los media de la cuenta IG (`/{ig-user}/media`) y crea
   `FeedItem` sin duplicar por URL; al final recalcula actividad.
@@ -221,14 +224,17 @@ El calendario de eventos tiene dos vías de alimentación:
 - **Panel de administración:** alta, edición y baja desde `/admin` (pestaña
   "Eventos") vía `POST/PUT/DELETE /api/admin/events` (protegidos por
   `X-Admin-Token`). La lógica vive en `EventRepository` (`lib/repository.py`).
-- **Ingesta automática desde Meta:** los artistas conectados que otorgaron el
-  permiso `pages_events` publican sus toquines como eventos de página;
-  `scripts/sync_eventos_meta.py` los registra en `events` (sin duplicar por
-  fuente `Facebook (página del artista) · {evento_id}`, con el artista como
-  promotor del cartel). El workflow `sync-eventos-meta.yml` lo corre cada 6 h.
-  Los tokens conectados antes de añadir `pages_events` al scope necesitan
-  **reconectar** Meta desde el perfil para concederlo (el sync los omite con
-  un aviso, sin fallar).
+- **Ingesta automática desde Meta (opcional, solo tras App Review):** los
+  artistas conectados que otorgaron el permiso `pages_events` publican sus
+  toquines como eventos de página; `scripts/sync_eventos_meta.py` los registra
+  en `events` (sin duplicar por fuente `Facebook (página del artista) ·
+  {evento_id}`, con el artista como promotor del cartel). El workflow
+  `sync-eventos-meta.yml` lo corre cada 6 h. Mientras `pages_events` no esté
+  aprobado, el login normal no lo pide (`Invalid Scope: pages_events` para
+  no-admin) y los eventos se gestionan por CRUD; el parámetro
+  `?con_eventos=1` en `GET /api/feed/igfb/login` existe para pedirlo de
+  forma incremental tras la aprobación. El sync no falla si el token no
+  trae el permiso (avisa y omite).
 
 **Eventos como señal de actividad:** `lib/servicios.recalcular_actividad`
 actualiza `artista.ultimo_evento` con el evento más reciente en cuyo cartel

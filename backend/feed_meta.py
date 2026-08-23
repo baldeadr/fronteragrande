@@ -41,7 +41,11 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 OWNER_COOKIE = "fg_meta_owner"
 OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
-SCOPES = "pages_show_list,pages_read_engagement,instagram_basic,pages_events"
+SCOPES = "pages_show_list,pages_read_engagement,instagram_basic"
+# Permiso opcional para eventos: solo se pide de forma incremental cuando
+# la app ya tiene aprobación de Meta; pedirlo sin aprobación bloquea a
+# usuarios no-admin con "Invalid Scope: pages_events".
+SCOPES_EVENTOS = f"{SCOPES},pages_events"
 GRAF_API = f"https://graph.facebook.com/{API_VERSION}"
 AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
@@ -261,9 +265,10 @@ def ig_seguidores(ig_user_id: str, page_token: str) -> int | None:
 def pagina_eventos(page_id: str, page_token: str, limite: int = 25) -> list[dict]:
     """Eventos de una página de Facebook (normalizados para el registro).
 
-    Requiere el permiso `pages_events` en el token (se pide al conectar).
-    Devuelve `{id, nombre, fecha, lugar, descripcion}`; sin fecha se omite
-    el evento.
+    Requiere el permiso `pages_events` en el token (permiso opcional: solo
+    disponible tras aprobación de Meta; sin él `sync_eventos_meta.py` avisa
+    y no falla). Devuelve `{id, nombre, fecha, lugar, descripcion}`; sin
+    fecha se omite el evento.
     """
     datos = _grafo(
         f"{page_id}/events",
@@ -292,8 +297,13 @@ def pagina_eventos(page_id: str, page_token: str, limite: int = 25) -> list[dict
 
 
 @router.get("/login")
-def login(slug: str, intencion: str = "conectar"):
-    """Inicia el flujo OAuth: redirige al diálogo de Facebook."""
+def login(slug: str, intencion: str = "conectar", con_eventos: bool = False):
+    """Inicia el flujo OAuth: redirige al diálogo de Facebook.
+
+    `con_eventos` pide además `pages_events` (solo tras aprobación de Meta);
+    por defecto no se pide para no bloquear a usuarios no-admin con
+    "Invalid Scope: pages_events".
+    """
     if not meta_configurado():
         raise HTTPException(
             status_code=503,
@@ -302,12 +312,13 @@ def login(slug: str, intencion: str = "conectar"):
     _get(slug)
     if intencion not in ("conectar", "desconectar"):
         raise HTTPException(status_code=400, detail="Intención no válida")
+    scope = SCOPES_EVENTOS if con_eventos else SCOPES
     params = urlencode(
         {
             "client_id": APP_ID,
             "redirect_uri": REDIRECT_URI,
             "state": f"{slug}:{intencion}",
-            "scope": SCOPES,
+            "scope": scope,
         }
     )
     return RedirectResponse(f"{AUTH_URL}?{params}")
