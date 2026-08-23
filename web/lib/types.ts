@@ -229,6 +229,7 @@ export interface AdminArtist {
   notas: string;
   logros: string;
   imagen_perfil: string | null;
+  imagen_candidatas?: Record<string, string>;
   verificado: boolean;
   links: LinkAdmin[];
 }

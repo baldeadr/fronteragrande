@@ -199,3 +199,22 @@ def imagen_de_artista(links) -> tuple[str, str]:
         if url:
             return url, plataforma
     return "", ""
+
+
+def extraer_todas_imagenes(links) -> dict[str, str]:
+    """Extrae imagen de perfil de TODAS las plataformas disponibles del artista.
+
+    Devuelve dict {plataforma: url} solo con las que devolvieron resultado.
+    No hace short-circuit: prueba todas para que el admin pueda elegir.
+    """
+    disponibles = {
+        l.plataforma: l.url
+        for l in links
+        if not l.es_busqueda and l.url and l.plataforma in EXTRACTORES
+    }
+    resultado: dict[str, str] = {}
+    for plataforma, url in disponibles.items():
+        img = EXTRACTORES[plataforma](url)
+        if img:
+            resultado[plataforma] = img
+    return resultado

@@ -13,15 +13,15 @@ Hay dos jerarquías distintas (no confundir):
 # Foto de perfil: orden de preferencia entre plataformas.
 PRIORIDAD_FOTO_DE_PERFIL = [
     "spotify",
-    "bandcamp",
-    "soundcloud",
-    "beatport",
-    "mixcloud",
-    "yt",
     "ig",
     "fb",
+    "yt",
     "tt",
     "x",
+    "soundcloud",
+    "bandcamp",
+    "mixcloud",
+    "beatport",
 ]
 
 # Enlace "puente" (principal) de la tarjeta de artista.

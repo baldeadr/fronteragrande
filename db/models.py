@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    JSON,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -101,6 +102,7 @@ class Artist(Base):
     imagen_perfil: Mapped[str | None] = mapped_column(String(500), nullable=True)
     imagen_origen: Mapped[str | None] = mapped_column(String(30), nullable=True)
     imagen_actualizada: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    imagen_candidatas: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     fecha_registro: Mapped[datetime | None] = mapped_column(Date, nullable=True)
 
     fb_page_id: Mapped[str | None] = mapped_column(String(120), nullable=True)

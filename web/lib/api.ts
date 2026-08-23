@@ -84,6 +84,8 @@ export async function editarArtista(
     estado_activo: string;
     estado_registro: string;
     redes: { plataforma: string; url: string }[];
+    imagen_perfil: string | null;
+    imagen_origen: string | null;
   }>,
 ): Promise<{ ok: boolean; slug: string }> {
   const res = await fetch(`${API_URL}/api/artists/${slug}`, {

@@ -23,8 +23,9 @@ from datetime import date, datetime
 from urllib.parse import urlencode
 
 import requests
-from fastapi import APIRouter, Cookie, HTTPException, Header
+from fastapi import APIRouter, Cookie, HTTPException, Header, Body
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, HttpUrl
 
 from db.database import SessionLocal
 from db.models import Artist
@@ -324,6 +325,43 @@ def login(slug: str, intencion: str = "conectar", con_eventos: bool = False):
     return RedirectResponse(f"{AUTH_URL}?{params}")
 
 
+class FotoEntrada(BaseModel):
+    """Entrada para actualizar foto de perfil (artista verificado)."""
+    imagen_perfil: HttpUrl | str
+    imagen_origen: str | None = None
+
+
+@router.put("/{slug}/photo")
+def actualizar_foto_propia(
+    slug: str,
+    body: FotoEntrada,
+    x_meta_owner: str = Header(default="", alias="X-Meta-Owner"),
+    meta_owner: str | None = Cookie(default=None, alias=OWNER_COOKIE),
+):
+    """Actualiza foto de perfil del artista (solo el propietario verificado).
+
+    Requiere la cookie `fg_meta_owner` o el header `X-Meta-Owner` con la
+    sesión emitida al conectar Meta (la cookie Lax no viaja en fetch
+    cross-origin, por eso la web usa el header).
+    """
+    if not _sesion_autoriza(x_meta_owner or meta_owner, slug):
+        raise HTTPException(
+            status_code=403,
+            detail="No autorizado: sesión de propietario inválida o expirada",
+        )
+    session = SessionLocal()
+    try:
+        artista = ArtistRepository(session).por_slug(slug)
+        if artista is None:
+            raise HTTPException(status_code=404, detail="Artista no encontrado")
+        artista.imagen_perfil = str(body.imagen_perfil)
+        artista.imagen_origen = body.imagen_origen or "manual"
+        artista.imagen_actualizada = datetime.utcnow()
+        session.commit()
+        return {"ok": True, "imagen_perfil": artista.imagen_perfil, "imagen_origen": artista.imagen_origen}
+    finally:
+        session.close()
+
 @router.post("/desconectar")
 def desconectar(
     slug: str,
@@ -359,11 +397,11 @@ def desconectar(
 
 @router.get("/callback")
 def callback(code: str, state: str):
-    """Recibe el `code`, guarda el token de la página y redirige al perfil.
+    """Recibe el `code`, guarda el token de la página y redirige a selección de foto.
 
     Al conectar, el artista **reclama** el perfil: `estado_registro` pasa a
     `confirmado (artista, YYYY-MM-DD)`, la señal de que la cuenta autorizada
-    administra la página registrada del artista.
+    administra la página registrada del artista. Luego redirige a elegir foto.
     """
     partes = state.split(":", 1)
     slug = partes[0]
@@ -405,7 +443,11 @@ def callback(code: str, state: str):
     finally:
         session.close()
     resultado = "desconectado" if intencion == "desconectar" and ok else "ok"
-    destino = f"{WEB_URL}/artistas/{slug}?igfb={resultado if ok else 'error'}"
+    if intencion == "conectar" and ok and owner_cookie:
+        # Redirigir a página de selección de foto con cookie de propietario
+        destino = f"{WEB_URL}/artistas/{slug}/seleccionar-foto?igfb=ok&owner={owner_cookie}"
+    else:
+        destino = f"{WEB_URL}/artistas/{slug}?igfb={resultado if ok else 'error'}"
     if owner_cookie:
         destino += f"&owner={owner_cookie}#meta_owner={owner_cookie}"
     respuesta = RedirectResponse(destino)

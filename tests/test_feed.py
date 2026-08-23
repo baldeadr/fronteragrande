@@ -72,3 +72,56 @@ def test_desconectar_meta_acepta_sesion_en_header(client, monkeypatch):
         headers={"X-Meta-Owner": token},
     )
     assert respuesta.status_code == 200
+
+
+def test_foto_propia_requiere_sesion_del_propietario(client):
+    """PUT /{slug}/photo sin sesión firmada se rechaza con 403."""
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/photo",
+        json={"imagen_perfil": "https://example.com/foto.jpg"},
+    )
+    assert respuesta.status_code == 403
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/photo",
+        json={"imagen_perfil": "https://example.com/foto.jpg"},
+        headers={"X-Meta-Owner": "token-falso"},
+    )
+    assert respuesta.status_code == 403
+
+
+def test_foto_propia_con_sesion_en_header(client, monkeypatch):
+    """El artista verificado elige su foto enviando la sesión en header."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/photo",
+        json={
+            "imagen_perfil": "https://example.com/foto.jpg",
+            "imagen_origen": "manual",
+        },
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 200
+    cuerpo = respuesta.json()
+    assert cuerpo["ok"] is True
+    assert cuerpo["imagen_perfil"] == "https://example.com/foto.jpg"
+    assert cuerpo["imagen_origen"] == "manual"
+
+    detalle = client.get("/api/artists/apex_ultra").json()
+    assert detalle["imagen_perfil"] == "https://example.com/foto.jpg"
+
+
+def test_foto_propia_de_otro_artista_rechazada(client, monkeypatch):
+    """La sesión de un artista no sirve para editar la foto de otro."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.put(
+        "/api/feed/igfb/vaale/photo",
+        json={"imagen_perfil": "https://example.com/foto.jpg"},
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 403

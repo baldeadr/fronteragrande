@@ -752,6 +752,7 @@ def admin_list_artists(
                 "notas": a.notas or "",
                 "logros": a.logros or "",
                 "imagen_perfil": a.imagen_perfil or None,
+                "imagen_candidatas": a.imagen_candidatas or None,
                 "verificado": bool(
                     (a.fb_page_token or a.tt_refresh_token) and a.estado_registro
                 ),

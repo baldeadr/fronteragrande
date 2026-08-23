@@ -615,9 +615,10 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
     """Edición de un artista desde el panel de administración.
 
     Aplica solo los campos presentes en `datos`: campos básicos (nombre,
-    ciudad, categoría, géneros, bio, notas, logros), estado de actividad y
-    el reemplazo de los enlaces de plataforma (si llega `redes`). Devuelve
-    `None` si el slug no existe. No hace commit: lo hace el caller.
+    ciudad, categoría, géneros, bio, notas, logros), estado de actividad,
+    foto de perfil (`imagen_perfil`, `imagen_origen`) y el reemplazo de los
+    enlaces de plataforma (si llega `redes`). Devuelve `None` si el slug no
+    existe. No hace commit: lo hace el caller.
     """
     repos = ArtistRepository(session)
     artista = repos.por_slug(slug)
@@ -653,6 +654,10 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
         artista.estado_activo = estado
     if "estado_registro" in datos:
         artista.estado_registro = datos.get("estado_registro") or ""
+    if "imagen_perfil" in datos:
+        artista.imagen_perfil = datos.get("imagen_perfil") or None
+    if "imagen_origen" in datos:
+        artista.imagen_origen = datos.get("imagen_origen") or None
 
     if "redes" in datos:
         _reemplazar_redes(session, artista, datos.get("redes") or [])

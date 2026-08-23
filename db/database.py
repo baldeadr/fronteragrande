@@ -92,6 +92,12 @@ def _asegurar_columnas_extra():
                         "tt_refresh_token VARCHAR(500)"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "imagen_candidatas JSON"
+                    )
+                )
         return
     from sqlalchemy import text
 
@@ -148,6 +154,9 @@ def _asegurar_columnas_extra():
             if columna not in columnas:
                 with engine.begin() as conn:
                     conn.execute(text(f"ALTER TABLE artists ADD COLUMN {columna} {tipo}"))
+        if "imagen_candidatas" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE artists ADD COLUMN imagen_candidatas JSON"))
 
 
 _asegurar_columnas_extra()

@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   adminArtistas,
@@ -403,6 +404,8 @@ function FormEditar({
   const [notas, setNotas] = useState(artista.notas);
   const [logros, setLogros] = useState(artista.logros);
   const [redes, setRedes] = useState<LinkAdmin[]>(artista.links.length ? artista.links : [{ plataforma: "ig", url: "" }]);
+  const [imagenSeleccionada, setImagenSeleccionada] = useState<string | null>(artista.imagen_perfil);
+  const [imagenOrigen, setImagenOrigen] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -425,6 +428,8 @@ function FormEditar({
         notas,
         logros,
         redes: redes.map((r) => ({ plataforma: r.plataforma, url: r.url.trim() })),
+        imagen_perfil: imagenSeleccionada,
+        imagen_origen: imagenOrigen,
       });
       onGuardado();
     } catch (err) {
@@ -432,6 +437,8 @@ function FormEditar({
       setGuardando(false);
     }
   }
+
+  const candidatos = artista.imagen_candidatas ?? {};
 
   return (
     <form
@@ -509,6 +516,75 @@ function FormEditar({
         rows={2}
         className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
       />
+
+      {Object.keys(candidatos).length > 0 && (
+        <div className="flex flex-col gap-3">
+          <p className="text-xs text-muted">Foto de perfil (elige una candidata o usa URL propia)</p>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(candidatos).map(([plataforma, url]) => (
+              <label
+                key={plataforma}
+                className={`flex flex-col items-center gap-1 cursor-pointer rounded-lg border-2 p-2 transition-colors ${
+                  imagenSeleccionada === url
+                    ? "border-accent bg-accent/10"
+                    : "border-line hover:border-accent/50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="imagen-perfil"
+                  value={url}
+                  checked={imagenSeleccionada === url}
+                  onChange={() => {
+                    setImagenSeleccionada(url);
+                    setImagenOrigen(plataforma);
+                  }}
+                  className="sr-only"
+                />
+                <Image
+                  src={url}
+                  alt={`Candidata ${plataforma}`}
+                  width={80}
+                  height={80}
+                  className="h-20 w-20 object-cover rounded"
+                  unoptimized
+                />
+                <span className="text-xs font-medium text-muted capitalize">{plataforma}</span>
+              </label>
+            ))}
+            <label className="flex flex-col items-center gap-1 cursor-pointer rounded-lg border-2 border-dashed p-2 transition-colors hover:border-accent/50">
+              <input
+                type="radio"
+                name="imagen-perfil"
+                value="custom"
+                checked={!!imagenSeleccionada && !Object.values(candidatos).includes(imagenSeleccionada)}
+                onChange={() => {
+                  setImagenSeleccionada("");
+                  setImagenOrigen("manual");
+                }}
+                className="sr-only"
+              />
+              <div className="h-20 w-20 flex items-center justify-center rounded bg-surface border border-line">
+                <span className="text-xs text-muted">URL propia</span>
+              </div>
+            </label>
+          </div>
+          {imagenSeleccionada && !Object.values(candidatos).includes(imagenSeleccionada) && (
+            <input
+              type="url"
+              value={imagenSeleccionada}
+              onChange={(e) => setImagenSeleccionada(e.target.value)}
+              placeholder="https://…"
+              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+          )}
+          {imagenSeleccionada && Object.values(candidatos).includes(imagenSeleccionada) && (() => {
+            const entry = Object.entries(candidatos).find(([, v]) => v === imagenSeleccionada);
+            const label = entry ? entry[0].charAt(0).toUpperCase() + entry[0].slice(1) : imagenOrigen;
+            return <p className="text-xs text-accent">Usando: {label}</p>;
+          })()}
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <p className="text-xs text-muted">Redes (enlaces al puente)</p>
