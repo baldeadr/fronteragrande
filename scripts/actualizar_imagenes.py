@@ -6,6 +6,9 @@ scraping público (`og:image`) como respaldo. El avatar de TikTok se actualiza
 en `scripts/sync_feed_tiktok.py` (donde ya se rota el token).
 Re-ejecutable: re-correrlo refresca las URLs (las de redes pueden caducar).
 Guarda todas las URLs candidatas en `imagen_candidatas` para selección manual.
+Como el scraping es intermitente, conserva las candidatas estables de corridas
+previas cuando una plataforma no responde (`imagenes.fusionar_candidatas`;
+fb/ig se excluyen porque su URL firmada caduca).
 Respeta selecciones manuales (`imagen_origen == "manual"`).
 """
 
@@ -59,14 +62,26 @@ def main() -> None:
     try:
         for artista in session.query(Artist).order_by(Artist.nombre).all():
             # 1. Extraer TODAS las imágenes candidatas (scraping + API)
-            candidatas = imagenes.extraer_todas_imagenes(artista.links)
+            nuevas = imagenes.extraer_todas_imagenes(artista.links)
 
             # 2. API oficiales (Meta, YouTube) tienen prioridad sobre scraping
             api_url, api_origen = _imagen_api(artista)
             if api_url:
-                candidatas[api_origen] = api_url  # pisa si ya existía
+                nuevas[api_origen] = api_url  # pisa si ya existía
 
-            # 3. Seleccionar la mejor automáticamente (para imagen_perfil)
+            # 3. Arrastrar candidatas estables de corridas previas: el
+            #    scraping es intermitente y una corrida mala no debe degradar
+            #    la elección anterior (fb/ig se excluyen: su URL caduca).
+            vigentes = {
+                l.plataforma
+                for l in artista.links
+                if not l.es_busqueda and l.url and l.plataforma in imagenes.EXTRACTORES
+            }
+            candidatas = imagenes.fusionar_candidatas(
+                artista.imagen_candidatas, nuevas, vigentes
+            )
+
+            # 4. Seleccionar la mejor automáticamente (para imagen_perfil)
             #    Respeta selección manual: si imagen_origen == "manual", no toca imagen_perfil/imagen_origen
             seleccion_manual = artista.imagen_origen == "manual"
             url, origen = artista.imagen_perfil or "", artista.imagen_origen or ""
@@ -78,7 +93,7 @@ def main() -> None:
                         origen = plataforma
                         break
 
-            # 4. Guardar todo
+            # 5. Guardar todo
             artista.imagen_candidatas = candidatas or None
             if not seleccion_manual:
                 artista.imagen_perfil = url or None

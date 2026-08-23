@@ -217,6 +217,20 @@ YouTube Data API si hay `YOUTUBE_API_KEY`. El avatar de TikTok se actualiza en
 responde, cae a la cadena de scraping `og:image` (jerarquía en
 `scraper/jerarquias.py`).
 
+Como el scraping es intermitente (una plataforma puede no responder en una
+corrida y sí en la siguiente), el script **arrastra candidatas estables** de
+la corrida previa (`imagenes.fusionar_candidatas`): si el enlace sigue
+registrado y la URL no caduca, se conserva la foto anterior para que la
+selección no degrade. Solo `fb`/`ig` se excluyen del arrastre: sus URLs del
+CDN firmado de Meta expiran.
+
+Se ejecuta con el workflow `actualizar-imagenes.yml` (manual o cada lunes) o a
+mano contra producción:
+
+```bash
+DATABASE_URL="postgresql://…" .venv/bin/python scripts/actualizar_imagenes.py
+```
+
 ### Eventos: CRUD en el admin e ingesta desde Meta (fase 2026-08)
 
 El calendario de eventos tiene dos vías de alimentación:

@@ -218,3 +218,32 @@ def extraer_todas_imagenes(links) -> dict[str, str]:
         if img:
             resultado[plataforma] = img
     return resultado
+
+
+# Plataformas cuya URL de foto caduca (CDN firmado de Meta): no sirve
+# arrastrarlas de corridas anteriores porque pueden dejar de resolver.
+URL_CADUCA = {"fb", "ig"}
+
+
+def fusionar_candidatas(
+    previas: dict[str, str] | None,
+    nuevas: dict[str, str],
+    vigentes: set[str],
+) -> dict[str, str]:
+    """Conserva candidatas estables de corridas previas ante fallos de red.
+
+    El scraping es intermitente: una plataforma que respondió en una corrida
+    puede no responder en la siguiente. Si la URL no caduca y el enlace de esa
+    plataforma sigue registrado, se arrastra la foto anterior para que la
+    selección (`PRIORIDAD_FOTO_DE_PERFIL`) no degrade entre corridas.
+    """
+    fusion = dict(nuevas)
+    for plataforma, url in (previas or {}).items():
+        if (
+            url
+            and plataforma not in fusion
+            and plataforma not in URL_CADUCA
+            and plataforma in vigentes
+        ):
+            fusion[plataforma] = url
+    return fusion
