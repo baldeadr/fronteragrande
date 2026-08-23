@@ -34,7 +34,16 @@ export default function Footer() {
           grande de Tamaulipas.
         </p>
         <p>
-          Parte del universo <span className="text-accent">architecting-a-band</span>.
+          Parte del universo{" "}
+          <a
+            href="https://baldeadr.github.io/architecting-a-band-web/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:underline"
+          >
+            architecting-a-band
+          </a>
+          .
         </p>
         <nav aria-label="Redes sociales" className="mt-3 flex flex-wrap justify-center gap-2">
           {redes.map((red) => (

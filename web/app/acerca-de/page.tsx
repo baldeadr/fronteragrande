@@ -132,7 +132,16 @@ export default function AcercaDePage() {
           local y entender cómo encajar en ella. Con el tiempo, esa idea pivotó
           y tomó forma como base de datos interactiva abierta a todo el público.
           Hoy Frontera Grande forma parte del universo artístico de{" "}
-          <b>Adrian Balderas</b> llamado <b>architecting-a-band</b>.
+          <b>Adrian Balderas</b> llamado{" "}
+          <a
+            href="https://baldeadr.github.io/architecting-a-band-web/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-accent hover:underline"
+          >
+            architecting-a-band
+          </a>
+          .
         </p>
       </section>
 
