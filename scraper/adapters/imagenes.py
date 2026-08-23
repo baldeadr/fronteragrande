@@ -5,7 +5,8 @@ página del artista en cada plataforma y la guarda. La web carga la imagen
 directamente desde la URL remota.
 
 Fuentes probadas:
-- Spotify: la página *embed* del artista incluye su foto (image-cdn-ak.spotifycdn.com).
+- Spotify: la página *embed* del artista incluye su foto (image-cdn-ak.spotifycdn.com);
+  si el embed no responde, se usa el oEmbed público (`thumbnail_url`).
 - Bandcamp, SoundCloud, YouTube, Instagram, Facebook, TikTok, X: se intenta `og:image` de la página.
 - Instagram/Facebook/TikTok suelen bloquear scrapers (se omite si fallan).
 """
@@ -63,29 +64,44 @@ def _og_image(html: str) -> str:
     return m.group(1) if m else ""
 
 
+def _spotify_oembed(url_artista: str) -> str:
+    """Respaldo vía `open.spotify.com/oembed` (JSON público con thumbnail)."""
+    respuesta = _get_con_params("https://open.spotify.com/oembed", {"url": url_artista})
+    if respuesta is None or respuesta.status_code != 200:
+        return ""
+    try:
+        miniatura = (respuesta.json().get("thumbnail_url") or "").strip()
+    except ValueError:
+        return ""
+    return miniatura if miniatura.startswith("https://image-cdn") else ""
+
+
 def _spotify(url: str) -> str:
     """Foto del artista desde la página embed de Spotify.
 
     Prefiere la foto de perfil (`ab676161`); si el artista no tiene, usa su
-    imagen de cabecera (`ab67616d0000b273`, recorte grande).
+    imagen de cabecera (`ab67616d0000b273`, recorte grande). Si el embed no
+    responde (Spotify bloquea IPs de datacenter a veces), cae al oEmbed.
     """
     m = re.search(r"artist/([0-9A-Za-z]+)", url or "")
     if not m:
         return ""
+    url_artista = f"https://open.spotify.com/artist/{m.group(1)}"
     respuesta = _get(f"https://open.spotify.com/embed/artist/{m.group(1)}")
-    if respuesta is None or respuesta.status_code != 200:
-        return ""
-    foto = re.search(
-        r"https://image-cdn-ak\.spotifycdn\.com/image/ab676161[0-9a-f]+",
-        respuesta.text,
-    )
-    if foto:
-        return foto.group(0)
-    cabecera = re.search(
-        r"https://image-cdn-ak\.spotifycdn\.com/image/ab67616d0000b273[0-9a-f]+",
-        respuesta.text,
-    )
-    return cabecera.group(0) if cabecera else ""
+    if respuesta is not None and respuesta.status_code == 200:
+        foto = re.search(
+            r"https://image-cdn-ak\.spotifycdn\.com/image/ab676161[0-9a-f]+",
+            respuesta.text,
+        )
+        if foto:
+            return foto.group(0)
+        cabecera = re.search(
+            r"https://image-cdn-ak\.spotifycdn\.com/image/ab67616d0000b273[0-9a-f]+",
+            respuesta.text,
+        )
+        if cabecera:
+            return cabecera.group(0)
+    return _spotify_oembed(url_artista)
 
 
 def _og(url: str) -> str:
