@@ -43,12 +43,17 @@ colores ajenos al sistema de diseño.
 | Iniciales `FG` | **Archivo Black** | 900 | La fuente es el símbolo; no se reemplaza por otra |
 | Wordmark | **Arial / Helvetica** | 300 (light) | Sobrio, con `letter-spacing` generoso |
 | Títulos de web | Archivo Black (paquete local `@fontsource/archivo-black`) | — | Consistente con `FG` |
+| **Carrusel — titulares/kickers** | **Anton** (OFL, `~/.local/share/fonts/carrusel/Anton.ttf`) | 400 | Display de cartel para IG/FB: ocupa el cuadrado, lectura en 0,8 s |
+| **Carrusel — cuerpo/subs/pills** | **Space Grotesk** (OFL, variable 300-700) | 400-700 | Geométrico con carácter, más dinámico que Arial |
 
 - La web carga Archivo Black **localmente** vía `@fontsource/archivo-black`
   (importado en `web/app/globals.css`), sin depender de Google Fonts. La clase
   `.font-brand` aplica `"Archivo Black", "Arial Black", Arial, sans-serif` al
   nombre "Frontera Grande" de la barra superior; el resto del cuerpo sigue en
   `system-ui` para legibilidad.
+- **Carrusel (IG/FB):** `Archivo Black` se reserva **solo** para el logo FG y el dominio `FRONTERAGRANDE.MX`; titulares y kickers en **Anton** (`rol="anton"`) y cuerpos/pills en **Space Grotesk** (`rol="space"`). Oswald quedó descartado por genérico. Generador canónico: `scripts/generar_carrousel_v2.py` (salida en `carrousel/`: PNG comprometidos, SVG regenerables e ignorados por git).
+- **Énfasis con color:** palabras clave en `ACCENT` (`#9d4edd`): portada `tu ciudad?`/`solo lugar.`, kickers `PARA LOS FANS/ARTISTAS`, cierre `FRONTERAGRANDE.MX`. Revisar todas las diapositivas antes de publicar.
+- Todas las fuentes del carrusel son **OFL gratuitas**, en `~/.local/share/fonts/carrusel/` para `PIL.ImageFont` + `fc-cache` (medir con el mismo peso que renderiza Inkscape: fuentes variables con `set_variation_by_axes`). No usar más de 3 familias.
 - Archivo Black debe estar instalada para **regenerar** los SVG/PNG (está en
   `~/.local/share/fonts/ArchivoBlack-Regular.ttf` en el entorno de trabajo).
 - Los SVG publicados ya tienen el texto **convertido a trazados** (paths, vía
@@ -86,7 +91,7 @@ se toca (verificado midiendo el render, no a ojo).
 | `web/app/favicon.ico` | Favicon legacy (16/32/48) | Raster del `icon.svg` |
 | `web/public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon-180.png` | Iconos de la PWA instalable (manifest + iPhone) | Raster del `icon.svg` (solo `FG` + línea; sin wordmark, que no se lee a tamaño de icono) |
 | `web/public/banner-frontera-grande.svg` + `.png` | Banner para Facebook (1640×624) | Logo embebido + wordmark grande en dos renglones + eslogan "La escena fronteriza, en un solo lugar." |
-| `web/public/portada-playlist.svg` + `.png` | **Portada de la playlist de Spotify** (3000×3000) | Monograma `FG` (estilo favicon: proporciones normales, `matrix(0.96 0 0 1.06 30 -40)`, `letter-spacing=40`) + línea morada centrada + wordmark `FRONTERA`/`GRANDE` en Archivo Black + etiqueta "DESCUBRIMIENTO SEMANAL" (Arial light) + eslogan al pie. Misma receta del banner: el monograma manda a tamaño de miniatura (64px), el resto acompaña. |
+| `web/public/portada-playlist.svg` + `.png` | **Portada minimalista de la playlist de Spotify** (3000×3000) | Resaltador morado irregular e inclinado con "DESCUBRIMIENTO SEMANAL" arriba, monograma `FG` + línea de identidad al centro y `FRONTERA`/`GRANDE` en dos renglones abajo. |
 
 ## 6. Reglas (qué NO se cambia sin decisión)
 
@@ -108,6 +113,7 @@ se toca (verificado midiendo el render, no a ojo).
   abstracta (sección 1).
 - Cambiar la tipografía de `FG` (Archivo Black) o el cuadrado redondeado
   cambia la identidad: requiere decisión explícita.
+- **No** monotonía tipográfica en carrusel: **Anton** (titulares) + **Archivo Black** (logo/dominio) + **Space Grotesk** (cuerpo); nunca más de 3 familias, sombra tipo halo centrada (`SOMBRA_COLOR`/`SOMBRA_OPACIDAD`) y verificación anti-solape integrada en el generador. Publicación neutra: sin fotos ni nombres de artistas concretos.
 
 ## 7. Cómo actualizar el logo
 

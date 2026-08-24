@@ -1,0 +1,17 @@
+01-portada-bg.jpg
+dark concert crowd from behind, stage lights bokeh in purple #9d4edd, smoke haze, shallow depth of field, Tamaulipas border night atmosphere, no faces recognizable, no text, cinematic, overlay ready for dark UI --ar 1:1 --style raw
+
+02-mapa-bg.jpg
+abstract aerial view of Rio Grande river valley at night, dark terrain with subtle purple light trace marking the border, minimal topographic lines, moody map texture, very dark, no labels, no text --ar 1:1
+
+03a-fan.jpg
+young person with headphones listening to music on phone at night, silhouette backlight, purple neon reflection, intimate, indoors, no face front, no text --ar 1:1
+
+03b-artista.jpg
+local band rehearsing in garage/studio, guitars and drums, warm tungsten light, dust particles, Tamaulipas DIY venue, backs/side view, no faces front, no text, documentary --ar 1:1
+
+04-plataforma.jpg
+dark desk with phone screen glow, subtle gradient mesh purple #2a1a33 to #14141b, abstract, no device, texture only, very dark, bokeh --ar 1:1
+
+05-link.jpg
+hand holding phone displaying QR code glow, dark background, purple edge light, minimal, close-up, no text on screen, no brand --ar 9:16

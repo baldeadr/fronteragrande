@@ -29,3 +29,6 @@ scripts/tarjetas/
 # OS / editores
 .DS_Store
 .obsidian/
+
+# carrusel: artefactos regenerables con scripts/generar_*.py
+carrousel/*.svg
