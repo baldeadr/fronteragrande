@@ -96,3 +96,9 @@ escena regional.
    más allá; el modelo de datos ya lo permite (ciudad base única, ranking).
 4. **Otras disciplinas artísticas**: la estructura (proyecto → redes → actividad)
    es reutilizable; se ampliará cuando se decida el primer piloto.
+5. **Predicciones e inteligencia de datos** `[PENDIENTE]`: cuando la base tenga
+   una historia estable y suficiente de actividad, alcance y eventos, se evaluará
+   entrenar modelos de machine learning para predecir tendencias de la escena,
+   estimar crecimiento por proyecto/ciudad/género, recomendar colaboraciones o
+   eventos, y detectar anomalías en métricas. El foco previo sigue siendo la
+   calidad, verificación y cobertura de los datos.

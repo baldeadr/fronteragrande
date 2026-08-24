@@ -40,6 +40,24 @@ superen esos límites.
 La infraestructura actual puede mantenerse casi gratis. Antes de contratar
 servicios de datos, debe medirse la audiencia real.
 
+### Costo anual con app en tiendas (condicional)
+
+Si el sitio se publica como app en tiendas (roadmap, etapa 23), los costos
+adicionales serían:
+
+| Concepto | Costo |
+|---|---:|
+| Google Play (cuenta de desarrollador) | $25 USD una sola vez |
+| Apple Developer Program | $99 USD por año |
+| Dominio `fronteragrande.mx` | $30.70 USD por año |
+
+Primer año con ambas tiendas: **~$154.70 USD**. Años siguientes:
+**~$129.70 USD**.
+
+Condición acordada con el artista: publicar en tiendas **solo cuando el
+ingreso anual del sitio cubra el costo anual recurrente (~$130 USD)**,
+medible con AdSense + patrocinios tras los 90 días de audiencia.
+
 ## 3. Plataformas de datos musicales
 
 Los precios son referencias observadas en las páginas oficiales durante agosto
