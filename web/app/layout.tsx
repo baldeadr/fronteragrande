@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -60,6 +61,7 @@ export default function RootLayout({
         <NavegacionMovil />
         <BannerNotificaciones />
         <PlaylistSemanal />
+        <Analytics />
         <Script id="registro-service-worker" strategy="afterInteractive">
           {`
             if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost","127.0.0.1"].includes(location.hostname))) {
