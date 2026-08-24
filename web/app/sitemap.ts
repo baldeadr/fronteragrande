@@ -10,8 +10,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE, changeFrequency: "daily", priority: 1 },
     { url: `${BASE}/artistas`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/eventos`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/feed`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/stats`, changeFrequency: "weekly", priority: 0.5 },
     { url: `${BASE}/ayuda-artistas`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/acerca-de`, changeFrequency: "monthly", priority: 0.5 },
   ];
 
   let artistas: MetadataRoute.Sitemap = [];
