@@ -98,7 +98,7 @@ class ArtistRepository:
                 ArtistLink.url != "",
             )
             .distinct(Artist.id)
-            .order_by(Artist.nombre)
+            .order_by(Artist.id, Artist.nombre)
         ).scalars().all()
 
     def con_lanzamiento(self) -> list[Artist]:
