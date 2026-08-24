@@ -97,7 +97,7 @@ class ArtistRepository:
                 ArtistLink.es_busqueda.is_(False),
                 ArtistLink.url != "",
             )
-            .distinct()
+            .distinct(Artist.id)
             .order_by(Artist.nombre)
         ).scalars().all()
 
