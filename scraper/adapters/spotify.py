@@ -97,7 +97,7 @@ def get_artist_releases(artist_id: str, limite: int = 10) -> list[dict]:
     token = _token()
     respuesta = requests.get(
         f"{API_BASE}/artists/{artist_id}/albums",
-        params={"include_groups": "album,single", "limit": limite},
+        params={"include_groups": "album,single", "limit": min(limite, 10)},
         headers={"Authorization": f"Bearer {token}"},
         timeout=15,
     )
