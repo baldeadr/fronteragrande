@@ -220,15 +220,21 @@ def _grafo(ruta: str, params: dict) -> dict:
 
 
 def pagina_about(page_id: str, page_token: str) -> str:
-    """Descripción de la página de Facebook (`description`/`about`)."""
+    """Descripción de la página de Facebook.
+
+    La "bio" visible vive en campos distintos según cómo la llenó el
+    artista: se prueba `description`, `about`, `general_info` y `bio`.
+    """
     datos = _grafo(
         page_id,
-        {"access_token": page_token, "fields": "about,description"},
+        {"access_token": page_token,
+         "fields": "description,about,general_info,bio"},
     )
-    descripcion = (datos.get("description") or "").strip()
-    if not descripcion:
-        descripcion = (datos.get("about") or "").strip()
-    return descripcion
+    for campo in ("description", "about", "general_info", "bio"):
+        texto = (datos.get(campo) or "").strip()
+        if texto:
+            return texto
+    return ""
 
 
 def ig_bio(ig_user_id: str, page_token: str) -> str:

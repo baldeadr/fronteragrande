@@ -73,6 +73,12 @@ def _extraer_username_ig(url: str) -> str:
     return url.rstrip("/").rsplit("/", 1)[-1].split("?")[0]
 
 
+def _dato_real(valor: str | None) -> str:
+    """Texto utilizable del dato: vacío si falta o es el marcador [PENDIENTE]."""
+    texto = (valor or "").strip()
+    return "" if texto.lower() == "[pendiente]" else texto
+
+
 def _construir_mensaje(artista: Artist, enlaces: dict[str, str]) -> str:
     """Construye el mensaje del post de bienvenida."""
     lineas = [
@@ -80,12 +86,19 @@ def _construir_mensaje(artista: Artist, enlaces: dict[str, str]) -> str:
         "",
         f"Bienvenid@ {artista.nombre} a la escena musical de la frontera grande de Tamaulipas.",
         "",
-        f"🎸 {artista.segmento} · {artista.ciudad} · {artista.generos}",
-        "",
         f"🔗 Escúchalo y sígelo en: {WEB_URL}/artistas/{artista.slug}",
         "",
         "#FronteraGrande #EscenaLocal #Tamaulipas #MúsicaIndependiente",
     ]
+    ficha = " · ".join(
+        p for p in (
+            _dato_real(getattr(artista, "segmento", None)),
+            _dato_real(getattr(artista, "ciudad", None)),
+            _dato_real(artista.generos),
+        ) if p
+    )
+    if ficha:
+        lineas.insert(4, f"🎸 {ficha}")
     handles: list[str] = []
     if enlaces.get("fb"):
         handles.append(_extraer_username_fb(enlaces["fb"]))
@@ -207,7 +220,11 @@ def _ecualizador(lienzo: Image.Image) -> None:
 
 def _generos_cortos(generos: str, maximo: int = 3) -> str:
     """Primeros géneros separados por ' · ' para la línea bajo el nombre."""
-    partes = [g.strip() for g in (generos or "").split(",") if g.strip()]
+    partes = [
+        g.strip()
+        for g in (generos or "").split(",")
+        if g.strip() and g.strip().lower() != "[pendiente]"
+    ]
     return " · ".join(partes[:maximo])
 
 
@@ -386,7 +403,7 @@ def _nombre_sublinea(draw: ImageDraw.ImageDraw, artista: Artist,
         tam -= 4
     alto = _centrar_texto(draw, nombre, _fuente(tam), y_nombre, LIENZO[0], TEXTO)
     sublinea = " · ".join(
-        p for p in (artista.ciudad.strip(), _generos_cortos(artista.generos)) if p
+        p for p in (_dato_real(artista.ciudad), _generos_cortos(artista.generos)) if p
     )
     if sublinea:
         _centrar_texto(draw, sublinea, _fuente(32),
