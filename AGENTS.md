@@ -41,6 +41,9 @@ cd web && npm install
 # correr todo (API :8000 + web :3000)
 ./scripts/dev.sh
 
+# carruseles de RRSS (salida en carrousel/<carpeta>/, stock compartido en carrousel/fuentes/)
+python3 scripts/generar_carruseles.py --carrusel {presentacion|artistas|todos} --formato {cuadrado|reel|ambos}
+
 # tests del backend (red de seguridad; usa BD temporal aislada)
 .venv/bin/pytest
 

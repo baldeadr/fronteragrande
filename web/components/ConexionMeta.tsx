@@ -20,12 +20,18 @@ export default function ConexionMeta({
 
   if (!conectado) {
     return (
-      <a
-        href={`${API_URL}/api/feed/igfb/login?slug=${slug}`}
-        className="mt-1 inline-flex w-36 items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90"
-      >
-        Conectar Meta
-      </a>
+      <div className="flex flex-col items-start gap-2">
+        <a
+          href={`${API_URL}/api/feed/igfb/login?slug=${slug}`}
+          className="mt-1 inline-flex w-36 items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90"
+        >
+          Conectar Meta
+        </a>
+        <p className="text-xs text-muted max-w-xs">
+          Al conectar tu página, Frontera Grande podrá compartir tu proyecto
+          en sus redes sociales etiquetándote para darte visibilidad.
+        </p>
+      </div>
     );
   }
 
@@ -40,7 +46,7 @@ export default function ConexionMeta({
       </button>
 
       {abierto && (
-        <div className="mt-2 flex flex-col items-start gap-2">...
+        <div className="mt-2 flex flex-col items-start gap-2">
           <a
             href={`${API_URL}/api/feed/igfb/login?slug=${slug}`}
             className="inline-flex w-fit items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-text transition-colors hover:border-accent"
