@@ -7,12 +7,13 @@ orquesta: el conocimiento de plataformas vive en `lib/plataformas`.
 
 import os
 from datetime import date, datetime, time, timedelta
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
@@ -60,6 +61,7 @@ from backend.feed_tiktok import (
     tiktok_configurado,
     router as feed_tiktok_router,
 )
+import lib.promo_fg as lib_promo_fg
 
 app = FastAPI(title="Frontera Grande API", version="0.1.0")
 
@@ -207,6 +209,37 @@ def _json_safe(valor: Any) -> Any:
 @app.get("/api/health")
 def health():
     return {"estado": "ok"}
+
+
+@app.get("/api/promos/{slug}.png")
+def promo_imagen(slug: str):
+    """Sirve la tarjeta promocional del artista (generada al vuelo).
+
+    La usa Facebook al publicar el post de bienvenida (`POST /{page}/photos`
+    con `url`): la imagen debe ser accesible públicamente. Si la tarjeta
+    aún no existe en `instance/promos/`, se genera bajo demanda.
+    """
+    from db.database import SessionLocal
+    from lib.promo_fg import generar_imagen_promo
+
+    session = SessionLocal()
+    try:
+        artista = ArtistRepository(session).por_slug(slug)
+    finally:
+        session.close()
+    if artista is None:
+        raise HTTPException(status_code=404, detail="Artista no encontrado")
+
+    ruta = Path(lib_promo_fg.PROMOS_DIR) / f"{slug}.png"
+    if not ruta.exists():
+        generada = generar_imagen_promo(artista)
+        if generada is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Sin foto de perfil para generar la tarjeta",
+            )
+        ruta = generada
+    return FileResponse(ruta, media_type="image/png")
 
 
 def _cache_key_artists(

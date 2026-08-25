@@ -437,6 +437,12 @@ def callback(code: str, state: str):
                 from lib.notificaciones import notificar_verificacion_artista
 
                 notificar_verificacion_artista(session, artista.nombre)
+                from lib.promo_fg import publicar_bienvenida
+
+                promo_resultado = publicar_bienvenida(artista)
+                if not promo_resultado.get("ok"):
+                    logger.warning("No se pudo publicar bienvenida para %s: %s",
+                                   artista.nombre, promo_resultado.get("error"))
     except Exception as exc:
         session.rollback()
         logger.exception("Error al gestionar Meta para el artista %s: %s", slug, exc)

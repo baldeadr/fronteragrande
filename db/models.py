@@ -244,6 +244,27 @@ class PushSubscription(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class PromoPost(Base):
+    """Registro de posts promocionales publicados en la página de Frontera Grande.
+
+    Se crea cuando un artista verifica su perfil y se publica un post de bienvenida
+    en la página oficial de Frontera Grande etiquetando al artista.
+    """
+
+    __tablename__ = "promo_posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"), index=True)
+    plataforma: Mapped[str] = mapped_column(String(20), default="fb")  # fb, ig
+    post_id: Mapped[str] = mapped_column(String(120))  # ID del post en la API de Meta
+    fecha: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    estado: Mapped[str] = mapped_column(String(20), default="publicado")  # publicado, error, eliminado
+    mensaje: Mapped[str] = mapped_column(Text, default="")
+    error_detalle: Mapped[str] = mapped_column(Text, default="")
+
+    artist: Mapped["Artist"] = relationship()
+
+
 class AltaRegistro(Base):
     """Intentos de alta de proyecto desde el formulario público.
 
