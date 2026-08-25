@@ -62,3 +62,11 @@ _default_cache = MemoryCache()
 def get_cache() -> MemoryCache:
     """Devuelve la caché por defecto de la aplicación."""
     return _default_cache
+
+
+def invalidate_public_cache(cache: MemoryCache) -> None:
+    """Invalida las claves de caché públicas tras escrituras."""
+    cache.delete_pattern("artists:")
+    cache.delete_pattern("feed:")
+    cache.delete_pattern("stats:")
+    cache.delete_pattern("ranking:")

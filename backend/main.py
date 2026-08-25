@@ -35,7 +35,7 @@ from lib.plataformas import (
     link_con_metadatos,
     preview_feed,
 )
-from lib.cache import MemoryCache
+from lib.cache import MemoryCache, invalidate_public_cache
 from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRepository, SettingsRepository
 from lib.servicios import (
     artistas_df,
@@ -181,14 +181,6 @@ def _fecha_desde(texto: str | None) -> date | None:
     if not texto or not texto.strip():
         return None
     return date.fromisoformat(texto.strip())
-
-
-def invalidate_public_cache(cache: MemoryCache) -> None:
-    """Invalida las claves de caché públicas tras escrituras."""
-    cache.delete_pattern("artists:")
-    cache.delete_pattern("feed:")
-    cache.delete_pattern("stats:")
-    cache.delete_pattern("ranking:")
 
 
 def _json_safe(valor: Any) -> Any:

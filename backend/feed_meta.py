@@ -29,6 +29,7 @@ from pydantic import BaseModel, HttpUrl
 
 from db.database import SessionLocal
 from db.models import Artist
+from lib.cache import get_cache, invalidate_public_cache
 from lib.repository import ArtistRepository
 
 API_VERSION = os.getenv("META_API_VERSION", "v22.0")
@@ -390,6 +391,7 @@ def desconectar(
         artista.fb_page_token = None
         artista.ig_user_id = None
         session.commit()
+        invalidate_public_cache(get_cache())
         return {"ok": True}
     finally:
         session.close()
@@ -431,6 +433,7 @@ def callback(code: str, state: str):
                     f"confirmado (artista, {date.today().isoformat()})"
                 )
             session.commit()
+            invalidate_public_cache(get_cache())
             ok = True
             if intencion == "conectar":
                 owner_cookie = _crear_sesion_propietario(slug)
