@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 API_VERSION = os.getenv("META_API_VERSION", "v22.0")
 FG_PAGE_ID = os.getenv("FG_PAGE_ID", "")
 FG_PAGE_TOKEN = os.getenv("FG_PAGE_TOKEN", "")
+PROMO_AUTO_PUBLISH = os.getenv("PROMO_AUTO_PUBLISH", "false").lower() == "true"
 WEB_URL = os.getenv("WEB_URL", "https://fronteragrande.mx")
 RUTA_MONOGRAMA = Path(__file__).resolve().parent.parent / "web" / "public" / "assets" / "monograma_fg.png"
 _MONO_CACHE: dict = {}
@@ -571,13 +572,18 @@ def publicar_en_fb(mensaje: str, imagen_url: str | None = None) -> dict:
                     "access_token": FG_PAGE_TOKEN,
                     "url": imagen_url,
                     "caption": mensaje,
+                    "published": "true" if PROMO_AUTO_PUBLISH else "false",
                 },
                 timeout=60,
             )
         else:
             r = requests.post(
                 f"{GRAF_API}/{FG_PAGE_ID}/feed",
-                data={"access_token": FG_PAGE_TOKEN, "message": mensaje},
+                data={
+                    "access_token": FG_PAGE_TOKEN,
+                    "message": mensaje,
+                    "published": "true" if PROMO_AUTO_PUBLISH else "false",
+                },
                 timeout=30,
             )
         r.raise_for_status()
