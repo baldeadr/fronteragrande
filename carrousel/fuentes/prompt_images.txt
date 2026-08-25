@@ -15,3 +15,24 @@ dark desk with phone screen glow, subtle gradient mesh purple #2a1a33 to #14141b
 
 05-link.jpg
 hand holding phone displaying QR code glow, dark background, purple edge light, minimal, close-up, no text on screen, no brand --ar 9:16
+
+art-check.jpg
+close-up hand holding phone at night, glowing circular check mark on screen, purple #9d4edd neon rim light, dark background, shallow depth of field, no readable UI text, no brand, cinematic --ar 1:1
+
+art-feed.jpg
+martphone floating above desk emitting holographic notification cards and music notes, purple glow on dark moody room, bokeh, abstract, no readable text, no brand --ar 1:1
+
+art-playlist.jpg
+studio headphones resting on vinyl record, purple edge lighting, dark smoky background, bokeh dust particles, cinematic product shot, no text --ar 1:1
+
+art-portada-bg.jpg
+lone musician with electric guitar seen from behind on a small stage, purple #9d4edd stage lights cutting through haze, dark venue, silhouettes of audience below, cinematic, subject centered, no faces visible, no text, overlay ready for dark UI --ar 1:1 --style raw
+
+art-directorio-bg.jpg
+elevated night view of a mexican-american border twin towns split by a narrow calm river, only low-rise flat rooftops, small houses, water towers and tinacos, international bridge crossing the river with subtle purple #9d4edd lights, dry desert vegetation, dusty haze, very dark moody minimal, no skyscrapers, no labels, no text --ar 1:1 --style raw --no skyscrapers, tall buildings, modern city
+
+art-cierre-bg.jpg
+vintage microphone on stand alone at the center of an empty stage, single dramatic purple #9d4edd spotlight beam cutting through haze, dark empty venue, cinematic, subject centered, no people, no text, overlay ready for dark UI --ar 1:1 --style raw
+
+
+hands flipping through a crate of vinyl records in a dark record store, purple #9d4edd rim light and bokeh, moody crate-digging atmosphere, shallow depth of field, no faces, no readable text on sleeves, cinematic --ar 1:1 --style raw

@@ -30,5 +30,5 @@ scripts/tarjetas/
 .DS_Store
 .obsidian/
 
-# carrusel: artefactos regenerables con scripts/generar_*.py
-carrousel/*.svg
+# carrusel: artefactos regenerables con scripts/generar_carruseles.py
+carrousel/**/*.svg
