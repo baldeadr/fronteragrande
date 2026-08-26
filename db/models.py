@@ -92,6 +92,7 @@ class Artist(Base):
 
     ultimo_lanzamiento: Mapped[datetime | None] = mapped_column(Date, nullable=True)
     ultimo_evento: Mapped[datetime | None] = mapped_column(Date, nullable=True)
+    ultimo_sync_lanzamientos: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     estado_activo: Mapped[str] = mapped_column(String(20), default="en_duda", index=True)
     metodo_actividad: Mapped[str] = mapped_column(String(60), default="sin datos")
 

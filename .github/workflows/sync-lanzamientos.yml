@@ -2,20 +2,27 @@ name: Sincronizar lanzamientos
 
 on:
   workflow_dispatch:
+    inputs:
+      solo_nuevos:
+        type: boolean
+        description: "Solo artistas sin sync previo (catch-up)"
+        required: false
+        default: false
+      force_all:
+        type: boolean
+        description: "Re-sincronizar TODOS (ignora timestamp)"
+        required: false
+        default: false
   schedule:
     - cron: "20 */6 * * *"
 
 jobs:
-  sincronizar:
+  sync-bandcamp:
+    name: Bandcamp
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
-      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
@@ -28,5 +35,76 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-prod.txt
 
-      - name: Sincronizar lanzamientos
-        run: python scripts/sync_lanzamientos.py
+      - name: Sincronizar Bandcamp
+        run: python scripts/sync_bandcamp.py
+
+  sync-soundcloud:
+    name: SoundCloud
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar SoundCloud
+        run: python scripts/sync_soundcloud.py
+
+  sync-spotify:
+    name: Spotify (batches)
+    needs: [sync-bandcamp, sync-soundcloud]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        batch: [0, 1, 2, 3]
+      fail-fast: false
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar Spotify batch ${{ matrix.batch }}
+        run: python scripts/sync_spotify_batch.py --batch ${{ matrix.batch }} --total-batches 4
+
+  recalcular-actividad:
+    name: Recalcular actividad
+    needs: [sync-spotify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Recalcular actividad
+        run: python scripts/recalcular_actividad.py

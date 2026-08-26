@@ -101,6 +101,12 @@ def _asegurar_columnas_extra():
                         "imagen_candidatas JSON"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "ultimo_sync_lanzamientos TIMESTAMP"
+                    )
+                )
         return
     from sqlalchemy import text
 
@@ -160,6 +166,11 @@ def _asegurar_columnas_extra():
         if "imagen_candidatas" not in columnas:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE artists ADD COLUMN imagen_candidatas JSON"))
+        if "ultimo_sync_lanzamientos" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE artists ADD COLUMN ultimo_sync_lanzamientos DATETIME")
+                )
 
 
 _asegurar_columnas_extra()
