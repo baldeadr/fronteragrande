@@ -103,16 +103,36 @@ def get_artist_releases(artist_id: str, limite: int = 10) -> list[dict]:
     `imagen`) más `tipo_lanzamiento` ("album"/"single"). No incluye
     apariciones ni compilaciones (`include_groups=album,single`).
     """
+    print(f"  DEBUG: get_artist_releases artist_id={artist_id}", flush=True)
     token = _token()
     for intento in range(3):
-        respuesta = requests.get(
-            f"{API_BASE}/artists/{artist_id}/albums",
-            params={"include_groups": "album,single", "limit": min(limite, 10)},
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=15,
-        )
+        print(f"  DEBUG: Requesting albums (intento {intento+1})", flush=True)
+        try:
+            respuesta = requests.get(
+                f"{API_BASE}/artists/{artist_id}/albums",
+                params={"include_groups": "album,single", "limit": min(limite, 10)},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=(5, 15),
+            )
+            print(f"  DEBUG: Response status: {respuesta.status_code}", flush=True)
+        except requests.exceptions.Timeout:
+            print(f"  DEBUG: Timeout on request", flush=True)
+            if intento < 2:
+                time.sleep(2 + intento * 2)
+                token = _token()
+                continue
+            raise
+        except Exception as e:
+            print(f"  DEBUG: Request exception: {type(e).__name__}: {e}", flush=True)
+            if intento < 2:
+                time.sleep(2 + intento * 2)
+                token = _token()
+                continue
+            raise
+
         if respuesta.status_code == 429:
             espera = int(respuesta.headers.get("Retry-After", 2 + intento * 2))
+            print(f"  DEBUG: 429 - waiting {espera}s", flush=True)
             time.sleep(espera)
             token = _token()
             continue

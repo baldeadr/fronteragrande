@@ -106,14 +106,19 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
 
                     for intento in range(3):
                         try:
+                            print(f"  DEBUG: Calling get_artist_releases for {artista.nombre} (intento {intento+1})", flush=True)
                             items = get_artist_releases(artist_id, MAX_ITEMS)
+                            print(f"  DEBUG: Got {len(items)} items", flush=True)
                             break
                         except Exception as e:
-                            if hasattr(e, "response") and e.response.status_code == 429:
-                                espera = int(e.response.headers.get("Retry-After", 2 + intento * 5))
-                                print(f"  {artista.nombre}: 429 - esperando {espera}s (intento {intento+1}/3)", flush=True)
-                                time.sleep(espera)
-                                continue
+                            print(f"  DEBUG: Exception in get_artist_releases: {type(e).__name__}: {e}", flush=True)
+                            if hasattr(e, "response") and e.response is not None:
+                                print(f"  DEBUG: Response status: {e.response.status_code}", flush=True)
+                                if e.response.status_code == 429:
+                                    espera = int(e.response.headers.get("Retry-After", 2 + intento * 5))
+                                    print(f"  {artista.nombre}: 429 - esperando {espera}s (intento {intento+1}/3)", flush=True)
+                                    time.sleep(espera)
+                                    continue
                             raise
 
                     for item in items:
