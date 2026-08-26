@@ -81,7 +81,8 @@ def main() -> None:
                     session.rollback()
                     print(f"{artista.nombre} ({enlace.plataforma}): {exc}")
                 total += nuevos
-                time.sleep(1)
+                if enlace.plataforma == "spotify":
+                    time.sleep(0.5)
                 if nuevos:
                     print(f"{artista.nombre}: {nuevos} nuevos en {enlace.plataforma}")
         if total and SettingsRepository(session).obtener_bool("notificar_auto_feed"):
