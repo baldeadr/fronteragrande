@@ -29,5 +29,9 @@ services:
         sync: false
       - key: FG_PAGE_TOKEN
         sync: false
+      - key: PROMO_AUTO_PUBLISH
+        sync: false
+      - key: PROMO_IG
+        sync: false
       - key: ADMIN_PASSWORD
         sync: false
