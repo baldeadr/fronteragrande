@@ -26,14 +26,21 @@ except ValueError:
 
 def get_batch_artistas(batch: int, total_batches: int, solo_nuevos: bool = False):
     """Obtiene artistas del batch correspondiente."""
+    print(f"DEBUG: get_batch_artistas batch={batch} total_batches={total_batches} solo_nuevos={solo_nuevos}", flush=True)
     session = SessionLocal()
     try:
+        print("DEBUG: Creating ArtistRepository", flush=True)
         repo = ArtistRepository(session)
+        print("DEBUG: Getting all artists", flush=True)
+        todos_artistas = repo.todos()
+        print(f"DEBUG: Total artistas en BD: {len(todos_artistas)}", flush=True)
+        
         todos = [
             a
-            for a in repo.todos()
+            for a in todos_artistas
             if any(l.plataforma == "spotify" and not l.es_busqueda for l in a.links)
         ]
+        print(f"DEBUG: Artistas con link Spotify: {len(todos)}", flush=True)
 
         # Ordenar: NULL timestamp primero (nunca sincronizados), luego más antiguos
         todos.sort(
@@ -49,13 +56,19 @@ def get_batch_artistas(batch: int, total_batches: int, solo_nuevos: bool = False
                 fuente="spotify"
             ).subquery()
             todos = [a for a in todos if a.id not in artistas_con_sp]
+            print(f"DEBUG: Artistas sin items Spotify: {len(todos)}", flush=True)
 
         # Distribuir en batches
         batch_size = (len(todos) + total_batches - 1) // total_batches
         inicio = batch * batch_size
         fin = min(inicio + batch_size, len(todos))
 
-        return todos[inicio:fin]
+        result = todos[inicio:fin]
+        print(f"DEBUG: Batch {batch}: {len(result)} artistas (inicio={inicio}, fin={fin})", flush=True)
+        return result
+    except Exception as e:
+        print(f"DEBUG ERROR in get_batch_artistas: {e}", flush=True)
+        raise
     finally:
         session.close()
 
@@ -64,19 +77,23 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
     """Procesa un batch de artistas para Spotify."""
     from db.models import FeedItem
 
+    print(f"DEBUG: main batch={batch} total_batches={total_batches} solo_nuevos={solo_nuevos}", flush=True)
     session = SessionLocal()
     total = 0
     try:
+        print("DEBUG: Creating FeedRepository", flush=True)
         feed = FeedRepository(session)
+        print("DEBUG: Getting batch artists", flush=True)
         artistas = get_batch_artistas(batch, total_batches, solo_nuevos)
 
         if not artistas:
-            print(f"Batch {batch}/{total_batches}: sin artistas que procesar")
+            print(f"Batch {batch}/{total_batches}: sin artistas que procesar", flush=True)
             return 0
 
-        print(f"Batch {batch}/{total_batches}: {len(artistas)} artistas")
+        print(f"Batch {batch}/{total_batches}: {len(artistas)} artistas", flush=True)
 
         for artista in artistas:
+            print(f"DEBUG: Procesando {artista.nombre}", flush=True)
             enlaces = [
                 l for l in artista.links if l.plataforma == "spotify" and not l.es_busqueda
             ]
@@ -94,7 +111,7 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
                         except Exception as e:
                             if hasattr(e, "response") and e.response.status_code == 429:
                                 espera = int(e.response.headers.get("Retry-After", 2 + intento * 5))
-                                print(f"  {artista.nombre}: 429 - esperando {espera}s (intento {intento+1}/3)")
+                                print(f"  {artista.nombre}: 429 - esperando {espera}s (intento {intento+1}/3)", flush=True)
                                 time.sleep(espera)
                                 continue
                             raise
@@ -113,14 +130,17 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
 
                 except Exception as exc:
                     session.rollback()
-                    print(f"{artista.nombre} (spotify): {exc}")
+                    print(f"{artista.nombre} (spotify): {exc}", flush=True)
                 total += nuevos
                 if nuevos:
-                    print(f"  {artista.nombre}: {nuevos} nuevos en spotify")
+                    print(f"  {artista.nombre}: {nuevos} nuevos en spotify", flush=True)
                 time.sleep(0.5)
 
-        print(f"Spotify batch {batch} total items nuevos: {total}")
+        print(f"Spotify batch {batch} total items nuevos: {total}", flush=True)
         return total
+    except Exception as e:
+        print(f"DEBUG ERROR in main: {e}", flush=True)
+        raise
     finally:
         session.close()
 
