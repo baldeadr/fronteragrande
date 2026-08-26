@@ -49,9 +49,17 @@ def channel_id_from_url(url: str) -> str | None:
     if m:
         return m.group(1)
 
+    is_handle = "/@" in url or "/user/" in url
+
     pagina = _fetch_pagina(url)
     if pagina:
-        m = RE_CHANNEL_ID.search(pagina) or RE_BROWSE_ID.search(pagina)
+        if is_handle:
+            # Para handles (@usuario), browseId es el correcto
+            m = RE_BROWSE_ID.search(pagina)
+            if not m:
+                m = RE_CHANNEL_ID.search(pagina)
+        else:
+            m = RE_CHANNEL_ID.search(pagina) or RE_BROWSE_ID.search(pagina)
         if m:
             return m.group(1)
     return None
