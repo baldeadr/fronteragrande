@@ -112,6 +112,9 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
                             break
                         except Exception as e:
                             print(f"  DEBUG: Exception in get_artist_releases: {type(e).__name__}: {e}", flush=True)
+                            if "Rate limit exceeded" in str(e):
+                                print(f"  {artista.nombre}: Rate limit persistente, saltando artista", flush=True)
+                                raise
                             if hasattr(e, "response") and e.response is not None:
                                 print(f"  DEBUG: Response status: {e.response.status_code}", flush=True)
                                 if e.response.status_code == 429:
