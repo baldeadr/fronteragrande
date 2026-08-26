@@ -71,6 +71,10 @@ def get_batch_artistas(batch: int, total_batches: int, solo_nuevos: bool = False
 
         result = todos[inicio:fin]
         print(f"DEBUG: Batch {batch}: {len(result)} artistas (inicio={inicio}, fin={fin})", flush=True)
+        # Limitar a 10 artistas por corrida para evitar rate limit global
+        if total_batches == 1 and len(result) > 10:
+            result = result[:10]
+            print(f"DEBUG: Limitado a 10 artistas por corrida (de {len(todos)} totales)", flush=True)
         return result
     except Exception as e:
         print(f"DEBUG ERROR in get_batch_artistas: {e}", flush=True)
@@ -99,6 +103,8 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
         print(f"Batch {batch}/{total_batches}: {len(artistas)} artistas", flush=True)
 
         for artista in artistas:
+            # Pequeño delay aleatorio entre artistas
+            time.sleep(0.5 + (hash(artista.id) % 100) / 100.0)
             print(f"DEBUG: Procesando {artista.nombre}", flush=True)
             enlaces = [
                 l for l in artista.links if l.plataforma == "spotify" and not l.es_busqueda
