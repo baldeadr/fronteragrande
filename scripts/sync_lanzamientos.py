@@ -69,6 +69,7 @@ def main() -> None:
         for artista in ArtistRepository(session).todos():
             enlaces = [l for l in artista.links if l.plataforma in PLATAFORMAS and not l.es_busqueda]
             for enlace in enlaces:
+                print(f"  Procesando {artista.nombre} - {enlace.plataforma}...", flush=True)
                 nuevos = 0
                 try:
                     for item in PLATAFORMAS[enlace.plataforma](artista, enlace, MAX_ITEMS):
@@ -79,12 +80,12 @@ def main() -> None:
                     session.commit()
                 except Exception as exc:
                     session.rollback()
-                    print(f"{artista.nombre} ({enlace.plataforma}): {exc}")
+                    print(f"{artista.nombre} ({enlace.plataforma}): {exc}", flush=True)
                 total += nuevos
                 if enlace.plataforma == "spotify":
                     time.sleep(0.5)
                 if nuevos:
-                    print(f"{artista.nombre}: {nuevos} nuevos en {enlace.plataforma}")
+                    print(f"{artista.nombre}: {nuevos} nuevos en {enlace.plataforma}", flush=True)
         if total and SettingsRepository(session).obtener_bool("notificar_auto_feed"):
             enviadas = notificar_todos(
                 PushSubscriptionRepository(session),
@@ -95,14 +96,14 @@ def main() -> None:
             session.commit()
             if enviadas:
                 print(f"Aviso enviado a {enviadas} suscriptores")
-        print(f"Total de items nuevos: {total}")
+        print(f"Total de items nuevos: {total}", flush=True)
     finally:
         session.close()
 
     from scripts.recalcular_actividad import recalcular
 
     cambios = recalcular()
-    print(f"Cambios de actividad tras el sync: {len(cambios)}")
+    print(f"Cambios de actividad tras el sync: {len(cambios)}", flush=True)
 
 
 if __name__ == "__main__":
