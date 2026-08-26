@@ -58,6 +58,12 @@ def get_batch_artistas(batch: int, total_batches: int, solo_nuevos: bool = False
             todos = [a for a in todos if a.id not in artistas_con_sp]
             print(f"DEBUG: Artistas sin items Spotify: {len(todos)}", flush=True)
 
+        # Si total_batches=1, procesar todos
+        if total_batches == 1:
+            result = todos
+            print(f"DEBUG: Single batch: {len(result)} artistas", flush=True)
+            return result
+
         # Distribuir en batches
         batch_size = (len(todos) + total_batches - 1) // total_batches
         inicio = batch * batch_size
@@ -142,7 +148,7 @@ def main(batch: int, total_batches: int, solo_nuevos: bool = False) -> int:
                 total += nuevos
                 if nuevos:
                     print(f"  {artista.nombre}: {nuevos} nuevos en spotify", flush=True)
-                time.sleep(0.5)
+                time.sleep(2.0)
 
         print(f"Spotify batch {batch} total items nuevos: {total}", flush=True)
         return total

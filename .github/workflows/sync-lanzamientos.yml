@@ -60,14 +60,10 @@ jobs:
         run: python scripts/sync_soundcloud.py
 
   sync-spotify:
-    name: Spotify (batches)
+    name: Spotify (secuencial con delays)
     needs: [sync-bandcamp, sync-soundcloud]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      matrix:
-        batch: [0, 1, 2, 3]
-      fail-fast: false
+    timeout-minutes: 45
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
@@ -84,8 +80,11 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-prod.txt
 
-      - name: Sincronizar Spotify batch ${{ matrix.batch }}
-        run: python scripts/sync_spotify_batch.py --batch ${{ matrix.batch }} --total-batches 4
+      - name: Sincronizar Spotify (secuencial)
+        run: |
+          # Delay aleatorio inicial para desfasar con otras ejecuciones
+          sleep $((RANDOM % 60))
+          python scripts/sync_spotify_batch.py --batch 0 --total-batches 1
 
   recalcular-actividad:
     name: Recalcular actividad
