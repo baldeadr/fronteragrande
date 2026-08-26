@@ -19,6 +19,7 @@ Uso:
 
 import os
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -80,6 +81,7 @@ def main() -> None:
                     session.rollback()
                     print(f"{artista.nombre} ({enlace.plataforma}): {exc}")
                 total += nuevos
+                time.sleep(1)
                 if nuevos:
                     print(f"{artista.nombre}: {nuevos} nuevos en {enlace.plataforma}")
         if total and SettingsRepository(session).obtener_bool("notificar_auto_feed"):
