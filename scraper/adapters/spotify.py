@@ -7,7 +7,6 @@ Si no están configuradas, las funciones lanzan `SpotifyNoConfigurado`.
 import base64
 import os
 import re
-import time
 from datetime import date
 
 import requests
@@ -22,12 +21,7 @@ class SpotifyNoConfigurado(ScraperError):
     pass
 
 
-_token_cache: dict = {}
-
-
 def _token() -> str:
-    if _token_cache.get("token") and time.time() < _token_cache.get("expires", 0):
-        return _token_cache["token"]
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
     client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
     if not client_id or not client_secret:
@@ -47,10 +41,7 @@ def _token() -> str:
         timeout=15,
     )
     respuesta.raise_for_status()
-    token = respuesta.json()["access_token"]
-    _token_cache["token"] = token
-    _token_cache["expires"] = time.time() + 3500
-    return token
+    return respuesta.json()["access_token"]
 
 
 def artist_id_from_url(url: str) -> str | None:
@@ -104,19 +95,12 @@ def get_artist_releases(artist_id: str, limite: int = 10) -> list[dict]:
     apariciones ni compilaciones (`include_groups=album,single`).
     """
     token = _token()
-    for intento in range(3):
-        respuesta = requests.get(
-            f"{API_BASE}/artists/{artist_id}/albums",
-            params={"include_groups": "album,single", "limit": min(limite, 10)},
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=15,
-        )
-        if respuesta.status_code == 429:
-            espera = int(respuesta.headers.get("Retry-After", 2 + intento * 2))
-            time.sleep(espera)
-            token = _token()
-            continue
-        break
+    respuesta = requests.get(
+        f"{API_BASE}/artists/{artist_id}/albums",
+        params={"include_groups": "album,single", "limit": min(limite, 10)},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=15,
+    )
     respuesta.raise_for_status()
     items = []
     for a in respuesta.json().get("items", []):
