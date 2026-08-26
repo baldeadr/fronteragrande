@@ -12,6 +12,7 @@ de esa URL al crear el post (`POST /{page_id}/photos` con `url` + `caption`).
 import logging
 import os
 import hashlib
+import time
 from io import BytesIO
 from pathlib import Path
 
@@ -26,6 +27,7 @@ API_VERSION = os.getenv("META_API_VERSION", "v22.0")
 FG_PAGE_ID = os.getenv("FG_PAGE_ID", "")
 FG_PAGE_TOKEN = os.getenv("FG_PAGE_TOKEN", "")
 PROMO_AUTO_PUBLISH = os.getenv("PROMO_AUTO_PUBLISH", "false").lower() == "true"
+PROMO_IG = os.getenv("PROMO_IG", "false").lower() == "true"
 WEB_URL = os.getenv("WEB_URL", "https://fronteragrande.mx")
 RUTA_MONOGRAMA = Path(__file__).resolve().parent.parent / "web" / "public" / "assets" / "monograma_fg.png"
 _MONO_CACHE: dict = {}
@@ -543,6 +545,9 @@ def generar_imagen_promo(artista: Artist, variante: int | None = None) -> Path |
     PROMOS_DIR.mkdir(parents=True, exist_ok=True)
     ruta = PROMOS_DIR / f"{artista.slug}.png"
     lienzo.convert("RGB").save(ruta, "PNG", optimize=True)
+    # Instagram exige JPEG para contenedores de imagen: se guarda gemelo.
+    ruta_jpg = PROMOS_DIR / f"{artista.slug}.jpg"
+    lienzo.convert("RGB").save(ruta_jpg, "JPEG", quality=90, optimize=True)
     return ruta
 
 
@@ -597,11 +602,143 @@ def publicar_en_fb(mensaje: str, imagen_url: str | None = None) -> dict:
         return {"ok": False, "error": f"Error de red: {exc}"}
 
 
+_IG_FG_CACHE: dict[str, str | None] = {}
+
+
+def _ig_de_fg() -> str | None:
+    """ID de la cuenta de Instagram de la página FG (None si no hay).
+
+    Se consulta una sola vez por proceso y se cachea: la vinculación no
+    cambia durante la vida del servicio.
+    """
+    if not promo_configurado():
+        return None
+    if "id" in _IG_FG_CACHE:
+        return _IG_FG_CACHE["id"]
+    ig_id = None
+    try:
+        r = requests.get(
+            f"{GRAF_API}/{FG_PAGE_ID}",
+            params={
+                "access_token": FG_PAGE_TOKEN,
+                "fields": "instagram_business_account",
+            },
+            timeout=15,
+        )
+        r.raise_for_status()
+        ig_id = (r.json().get("instagram_business_account") or {}).get("id")
+        if not ig_id:
+            logger.warning("La página FG no tiene Instagram business vinculado")
+    except requests.RequestException as exc:
+        logger.warning("No se pudo leer el IG de la página FG: %s", exc)
+    _IG_FG_CACHE["id"] = ig_id
+    return ig_id
+
+
+def _construir_mensaje_ig(artista: Artist, enlaces: dict[str, str]) -> str:
+    """Caption para Instagram: mención clicable al handle del artista.
+
+    En IG los @handles se convierten en enlaces que además notifican a la
+    banda (a diferencia de los captions de FB vía API). Sin placeholders.
+    """
+    partes_nombre = artista.nombre.strip()
+    handle = ""
+    if enlaces.get("ig"):
+        handle = _extraer_username_ig(enlaces["ig"])
+    titulo = (
+        f"{partes_nombre} (@{handle})" if handle else partes_nombre
+    )
+    ficha = " · ".join(
+        p for p in (
+            _dato_real(getattr(artista, "segmento", None)),
+            _dato_real(getattr(artista, "ciudad", None)),
+            _dato_real(artista.generos),
+        ) if p
+    )
+    lineas = [
+        f"🎵 {titulo} se suma a la escena musical de la frontera grande de Tamaulipas 🎸",
+    ]
+    if ficha:
+        lineas.append(ficha)
+    lineas.append("🔗 Escúchalo y sígelo: link en bio")
+    hashtags = ["#FronteraGrande", "#MusicaIndependiente", "#Tamaulipas",
+                "#EscenaLocal"]
+    ciudad = _dato_real(getattr(artista, "ciudad", None))
+    if ciudad:
+        hashtags.append(f"#{ciudad.replace(' ', '')}")
+    lineas.append(" ".join(hashtags))
+    return "\n".join(lineas)
+
+
+def publicar_en_ig(mensaje: str, imagen_url: str) -> dict:
+    """Publica la tarjeta en el Instagram de la página FG.
+
+    Flujo de contenedores: `POST /{ig}/media` → poll de `status_code` →
+    `POST /{ig}/media_publish`. La API de IG no tiene borradores: publicar
+    es inmediato. Returns dict con 'ok', 'post_id' o 'error'.
+    """
+    ig_id = _ig_de_fg()
+    if not ig_id:
+        return {"ok": False, "error": "Página FG sin Instagram vinculado"}
+    try:
+        r = requests.post(
+            f"{GRAF_API}/{ig_id}/media",
+            data={
+                "access_token": FG_PAGE_TOKEN,
+                "image_url": imagen_url,
+                "caption": mensaje,
+            },
+            timeout=60,
+        )
+        r.raise_for_status()
+        resp = r.json()
+        creation_id = resp.get("id")
+        if not creation_id:
+            error = (resp.get("error") or {}).get("message", "sin creation_id")
+            return {"ok": False, "error": f"Error de Meta: {error}"}
+
+        publicado = False
+        for _ in range(10):
+            time.sleep(2)
+            e = requests.get(
+                f"{GRAF_API}/{creation_id}",
+                params={"access_token": FG_PAGE_TOKEN,
+                        "fields": "status_code"},
+                timeout=15,
+            )
+            estado = e.json().get("status_code")
+            if estado == "FINISHED":
+                publicado = True
+                break
+            if estado == "ERROR":
+                return {"ok": False, "error": "El contenedor de IG falló"}
+        if not publicado:
+            return {"ok": False, "error": "Contenedor de IG sin procesar (timeout)"}
+
+        p = requests.post(
+            f"{GRAF_API}/{ig_id}/media_publish",
+            data={"access_token": FG_PAGE_TOKEN, "creation_id": creation_id},
+            timeout=30,
+        )
+        p.raise_for_status()
+        resp_p = p.json()
+        post_id = resp_p.get("id")
+        if not post_id:
+            error = (resp_p.get("error") or {}).get("message", "sin id")
+            return {"ok": False, "error": f"Error de Meta: {error}"}
+        return {"ok": True, "post_id": post_id}
+    except requests.RequestException as exc:
+        return {"ok": False, "error": f"Error de red: {exc}"}
+
+
 def publicar_bienvenida(artista: Artist) -> dict:
     """Genera la tarjeta promocional y publica el post de bienvenida.
 
-    No lanza excepciones: registra el resultado en `promo_posts` y devuelve
-    un dict con 'ok'. Un fallo de promo nunca rompe la verificación.
+    Publica en la página de Facebook y, si PROMO_IG está activo y la
+    página tiene Instagram vinculado, también en Instagram con caption
+    propio. No lanza excepciones: registra cada resultado en `promo_posts`
+    y devuelve un dict con 'ok'. Un fallo de promo nunca rompe la
+    verificación.
     """
     if not promo_configurado():
         logger.info("Promo desactivado: FG_PAGE_ID/FG_PAGE_TOKEN ausentes")
@@ -611,10 +748,12 @@ def publicar_bienvenida(artista: Artist) -> dict:
     mensaje = _construir_mensaje(artista, enlaces)
 
     imagen_url = None
+    imagen_url_jpg = None
     try:
         ruta = generar_imagen_promo(artista)
         if ruta and API_PUBLIC_URL:
             imagen_url = imagen_promo_url(artista.slug)
+            imagen_url_jpg = f"{API_PUBLIC_URL}/api/promos/{artista.slug}.jpg"
     except Exception as exc:
         logger.warning("Tarjeta no generada para %s: %s", artista.nombre, exc)
 
@@ -646,6 +785,42 @@ def publicar_bienvenida(artista: Artist) -> dict:
     else:
         logger.error("Fallo publicando bienvenida para %s: %s",
                      artista.nombre, resultado.get("error"))
+
+    resultado_ig: dict | None = None
+    if PROMO_IG:
+        mensaje_ig = _construir_mensaje_ig(artista, enlaces)
+        if imagen_url_jpg:
+            resultado_ig = publicar_en_ig(mensaje_ig, imagen_url_jpg)
+        else:
+            resultado_ig = {"ok": False,
+                            "error": "Sin URL pública para la tarjeta"}
+        try:
+            from db.database import SessionLocal
+
+            session = SessionLocal()
+            try:
+                promo = PromoPost(
+                    artist_id=artista.id,
+                    plataforma="ig",
+                    post_id=resultado_ig.get("post_id", ""),
+                    mensaje=mensaje_ig,
+                    estado="publicado" if resultado_ig.get("ok") else "error",
+                    error_detalle=resultado_ig.get("error", ""),
+                )
+                session.add(promo)
+                session.commit()
+            finally:
+                session.close()
+        except Exception as exc:
+            logger.exception("Error guardando promo_post IG: %s", exc)
+        if resultado_ig.get("ok"):
+            logger.info("Bienvenida publicada en IG para %s (post_id=%s)",
+                        artista.nombre, resultado_ig["post_id"])
+        else:
+            logger.error("Fallo publicando bienvenida en IG para %s: %s",
+                         artista.nombre, resultado_ig.get("error"))
+
+    resultado["ig"] = resultado_ig
     return resultado
 
 

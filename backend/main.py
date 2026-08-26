@@ -234,6 +234,33 @@ def promo_imagen(slug: str):
     return FileResponse(ruta, media_type="image/png")
 
 
+@app.get("/api/promos/{slug}.jpg")
+def promo_imagen_jpg(slug: str):
+    """Versión JPEG de la tarjeta (Instagram requiere JPEG)."""
+    from db.database import SessionLocal
+    from lib.promo_fg import generar_imagen_promo
+
+    ruta = Path(lib_promo_fg.PROMOS_DIR) / f"{slug}.jpg"
+    if not ruta.exists():
+        session = SessionLocal()
+        try:
+            artista = ArtistRepository(session).por_slug(slug)
+        finally:
+            session.close()
+        if artista is None:
+            raise HTTPException(status_code=404, detail="Artista no encontrado")
+        generada = generar_imagen_promo(artista)
+        if generada is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Sin foto de perfil para generar la tarjeta",
+            )
+    return FileResponse(
+        Path(lib_promo_fg.PROMOS_DIR) / f"{slug}.jpg",
+        media_type="image/jpeg",
+    )
+
+
 def _cache_key_artists(
     segmento: str | None,
     ciudad: str | None,
