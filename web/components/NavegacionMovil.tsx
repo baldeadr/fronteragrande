@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -88,9 +87,44 @@ export function BotonAtras() {
   );
 }
 
+function ItemNavegacion({
+  destino,
+  activo,
+  onClick,
+}: {
+  destino: (typeof destinos)[number];
+  activo: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={activo ? "page" : undefined}
+      className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[10px] transition duration-150 active:scale-95 active:bg-accent-soft ${
+        activo ? "text-accent" : "text-muted hover:text-text"
+      }`}
+    >
+      <Icono tipo={destino.icono} />
+      <span>{destino.texto}</span>
+    </button>
+  );
+}
+
 export default function NavegacionMovil() {
   const pathname = usePathname();
+  const router = useRouter();
   const ocultas = useBarrasOcultas();
+
+  function alClick(destino: (typeof destinos)[number]) {
+    const activo = coincideRuta(pathname, destino.href);
+    if (activo) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      router.refresh();
+    } else {
+      router.push(destino.href);
+    }
+  }
 
   return (
     <nav
@@ -102,17 +136,12 @@ export default function NavegacionMovil() {
         {destinos.map((destino) => {
           const activo = coincideRuta(pathname, destino.href);
           return (
-            <Link
+            <ItemNavegacion
               key={destino.href}
-              href={destino.href}
-              aria-current={activo ? "page" : undefined}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[10px] transition duration-150 active:scale-95 active:bg-accent-soft ${
-                activo ? "text-accent" : "text-muted hover:text-text"
-              }`}
-            >
-              <Icono tipo={destino.icono} />
-              <span>{destino.texto}</span>
-            </Link>
+              destino={destino}
+              activo={activo}
+              onClick={() => alClick(destino)}
+            />
           );
         })}
       </div>
