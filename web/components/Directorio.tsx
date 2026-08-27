@@ -16,6 +16,7 @@ export default function Directorio({
   const [ciudad, setCiudad] = useState("todos");
   const [estado, setEstado] = useState("todos");
   const [generosSel, setGenerosSel] = useState<string[]>([]);
+  const [generosExpandidos, setGenerosExpandidos] = useState(false);
 
   const segmentos = useMemo(
     () => [...new Set(artistas.map((a) => a.segmento))].sort(),
@@ -134,8 +135,25 @@ export default function Directorio({
 
       {generos.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted">Géneros</span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted">Géneros</span>
+            <button
+              type="button"
+              onClick={() => setGenerosExpandidos(!generosExpandidos)}
+              className="text-xs text-accent hover:underline"
+              aria-expanded={generosExpandidos}
+            >
+              {generosExpandidos ? "Ver menos" : "Ver más"}
+            </button>
+          </div>
+          <div
+            className="flex flex-wrap gap-1.5"
+            style={{
+              maxHeight: generosExpandidos ? "none" : "48px",
+              overflow: "hidden",
+              transition: "max-height 0.2s ease",
+            }}
+          >
             <button
               onClick={() => setGenerosSel([])}
               aria-pressed={generosSel.length === 0}

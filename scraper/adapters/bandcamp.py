@@ -31,6 +31,15 @@ RE_ITEM_GRID = re.compile(
     r'<li[^>]*class="[^"]*music-grid-item[^"]*"[^>]*>(.*?)</li>', re.DOTALL
 )
 
+RE_RELEASED = re.compile(
+    r'<p[^>]*class=["\'][^"\']*released[^"\']*["\'][^>]*>(.*?)</p>',
+    re.IGNORECASE | re.DOTALL,
+)
+RE_DATE_META = re.compile(
+    r'itemprop=["\']datePublished["\'][^>]*content=["\']([^"\']+)',
+    re.IGNORECASE,
+)
+
 
 class BandcampError(ScraperError):
     pass
@@ -204,20 +213,33 @@ def _parse_grid(html: str, url: str, limite: int) -> list[dict]:
     return items
 
 
+def _music_url(url: str) -> str:
+    """Convierte URL de artista a URL de música (/music)."""
+    from urllib.parse import urlparse, urlunparse
+    partes = urlparse(url)
+    path = partes.path.rstrip("/")
+    if not path or path == "/":
+        path = "/music"
+    elif not path.startswith("/music"):
+        path = "/music"
+    return urlunparse((partes.scheme, partes.netloc, path, "", "", ""))
+
+
 def ultimos_lanzamientos(url: str, limite: int = 6) -> list[dict]:
-    """Últimos lanzamientos del artista desde la cuadrícula de su página.
+    """Últimos lanzamientos del artista desde la cuadrícula de su página /music.
 
     Devuelve el formato normalizado de feed (`titulo`, `url`, `fecha`,
-    `imagen`). La fecha es el año del título (ver `_fecha_desde_titulo`).
-    Levanta `BandcampError` si la página no se puede leer o si no expone la
-    cuadrícula (p. ej. Bandcamp responde una página de verificación/bloqueo).
+    `imagen`). La fecha se intenta extraer del HTML (released/datePublished);
+    si no hay, cae al año entre paréntesis del título.
+    Levanta `BandcampError` si la página no se puede leer o no expone lanzamientos.
     """
-    html, status = _get(url)
+    music_url = _music_url(url)
+    html, status = _get(music_url)
     if html is None:
-        raise BandcampError(f"No se pudo leer la página de Bandcamp: {url} (status {status})")
-    items = _parse_grid(html, url, limite)
+        raise BandcampError(f"No se pudo leer la página de Bandcamp: {music_url} (status {status})")
+    items = _parse_grid(html, music_url, limite)
     if not items:
         raise BandcampError(
-            f"La página de Bandcamp no expone lanzamientos: {url} (status {status})"
+            f"La página de Bandcamp no expone lanzamientos: {music_url} (status {status})"
         )
     return items

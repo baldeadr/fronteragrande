@@ -14,12 +14,15 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
 import sys
 from datetime import date
 from pathlib import Path
+
+import qrcode
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -141,6 +144,23 @@ def _recortar_cuadrado(img, size):
         lado = min(w, h)
         img = img.crop(((w - lado) // 2, (h - lado) // 2, (w + lado) // 2, (h + lado) // 2))
     return img.resize(size, Image.Resampling.LANCZOS)
+
+
+def _generar_qr_playlist(playlist_url: str, size: int = 200) -> "Image.Image":
+    """Genera QR code que apunta a la playlist de Spotify."""
+    from PIL import Image
+    qr = qrcode.QRCode(
+        version=3,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=8,
+        border=2,
+    )
+    qr.add_data(playlist_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
+    # Redimensionar al tamaño deseado
+    img = img.resize((size, size), Image.Resampling.LANCZOS)
+    return img
 
 
 def _pegar_monograma(lienzo, alto: int, x: int, y_eje: int, tinto=None):
@@ -278,23 +298,38 @@ def _fondo_playlist_editorial() -> "Image.Image":
     return lienzo
 
 
-def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, draw=None) -> Path | None:
+def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, draw=None) -> Path | None:
     """Layout original: 3 cards horizontales."""
     from PIL import Image, ImageDraw
     
     if draw is None:
         draw = ImageDraw.Draw(lienzo)
 
+    # Seleccionar track de la semana (el primero, estable por semana)
+    track_semana = seleccionados_3[0]
+
     # Título principal
     _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(58), 48, LIENZO[0], TEXTO)
     _centrar_texto(draw, "Nueva selección del lunes", _fuente(26), 112, LIENZO[0], (*ACENTO_CLARO, 235))
+
+    # Track de la semana - badge destacado
+    badge_y = 155
+    badge_text = f"🎯  TRACK DE LA SEMANA:  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
+    _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
+    
+    # Línea bajo el badge
+    draw.line(
+        [(240, badge_y + 35), (840, badge_y + 35)],
+        fill=(*ACENTO, 120),
+        width=2
+    )
 
     # 3 cards de artistas
     card_w = 300
     card_h = 440
     gap = 40
     start_x = (LIENZO[0] - (3 * card_w + 2 * gap)) // 2
-    card_y = 175
+    card_y = 195
 
     for i, sel in enumerate(seleccionados_3):
         x = start_x + i * (card_w + gap)
@@ -401,6 +436,22 @@ def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int
     # Texto botón
     _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
 
+    # QR Code a la derecha del botón
+    qr_size = 80
+    qr_img = _generar_qr_playlist(playlist_url, qr_size)
+    qr_x = btn_x + btn_w + 20
+    qr_y = btn_y + (btn_h - qr_size) // 2
+    # Fondo blanco redondeado para el QR
+    qr_bg = Image.new("RGBA", (qr_size + 16, qr_size + 16), (255, 255, 255, 255))
+    draw_qr = ImageDraw.Draw(qr_bg)
+    draw_qr.rounded_rectangle(
+        (0, 0, qr_size + 15, qr_size + 15), radius=12, outline=(*ACENTO_CLARO, 100), width=2
+    )
+    lienzo.alpha_composite(qr_bg, (qr_x - 8, qr_y - 8))
+    lienzo.alpha_composite(qr_img, (qr_x, qr_y))
+    # Label bajo QR
+    _centrar_texto_en_caja(draw, "ESCANEA", _fuente(14), qr_y + qr_size + 5, qr_x, qr_size, (*ACENTO_CLARO, 200))
+
     _pegar_monograma(lienzo, 58, 56, 1016)
     draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
     draw.text((LIENZO[0] - 200, 1014), "fronteragrande.mx", font=_fuente(24), fill=(*ACENTO_CLARO, 230))
@@ -412,32 +463,40 @@ def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int
     return ruta
 
 
-def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, draw=None) -> Path | None:
+def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, draw=None) -> Path | None:
     """Layout editorial: apilado vertical, estilo revista, foto a la izquierda, info a la derecha."""
     from PIL import Image, ImageDraw
     
     if draw is None:
         draw = ImageDraw.Draw(lienzo)
 
+    # Seleccionar track de la semana (el primero, estable por semana)
+    track_semana = seleccionados_3[0]
+
     # Título grande estilo revista (alineado a la izquierda, con barra lateral)
     _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(64), 50, LIENZO[0], TEXTO)
     # Subtítulo con línea decorativa
     _centrar_texto(draw, "nueva selección del lunes", _fuente(28), 125, LIENZO[0], (*ACENTO_CLARO, 200))
     
+    # Track de la semana - badge estilo editorial
+    badge_y = 155
+    badge_text = f"🎯  TRACK DE LA SEMANA  ·  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
+    _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
+    
     # Línea separadora gruesa
     draw.line(
-        [(80, 175), (1000, 175)],
+        [(80, 180), (1000, 180)],
         fill=(*ACENTO, 180),
         width=4
     )
     draw.line(
-        [(80, 177), (1000, 177)],
+        [(80, 182), (1000, 182)],
         fill=(*ACENTO_CLARO, 100),
         width=1
     )
 
     # 3 bloques verticales apilados
-    bloque_y = 200
+    bloque_y = 210
     bloque_h = 240
     gap_v = 25
     foto_size = 180  # más pequeño
@@ -578,6 +637,23 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
         [(380, footer_y + 56), (396, footer_y + 66), (380, footer_y + 76)],
         fill=(*ACENTO_CLARO, 255)
     )
+    
+    # QR Code a la derecha
+    if playlist_url:
+        qr_size = 80
+        qr_img = _generar_qr_playlist(playlist_url, qr_size)
+        qr_x = LIENZO[0] - qr_size - 100
+        qr_y = footer_y - 10
+        # Fondo blanco redondeado para el QR
+        qr_bg = Image.new("RGBA", (qr_size + 16, qr_size + 16), (255, 255, 255, 255))
+        draw_qr = ImageDraw.Draw(qr_bg)
+        draw_qr.rounded_rectangle(
+            (0, 0, qr_size + 15, qr_size + 15), radius=12, outline=(*ACENTO_CLARO, 100), width=2
+        )
+        lienzo.alpha_composite(qr_bg, (qr_x - 8, qr_y - 8))
+        lienzo.alpha_composite(qr_img, (qr_x, qr_y))
+        # Label bajo QR
+        _centrar_texto_en_caja(draw, "ESCANEA", _fuente(14), qr_y + qr_size + 5, qr_x, qr_size, (*ACENTO_CLARO, 200))
 
     # Marca FG
     _pegar_monograma(lienzo, 58, 56, 1016)
@@ -591,7 +667,7 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
     return ruta
 
 
-def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str) -> Path | None:
+def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "") -> Path | None:
     """Genera la tarjeta 1080x1080 con 3 artistas — diseño EDITORIAL (vertical apilado)."""
     from PIL import Image, ImageDraw
     
@@ -602,52 +678,62 @@ def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fec
     
     if usar_editorial:
         lienzo = _fondo_playlist_editorial()
-        return _generar_layout_editorial(lienzo, seleccionados_3, total_tracks, fecha, draw=None)
+        return _generar_layout_editorial(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, draw=None)
     else:
         lienzo = _fondo_playlist()
-        return _generar_layout_cards(lienzo, seleccionados_3, total_tracks, fecha, draw=None)
+        return _generar_layout_cards(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, draw=None)
 
 
 def construir_copy_fb(datos: dict) -> str:
     """Construye el mensaje para Facebook."""
     sel = datos["seleccionados_3"]
+    track_semana = sel[0]
+    
     lines = [
-        "Cada lunes, una selección fresca de la escena musical de la frontera",
-        "norte de Tamaulipas y el Valle de Texas.",
+        "🎯  TRACK DE LA SEMANA",
+        f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
         "",
-        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" suenan:',
+        "Esa canción que no paras de tararear desde el lunes.",
+        "La que suena distinto cuando cruzas el puente de noche.",
+        "",
+        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks:',
     ]
     for s in sel:
-        lines.append(f'{s["titulo"]} — {s["artista"]}')
-    lines.append(f'... y {datos["total_tracks"] - 3} temas más.')
+        lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
+    lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
     lines.append("")
-    lines.append(f'🎧 Escucha y sigue la playlist:')
+    lines.append("🎧  Escucha la playlist completa:")
     lines.append(datos["playlist_url"])
     lines.append("")
-    lines.append("La rotación cambia cada lunes. ¿Tu proyecto ya tiene Spotify?")
-    lines.append("Regístralo en fronteragrande.mx y puede rotar la próxima semana.")
+    lines.append("👉  Guárdala y no te pierdas la rotación del próximo lunes.")
     lines.append("")
-    lines.append("#FronteraGrande #EscenaLocal #DescubrimientoSemanal")
+    lines.append("¿Tu proyecto ya está en la escena? Regístralo en fronteragrande.mx")
+    lines.append("")
+    lines.append("#FronteraGrande #EscenaLocal #DescubrimientoSemanal #MusicaFronteriza")
     return "\n".join(lines)
 
 
 def construir_copy_ig(datos: dict) -> str:
     """Construye el caption para Instagram con menciones @handle."""
     sel = datos["seleccionados_3"]
+    track_semana = sel[0]
+    menciones = [f"@{s['handle_ig']}" for s in sel if s.get("handle_ig")]
+    
     lines = [
-        "Nueva semana, nuevos sonidos de la frontera 🎵",
+        "🎯  TRACK DE LA SEMANA",
+        f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
         "",
-        'Esta semana en "Frontera Grande: Descubrimiento Semanal":',
+        "Esa canción que suena a cruzar el puente de noche con las ventanas abajo. 🌉",
+        "La que te acompaña en el trayecto Reynosa ↔ McAllen, Matamoros ↔ Brownsville.",
+        "",
+        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks de la escena:',
     ]
-    menciones = []
     for s in sel:
-        lines.append(f'{s["titulo"]} — {s["artista"]}')
-        if s.get("handle_ig"):
-            menciones.append(f"@{s['handle_ig']}")
-    lines.append(f'... y {datos["total_tracks"] - 3} tracks más de la escena.')
+        lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
+    lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
     lines.append("")
-    lines.append("🎧 Escucha completa: " + datos["playlist_url"])
-    lines.append("👉 Síguela para que no te pierdas la rotación del próximo lunes.")
+    lines.append("🎧  Escucha completa: " + datos["playlist_url"])
+    lines.append("👉  Guárdala → no te pierdas la rotación del próximo lunes.")
     lines.append("")
     if menciones:
         lines.append(" ".join(menciones))
@@ -655,7 +741,8 @@ def construir_copy_ig(datos: dict) -> str:
     hashtags = [
         "#FronteraGrande", "#DescubrimientoSemanal", "#EscenaLocal",
         "#MusicaIndependiente", "#Tamaulipas", "#ValleDeTexas",
-        "#Reynosa", "#Matamoros", "#NuevoLaredo", "#McAllen", "#Brownsville"
+        "#Reynosa", "#Matamoros", "#NuevoLaredo", "#McAllen", "#Brownsville",
+        "#MusicaFronteriza", "#PuenteInternacional"
     ]
     lines.append(" ".join(hashtags))
     return "\n".join(lines)
@@ -709,7 +796,7 @@ def main() -> int:
     # Generar tarjeta
     print("\nGenerando tarjeta...")
     ruta_tarjeta = generar_tarjeta_playlist(
-        datos["seleccionados_3"], datos["total_tracks"], datos["fecha"]
+        datos["seleccionados_3"], datos["total_tracks"], datos["fecha"], datos["playlist_url"]
     )
     if not ruta_tarjeta:
         print("[error] No se pudo generar la tarjeta")
