@@ -34,5 +34,40 @@ elevated night view of a mexican-american border twin towns split by a narrow ca
 art-cierre-bg.jpg
 vintage microphone on stand alone at the center of an empty stage, single dramatic purple #9d4edd spotlight beam cutting through haze, dark empty venue, cinematic, subject centered, no people, no text, overlay ready for dark UI --ar 1:1 --style raw
 
-
+art-busqueda-bg.jpg
 hands flipping through a crate of vinyl records in a dark record store, purple #9d4edd rim light and bokeh, moody crate-digging atmosphere, shallow depth of field, no faces, no readable text on sleeves, cinematic --ar 1:1 --style raw
+
+fans-portada-bg.jpg
+concert crowd seen from behind, raised hands silhouettes, small club stage, purple #9d4edd spotlights cutting through smoke haze, dark intimate venue, no faces recognizable, no text, cinematic, overlay ready for dark UI --ar 1:1 --style raw
+
+fans-toque-bg.jpg
+intimate live show in a small mexican border-town venue, band silhouettes on low stage seen from the crowd, dusty haze, warm tungsten mixed with purple #9d4edd rim light, documentary style, no front faces, no text --ar 1:1
+
+fans-aviso-bg.jpg
+hand holding smartphone at night, soft purple #9d4edd glow rising from screen, dark room, bokeh string lights in background, shallow depth of field, no readable UI text, no brand, cinematic --ar 1:1
+
+fans-explora-bg.jpg
+lone figure seen from behind on a low rooftop at night, overlooking scattered warm lights of a small mexican border town, subtle purple #9d4edd glow on the horizon, dry desert haze, faint stars, cinematic wide composition, no text --ar 1:1 --style raw
+
+fans-playlist-bg.jpg
+cassette tape with tangled wired earbuds on rough dark fabric, single purple #9d4edd neon edge light raking across, deep shadows, floating dust particles, macro product shot, moody, no text, no brand --ar 1:1
+
+fans-alerta-bg.jpg
+smartphone lying face-up on a wooden nightstand at night, screen glowing softly with purple #9d4edd light halo, blurred warm string lights bokeh in background, shallow depth of field, cinematic close-up, no readable UI, no brand --ar 1:1
+
+fans-cierre-bg.jpg
+heavy metal door slightly open at the end of a dark venue corridor, intense purple #9d4edd light pouring through the gap cutting beams through haze onto a concrete floor, dramatic chiaroscuro, no people, no text, cinematic --ar 1:1 --style raw
+
+fans-portada-bg.jpg
+concert crowd seen from behind, raised hands silhouettes, small club stage,purple #9d4edd spotlights cutting through smoke haze, dark intimate venue,no faces recognizable, no text, cinematic, overlay ready for dark UI--ar 1:1 --style raw
+
+fans-toque-bg.jpg
+intimate live show in a small mexican border-town venue, band silhouettes
+on low stage seen from the crowd, dusty haze, warm tungsten mixed with
+purple #9d4edd rim light, documentary style, no front faces, no text
+--ar 1:1
+
+fans-aviso-bg.jpg
+hand holding smartphone at night, soft purple #9d4edd glow rising from
+screen, dark room, bokeh string lights in background, shallow depth of
+field, no readable UI text, no brand, cinematic --ar 1:1

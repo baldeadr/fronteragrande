@@ -104,6 +104,11 @@ def artistas_con_spotify():
 def _token_cliente() -> str:
     from scraper.adapters.spotify import _token
 
+    # Verificar credenciales antes de intentar la llamada de red
+    if not os.getenv("SPOTIFY_CLIENT_ID") or not os.getenv("SPOTIFY_CLIENT_SECRET"):
+        from scraper.errors import SpotifyNoConfigurado
+        raise SpotifyNoConfigurado("SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET no configurados")
+
     return _token()
 
 
@@ -370,10 +375,69 @@ def _rellenar(token_usuario: str, playlist_id: str, uris: list[str]) -> None:
     respuesta.raise_for_status()
 
 
+def _guardar_seleccion_json(seleccion: list[dict], playlist_id: str, output_path: str) -> None:
+    """Guarda la selección semanal en JSON para el script de publicación."""
+    from datetime import date
+    from db.database import SessionLocal
+    from lib.repository import ArtistRepository
+
+    # Cargar artistas para buscar handles de IG
+    session = SessionLocal()
+    try:
+        artistas_db = {a.nombre: a for a in ArtistRepository(session).todos(con_links=True)}
+    finally:
+        session.close()
+
+    def _handle_ig_artista(nombre_artista: str) -> str | None:
+        artista = artistas_db.get(nombre_artista)
+        if not artista:
+            return None
+        for link in artista.links:
+            if link.plataforma == "ig" and link.url:
+                # Extraer username de la URL
+                url = link.url.rstrip("/")
+                return url.rsplit("/", 1)[-1].split("?")[0]
+        return None
+
+    # 3 tracks aleatorios para la tarjeta
+    import random
+    seleccionados_3 = random.sample(seleccion, min(3, len(seleccion)))
+
+    datos = {
+        "fecha": date.today().isoformat(),
+        "playlist_id": playlist_id,
+        "playlist_url": f"https://open.spotify.com/playlist/{playlist_id}",
+        "total_tracks": len(seleccion),
+        "tracks": [
+            {
+                "posicion": i + 1,
+                "titulo": c["titulo"],
+                "artista": c["artistas"],
+                "uri": c["uri"],
+            }
+            for i, c in enumerate(seleccion)
+        ],
+        "seleccionados_3": [
+            {
+                "titulo": c["titulo"],
+                "artista": c["artistas"],
+                "handle_ig": _handle_ig_artista(c["artistas"]),
+            }
+            for c in seleccionados_3
+        ],
+    }
+
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(json.dumps(datos, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\nSelección guardada en {output_file}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--auth", action="store_true", help="autorización única para obtener el refresh token")
     parser.add_argument("--dry-run", action="store_true", help="muestra la selección sin tocar la playlist")
+    parser.add_argument("--output-json", type=str, default="data/playlist_seleccion_semanal.json", help="ruta para guardar la selección en JSON")
     args = parser.parse_args()
 
     load_env()
@@ -464,6 +528,8 @@ def main() -> int:
 
     if args.dry_run:
         print("\nDry-run: no se modificó ninguna playlist.")
+        if args.output_json:
+            _guardar_seleccion_json(seleccion, "dry-run", args.output_json)
         return 0
 
     token_usuario = _usuario_token()
@@ -471,6 +537,8 @@ def main() -> int:
     _rellenar(token_usuario, playlist_id, [c["uri"] for c in seleccion])
     print(f"\nPlaylist actualizada: {os.getenv('PLAYLIST_NOMBRE', NOMBRE_DEFAULT)} "
           f"(ID {playlist_id}, {len(seleccion)} canciones).")
+    if args.output_json:
+        _guardar_seleccion_json(seleccion, playlist_id, args.output_json)
     return 0
 
 

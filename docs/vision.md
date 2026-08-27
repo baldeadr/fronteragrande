@@ -102,3 +102,9 @@ escena regional.
    estimar crecimiento por proyecto/ciudad/género, recomendar colaboraciones o
    eventos, y detectar anomalías en métricas. El foco previo sigue siendo la
    calidad, verificación y cobertura de los datos.
+6. **Ecosistema de playlists temáticas** `[PROPUESTA]`: a partir de la playlist
+   semanal "Descubrimiento Semanal", expandir a listas automáticas por **género**,
+   **ciudad/lada**, **clásicos**, **novedades/lanzamientos**, **artistas poco sonados**,
+   **categoría** y **eventos en vivo**. Cada playlist es un gancho de descubrimiento
+   y un activo medible para mercadotecnia y patrocinios. Detalle en
+   `docs/playlist_semanal.md` (sección 6).

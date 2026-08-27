@@ -1,0 +1,18 @@
+{
+  "fecha": "2026-08-31",
+  "playlist_id": "49qIAMVwZCHs5wLo1GLrlz",
+  "playlist_url": "https://open.spotify.com/playlist/49qIAMVwZCHs5wLo1GLrlz",
+  "total_tracks": 24,
+  "tracks": [
+    {"posicion": 1, "titulo": "Cumbia del Futuro", "artista": "Futura Driver", "uri": "spotify:track:1"},
+    {"posicion": 2, "titulo": "Neon Dreams", "artista": "Invitrox", "uri": "spotify:track:2"},
+    {"posicion": 3, "titulo": "Border Sound", "artista": "Soma Cake", "uri": "spotify:track:3"},
+    {"posicion": 4, "titulo": "Desert Rose", "artista": "Oxte", "uri": "spotify:track:4"},
+    {"posicion": 5, "titulo": "Midnight Drive", "artista": "They Are Astronauts", "uri": "spotify:track:5"}
+  ],
+  "seleccionados_3": [
+    {"titulo": "Cumbia del Futuro", "artista": "Futura Driver", "handle_ig": "futuradriver"},
+    {"titulo": "Neon Dreams", "artista": "Invitrox", "handle_ig": "invitrox_music"},
+    {"titulo": "Border Sound", "artista": "Soma Cake", "handle_ig": "somacake"}
+  ]
+}

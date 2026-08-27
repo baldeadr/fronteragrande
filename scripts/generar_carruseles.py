@@ -15,11 +15,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from carruseles import sistema
-from carruseles import artistas, presentacion
+from carruseles import artistas, fans, presentacion
 
 CARRUSELES = {
     presentacion.CARPETA: presentacion.SLIDES,
     artistas.CARPETA: artistas.SLIDES,
+    fans.CARPETA: fans.SLIDES,
 }
 ALIAS = {"artistas": artistas.CARPETA}
 

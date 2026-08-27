@@ -53,4 +53,26 @@ La playlist es un activo público y periódico: **algo nuevo cada lunes**. Ideas
 
 ---
 
-Última actualización: 2026-08-20.
+## 6. Futuras playlists (plan de expansión)
+
+El objetivo es construir un **ecosistema de playlists** que cubra distintas facetas de la escena, aprovechando la misma base de datos y automatización:
+
+| Playlist | Concepto | Fuente de selección | Frecuencia |
+|----------|----------|---------------------|------------|
+| **Por género** | Rock, electrónica, regional, hip-hop, pop, experimental, etc. | Artistas del directorio etiquetados por género (campo `generos`) | Semanal o quincenal |
+| **Por ciudad / lada** | Reynosa, Matamoros, Nuevo Laredo, Río Bravo, Valle Hermoso, lado EE. UU. (McAllen, Brownsville, Harlingen) | `ciudad` base del artista | Mensual |
+| **Clásicos de la frontera** | Temas emblemáticos / fundacionales de la escena (histórico) | Curaduría manual + artistas con `estado_activo = inactivo` pero legado | Trimestral |
+| **Novedades / Lanzamientos** | Últimos sencillos y álbumes de la semana (feed de lanzamientos) | `scripts/sync_lanzamientos.py` → `feed_items` tipo `lanzamiento` | Semanal (lunes) |
+| **Artistas poco sonados / "Joyas ocultas"** | Proyectos con buena música pero bajo alcance (ranking bajo, alta calidad) | `indice_alcance` bajo + señal de actividad reciente | Mensual |
+| **Por categoría** | Bandas, Solistas, DJs, Colectivos, Covers, Tributos | Campo `segmento` | Mensual |
+| **Eventos en vivo** | Setlists / canciones de artistas con eventos próximos | Tabla `events` + Spotify | Semanal (previa a fin de semana) |
+
+**Notas técnicas:**
+- Cada playlist nueva = ID manual en Spotify + secreto `SPOTIFY_PLAYLIST_ID_<NOMBRE>` en GitHub Actions + workflow dedicado (o parametrizar `generar_playlist_semanal.py` con `--playlist`).
+- Requiere **Extended Quota** de Spotify para top-tracks reales y métricas (hoy modo desarrollo limita a 403/0).
+- La portada seguiría la identidad visual (`docs/identidad.md`) con variante por tipo.
+- El script base (`generar_playlist_semanal.py`) ya es reutilizable: filtra artistas por criterio y aplica la misma lógica de selección/anti-duplicados.
+
+---
+
+Última actualización: 2026-08-25.

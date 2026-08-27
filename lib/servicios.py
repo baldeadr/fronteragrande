@@ -129,7 +129,7 @@ def feed_df(
         )
         filas.append(
             {
-                "fecha": fi.fecha or fi.created_at,
+                "fecha": fi.fecha,
                 "tipo": TIPOS_FEED.get(fi.tipo, fi.tipo),
                 "tipo_bruto": fi.tipo,
                 "fuente": fi.fuente,

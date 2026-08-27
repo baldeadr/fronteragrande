@@ -142,6 +142,35 @@ def _base_url(url: str) -> str:
     return f"{partes.scheme}://{partes.netloc}"
 
 
+RE_RELEASED = re.compile(
+    r'<p[^>]*class=["\'][^"\']*released[^"\']*["\'][^>]*>(.*?)</p>',
+    re.IGNORECASE | re.DOTALL,
+)
+RE_DATE_META = re.compile(
+    r'itemprop=["\']datePublished["\'][^>]*content=["\']([^"\']+)',
+    re.IGNORECASE,
+)
+
+
+def _fecha_desde_bloque(bloque: str) -> date | None:
+    """Intenta extraer fecha del bloque HTML del grid item."""
+    m = RE_RELEASED.search(bloque)
+    if m:
+        texto = re.sub(r"<[^>]+>", " ", m.group(1)).strip()
+        for fmt in ("%B %d, %Y", "%b %d, %Y", "%Y-%m-%d", "%d %B %Y", "%d %b %Y"):
+            try:
+                return datetime.strptime(texto, fmt).date()
+            except ValueError:
+                pass
+    m = RE_DATE_META.search(bloque)
+    if m:
+        try:
+            return datetime.fromisoformat(m.group(1).replace("Z", "+00:00")).date()
+        except ValueError:
+            pass
+    return None
+
+
 def _parse_grid(html: str, url: str, limite: int) -> list[dict]:
     """Lanzamientos desde la cuadrícula (`li.music-grid-item`) de la página."""
     base = _base_url(url)
@@ -161,11 +190,12 @@ def _parse_grid(html: str, url: str, limite: int) -> list[dict]:
         else:
             continue
         titulo = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", tit.group(1))).strip() if tit else ""
+        fecha = _fecha_desde_bloque(bloque) or _fecha_desde_titulo(titulo)
         items.append(
             {
                 "titulo": titulo,
                 "url": url_abs,
-                "fecha": _fecha_desde_titulo(titulo),
+                "fecha": fecha,
                 "imagen": img.group(1) if img else "",
             }
         )
