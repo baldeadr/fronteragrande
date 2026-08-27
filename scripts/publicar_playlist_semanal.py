@@ -417,16 +417,28 @@ def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> l
 
     # Footer MÁS VISIBLE - movido arriba, más grande, color destacado
     footer_y = 630
-    # Fondo semi-transparente para el footer
-    footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 90), (8, 5, 18, 200))
+    # Fondo semi-transparente para el footer (más alto para caber artistas extra)
+    footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 130), (8, 5, 18, 200))
     draw_footer = ImageDraw.Draw(footer_bg)
     draw_footer.rounded_rectangle(
-        (0, 0, LIENZO[0] - 120, 90), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+        (0, 0, LIENZO[0] - 120, 130), radius=16, outline=(*ACENTO_CLARO, 80), width=2
     )
     lienzo.alpha_composite(footer_bg, (60, footer_y - 5))
     
-    _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-    _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+    # Artistas adicionales en la imagen
+    if datos:
+        adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
+        if adicionales:
+            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
+            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 70, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 100, LIENZO[0], TEXTO)
+        else:
+            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+    else:
+        _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+        _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
 
     # Botón visual "Escuchar en Spotify"
     btn_y = 750
@@ -452,7 +464,7 @@ def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> l
     return ruta
 
 
-def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, draw=None) -> Path | None:
+def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, datos: dict | None = None, draw=None) -> Path | None:
     """Layout editorial: apilado vertical, estilo revista, foto a la izquierda, info a la derecha."""
     from PIL import Image, ImageDraw
     
@@ -486,7 +498,7 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
 
     # 3 bloques verticales apilados
     bloque_y = 210
-    bloque_h = 240
+    bloque_h = 230
     gap_v = 25
     foto_size = 180  # más pequeño
     margin_left = 80
@@ -601,17 +613,29 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
         )
 
 # Footer estilo editorial - MÁS VISIBLE
-    footer_y = 890
-    # Fondo semi-transparente
-    footer_bg = Image.new("RGBA", (LIENZO[0] - 160, 80), (8, 5, 18, 200))
+    footer_y = 920
+    # Fondo semi-transparente (más alto para caber artistas extra)
+    footer_bg = Image.new("RGBA", (LIENZO[0] - 160, 120), (8, 5, 18, 200))
     draw_footer = ImageDraw.Draw(footer_bg)
     draw_footer.rounded_rectangle(
-        (0, 0, LIENZO[0] - 160, 80), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+        (0, 0, LIENZO[0] - 160, 120), radius=16, outline=(*ACENTO_CLARO, 80), width=2
     )
     lienzo.alpha_composite(footer_bg, (80, footer_y - 10))
     
-    _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
-                   _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
+    # Artistas adicionales en la imagen
+    if datos:
+        adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
+        if adicionales:
+            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+            _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
+                           _fuente(24), footer_y + 75, LIENZO[0], (*ACENTO_CLARO, 255))
+        else:
+            _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
+                           _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
+    else:
+        _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
+                       _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
     
     # CTA minimalista
     draw.text(
@@ -639,7 +663,7 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
     return ruta
 
 
-def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "") -> Path | None:
+def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None) -> Path | None:
     """Genera la tarjeta 1080x1080 con 3 artistas — diseño EDITORIAL (vertical apilado)."""
     from PIL import Image, ImageDraw
     
@@ -650,10 +674,164 @@ def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fec
     
     if usar_editorial:
         lienzo = _fondo_playlist_editorial()
-        return _generar_layout_editorial(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, draw=None)
+        return _generar_layout_editorial(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, datos, draw=None)
     else:
+        # Layout CARDS (inline)
         lienzo = _fondo_playlist()
-        return _generar_layout_cards(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, draw=None)
+        draw = ImageDraw.Draw(lienzo)
+
+        # Seleccionar track de la semana (el primero, estable por semana)
+        track_semana = seleccionados_3[0]
+
+        # Título principal
+        _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(58), 48, LIENZO[0], TEXTO)
+        _centrar_texto(draw, "Nueva selección del lunes", _fuente(26), 112, LIENZO[0], (*ACENTO_CLARO, 235))
+
+        # Track de la semana - badge destacado
+        badge_y = 155
+        badge_text = f"🎯  TRACK DE LA SEMANA:  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
+        _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
+        
+        # Línea bajo el badge
+        draw.line(
+            [(240, badge_y + 35), (840, badge_y + 35)],
+            fill=(*ACENTO, 120),
+            width=2
+        )
+
+        # 3 cards de artistas
+        card_w = 300
+        card_h = 420
+        gap = 40
+        start_x = (LIENZO[0] - (3 * card_w + 2 * gap)) // 2
+        card_y = 185
+
+        for i, sel in enumerate(seleccionados_3):
+            x = start_x + i * (card_w + gap)
+            
+            # Card con glassmorphism sutil
+            card_bg = Image.new("RGBA", (card_w, card_h), (8, 5, 18, 180))
+            draw_card = ImageDraw.Draw(card_bg)
+            draw_card.rounded_rectangle(
+                (0, 0, card_w - 1, card_h - 1), radius=28, outline=(*ACENTO_CLARO, 60), width=2
+            )
+            draw_card.line(
+                [(20, 2), (card_w - 20, 2)],
+                fill=(*ACENTO_CLARO, 40),
+                width=3
+            )
+            lienzo.alpha_composite(card_bg, (x, card_y))
+
+            # Foto del artista
+            session = SessionLocal()
+            try:
+                artista = ArtistRepository(session).por_nombre(sel["artista"])
+                foto_url = artista.imagen_perfil if artista else None
+            finally:
+                session.close()
+
+            foto_size = 180  # más pequeño
+            foto_x = x + (card_w - foto_size) // 2
+            foto_y = card_y + 25
+            
+            if foto_url:
+                foto = _descargar_imagen(foto_url)
+                if foto:
+                    foto = _recortar_cuadrado(foto, (foto_size, foto_size))
+                    from PIL import Image, ImageDraw
+                    mascara = Image.new("L", (foto_size, foto_size), 0)
+                    ImageDraw.Draw(mascara).ellipse((0, 0, foto_size - 1, foto_size - 1), fill=255)
+                    foto.putalpha(mascara)
+                    
+                    draw.ellipse(
+                        (foto_x - 6, foto_y - 6, foto_x + foto_size + 6, foto_y + foto_size + 6),
+                        outline=(*ACENTO_CLARO, 220), width=5
+                    )
+                    draw.ellipse(
+                        (foto_x - 12, foto_y - 12, foto_x + foto_size + 12, foto_y + foto_size + 12),
+                        outline=(*ACENTO, 120), width=2
+                    )
+                    lienzo.alpha_composite(foto, (foto_x, foto_y))
+                else:
+                    draw.ellipse(
+                        (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
+                        fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
+                    )
+            else:
+                draw.ellipse(
+                    (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
+                    fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
+                )
+
+            # Track (GRANDE - protagonista) - subido más arriba
+            track = sel["titulo"]
+            maximo = card_w - 40
+            tam = 26
+            while tam > 18:
+                caja = draw.textbbox((0, 0), track, font=_fuente(tam))
+                if caja[2] - caja[0] <= maximo:
+                    break
+                tam -= 2
+            _centrar_texto_en_caja(draw, track, _fuente(tam), card_y + 225, x + 20, card_w - 40, TEXTO)
+
+            # Artista (pequeño, debajo)
+            nombre = sel["artista"]
+            maximo = card_w - 40
+            tam = 18
+            while tam > 14:
+                caja = draw.textbbox((0, 0), nombre, font=_fuente(tam))
+                if caja[2] - caja[0] <= maximo:
+                    break
+                tam -= 2
+            _centrar_texto_en_caja(draw, nombre, _fuente(tam), card_y + 270, x + 20, card_w - 40, (*ACENTO_CLARO, 200))
+
+        # Footer MÁS VISIBLE - movido arriba, más grande, color destacado
+        footer_y = 630
+        # Fondo semi-transparente para el footer (más alto para caber artistas extra)
+        footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 130), (8, 5, 18, 200))
+        draw_footer = ImageDraw.Draw(footer_bg)
+        draw_footer.rounded_rectangle(
+            (0, 0, LIENZO[0] - 120, 130), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+        )
+        lienzo.alpha_composite(footer_bg, (60, footer_y - 5))
+        
+        # Artistas adicionales en la imagen
+        if datos:
+            adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
+            if adicionales:
+                _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+                _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
+                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 70, LIENZO[0], (*ACENTO_CLARO, 255))
+                _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 100, LIENZO[0], TEXTO)
+            else:
+                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+                _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+        else:
+            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+
+        # Botón visual "Escuchar en Spotify"
+        btn_y = 750
+        btn_w = 380
+        btn_h = 56
+        btn_x = (LIENZO[0] - btn_w) // 2
+        # Fondo botón
+        draw.rounded_rectangle(
+            (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h),
+            radius=28, fill=(*ACENTO, 255)
+        )
+        # Texto botón
+        _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
+
+        _pegar_monograma(lienzo, 58, 56, 1016)
+        draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
+        draw.text((LIENZO[0] - 200, 1014), "fronteragrande.mx", font=_fuente(24), fill=(*ACENTO_CLARO, 230))
+
+        PROMOS_DIR.mkdir(parents=True, exist_ok=True)
+        slug = f"playlist_semanal_{fecha.replace('-', '')}"
+        ruta = PROMOS_DIR / f"{slug}.jpg"
+        lienzo.convert("RGB").save(ruta, "JPEG", quality=90, optimize=True)
+        return ruta
 
 
 def construir_copy_fb(datos: dict) -> str:
@@ -794,7 +972,7 @@ def main() -> int:
     # Generar tarjeta
     print("\nGenerando tarjeta...")
     ruta_tarjeta = generar_tarjeta_playlist(
-        datos["seleccionados_3"], datos["total_tracks"], datos["fecha"], datos["playlist_url"]
+        datos["seleccionados_3"], datos["total_tracks"], datos["fecha"], datos["playlist_url"], datos
     )
     if not ruta_tarjeta:
         print("[error] No se pudo generar la tarjeta")
