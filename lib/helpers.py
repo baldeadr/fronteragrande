@@ -481,26 +481,41 @@ TEXTO_PATRON_CONSUMO = {
     "youtube_dominante": (
         "La audiencia se concentra en YouTube, donde el contenido de audio "
         "genera vistas significativas. Esto refleja un hábito de consumo "
-        "regional: la audiencia busca y escucha gratis en YouTube. "
-        "Oportunidad: convertir vistas en seguidores de Spotify."
+        "regional: la audiencia busca y escucha gratis en YouTube. Oportunidad: "
+        "los videos ya llegan a mucha gente, pero en YouTube los ingresos por "
+        "audio son mínimos. Añade enlaces y llamadas a la acción (descripción, "
+        "pantallas finales) hacia tu página de Spotify, tus redes y tus "
+        "lanzamientos para convertir esas vistas en seguidores conectados que "
+        "generen ingresos reales."
     ),
     "spotify_dominante": (
         "Las plataformas de streaming concentran la mayor parte del consumo "
         "registrado. La audiencia descubre y guarda contenido en playlists, "
-        "lo que indica un consumo más intencional."
+        "lo que indica un consumo más intencional y mejor monetizado. "
+        "Oportunidad: tienes oyentes que ya te escuchan de forma activa; "
+        "fortalece tu presencia en redes sociales (Instagram, TikTok) para que "
+        "esos oyentes también te sigan y vean tu contenido, ampliando el "
+        "descubrimiento y fidelizando a tu audiencia."
     ),
     "social_dominante": (
         "Las redes sociales concentran la mayor audiencia registrada; el "
-        "consumo en plataformas musicales es menor. Existe oportunidad "
-        "para fortalecer la presencia en streaming."
+        "consumo en plataformas musicales es menor. Oportunidad: ya cuentas "
+        "con una comunidad que te sigue en redes; distribuye tu música en "
+        "plataformas de streaming (Spotify, YouTube Music) y enlázala desde "
+        "tus perfiles para que esa audiencia social se convierta en oyentes y "
+        "en ingresos por reproducción."
     ),
     "distribuido": (
         "La presencia está distribuida entre redes sociales y plataformas "
         "musicales sin una dominancia clara, lo que indica una audiencia "
-        "multicanal."
+        "multicanal. Oportunidad: tu base está equilibrada, así que el "
+        "crecimiento puede venir de enfocar una plataforma concreta y medir "
+        "dónde responden mejor tu audiencia y tu contenido."
     ),
     "sin_datos": (
-        "Aún no hay suficientes datos para detectar un patrón de consumo."
+        "Aún no hay suficientes datos para detectar un patrón de consumo. "
+        "Conecta tus plataformas (Facebook/Instagram, TikTok) y añade tus "
+        "enlaces de streaming para que el análisis pueda ayudarte."
     ),
 }
 
