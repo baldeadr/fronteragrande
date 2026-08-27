@@ -15,7 +15,9 @@
   directos a las redes** de cada proyecto (el *puente*): los proyectos se
   descubren, se escuchan y se ven donde realmente están.
 - Un instrumento de **stats de la escena**: categorías, ciudades, estado de
-  actividad y huella digital por plataforma (seguidores y reproducciones).
+  actividad, huella digital por plataforma (seguidores y reproducciones) y
+  **hábitos de consumo** (dominancia por plataforma, ratios de engagement,
+  benchmarks por género; ver `docs/habitos_consumo.md`).
 - Una **herramienta de detección de actividad**: a partir de internet se
   determina si un proyecto sigue activo (regla de actividad documentada).
 - Una **pieza del propio universo artístico** (`architecting-a-band`): sirve
