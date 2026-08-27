@@ -40,6 +40,7 @@ from lib.repository import ArtistRepository, EventRepository, PushSubscriptionRe
 from lib.servicios import (
     artistas_df,
     analisis_artista,
+    analisis_consumo,
     crear_artista,
     editar_artista,
     eventos_de_artista,
@@ -452,6 +453,9 @@ def artist_detail(
         metricas_artista(fila) if fila is not None else {},
         artist.fecha_captura,
     )
+    consumo = analisis_consumo(
+        metricas_artista(fila) if fila is not None else {},
+    )
 
     links = [link_con_metadatos(l) for l in artist.links]
     eventos = [
@@ -542,6 +546,7 @@ def artist_detail(
         ),
         "menciones": menciones.get(artist.slug, []),
         "analisis": analisis,
+        "consumo": consumo,
         "igfb": {
             "configurado": meta_configurado(),
             "conectado": bool(artist.fb_page_token),
@@ -583,7 +588,7 @@ def get_feed(
     if cached is not None:
         return cached
 
-    feed = feed_df(db, limite=80)
+    feed = feed_df(db, limite=500)
     if feed.empty:
         return []
     filas = [
