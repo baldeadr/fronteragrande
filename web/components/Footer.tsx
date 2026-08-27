@@ -62,6 +62,9 @@ export default function Footer() {
         <Link href="/ayuda-artistas" className="text-accent hover:underline">
           Ayuda para artistas
         </Link>
+        <Link href="/privacidad" className="text-accent hover:underline">
+          Política de privacidad
+        </Link>
         <a
           href={FACEBOOK_FRONTERA_GRANDE}
           target="_blank"
