@@ -1,4 +1,4 @@
-name: Sincronizar estadísticas de YouTube
+name: Sincronizar YouTube
 
 on:
   workflow_dispatch:
@@ -23,6 +23,9 @@ jobs:
 
       - name: Instalar dependencias
         run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar videos al feed
+        run: python scripts/actualizar_feed_youtube.py
 
       - name: Sincronizar estadísticas
         run: python scripts/sync_youtube_stats.py
