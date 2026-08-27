@@ -243,12 +243,7 @@ export default async function PerfilPage({
           </div>
 
           <div className="mb-3 pb-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Análisis
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-              {artist.analisis.texto}
-            </p>
+            <ConsumoAnalisis consumo={artist.consumo} />
           </div>
 
           {artist.menciones.length > 0 && (
@@ -483,8 +478,6 @@ export default async function PerfilPage({
           Repórtalo por Facebook
         </a>
       </p>
-
-      <ConsumoAnalisis consumo={artist.consumo} />
 
       <Suspense
         fallback={
