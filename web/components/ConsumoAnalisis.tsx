@@ -13,14 +13,6 @@ const ETIQUETAS_PATRON: Record<string, string> = {
   sin_datos: "Sin datos",
 };
 
-const COLOR_PATRON: Record<string, string> = {
-  youtube_dominante: "text-[#FF0000]",
-  spotify_dominante: "text-[#1DB954]",
-  social_dominante: "text-accent",
-  distribuido: "text-text",
-  sin_datos: "text-muted",
-};
-
 const NOMBRE_PLATAFORMA: Record<string, string> = {
   ig: "Instagram",
   fb: "Facebook",
@@ -68,9 +60,7 @@ export default function ConsumoAnalisis({
     <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <span className="font-bold">Consumo: </span>
-        <span
-          className={`font-bold ${COLOR_PATRON[consumo.patron] ?? "text-muted"}`}
-        >
+        <span className="font-bold text-text">
           {ETIQUETAS_PATRON[consumo.patron] ?? consumo.patron}
         </span>
 
