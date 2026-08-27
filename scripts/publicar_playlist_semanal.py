@@ -298,9 +298,14 @@ def _fondo_playlist_editorial() -> "Image.Image":
     return lienzo
 
 
-def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, draw=None) -> Path | None:
-    """Layout original: 3 cards horizontales."""
-    from PIL import Image, ImageDraw
+def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> list[str]:
+    """Obtiene lista de artistas adicionales (sin repetir los 3 principales)."""
+    principales = {s["artista"] for s in seleccionados_3}
+    adicionales = []
+    for t in datos.get("tracks", []):
+        if t["artista"] not in principales and t["artista"] not in adicionales:
+            adicionales.append(t["artista"])
+    return adicionales[:8]  # máximo 8
     
     if draw is None:
         draw = ImageDraw.Draw(lienzo)
@@ -435,22 +440,6 @@ def _generar_layout_cards(lienzo, seleccionados_3: list[dict], total_tracks: int
     )
     # Texto botón
     _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
-
-    # QR Code a la derecha del botón
-    qr_size = 80
-    qr_img = _generar_qr_playlist(playlist_url, qr_size)
-    qr_x = btn_x + btn_w + 20
-    qr_y = btn_y + (btn_h - qr_size) // 2
-    # Fondo blanco redondeado para el QR
-    qr_bg = Image.new("RGBA", (qr_size + 16, qr_size + 16), (255, 255, 255, 255))
-    draw_qr = ImageDraw.Draw(qr_bg)
-    draw_qr.rounded_rectangle(
-        (0, 0, qr_size + 15, qr_size + 15), radius=12, outline=(*ACENTO_CLARO, 100), width=2
-    )
-    lienzo.alpha_composite(qr_bg, (qr_x - 8, qr_y - 8))
-    lienzo.alpha_composite(qr_img, (qr_x, qr_y))
-    # Label bajo QR
-    _centrar_texto_en_caja(draw, "ESCANEA", _fuente(14), qr_y + qr_size + 5, qr_x, qr_size, (*ACENTO_CLARO, 200))
 
     _pegar_monograma(lienzo, 58, 56, 1016)
     draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
@@ -637,23 +626,6 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
         [(380, footer_y + 56), (396, footer_y + 66), (380, footer_y + 76)],
         fill=(*ACENTO_CLARO, 255)
     )
-    
-    # QR Code a la derecha
-    if playlist_url:
-        qr_size = 80
-        qr_img = _generar_qr_playlist(playlist_url, qr_size)
-        qr_x = LIENZO[0] - qr_size - 100
-        qr_y = footer_y - 10
-        # Fondo blanco redondeado para el QR
-        qr_bg = Image.new("RGBA", (qr_size + 16, qr_size + 16), (255, 255, 255, 255))
-        draw_qr = ImageDraw.Draw(qr_bg)
-        draw_qr.rounded_rectangle(
-            (0, 0, qr_size + 15, qr_size + 15), radius=12, outline=(*ACENTO_CLARO, 100), width=2
-        )
-        lienzo.alpha_composite(qr_bg, (qr_x - 8, qr_y - 8))
-        lienzo.alpha_composite(qr_img, (qr_x, qr_y))
-        # Label bajo QR
-        _centrar_texto_en_caja(draw, "ESCANEA", _fuente(14), qr_y + qr_size + 5, qr_x, qr_size, (*ACENTO_CLARO, 200))
 
     # Marca FG
     _pegar_monograma(lienzo, 58, 56, 1016)
@@ -689,6 +661,14 @@ def construir_copy_fb(datos: dict) -> str:
     sel = datos["seleccionados_3"]
     track_semana = sel[0]
     
+    # Obtener más artistas de la lista completa (sin repetir los 3 principales)
+    todos_artistas = []
+    for t in datos.get("tracks", []):
+        if t["artista"] not in [s["artista"] for s in sel]:
+            if t["artista"] not in todos_artistas:
+                todos_artistas.append(t["artista"])
+    mas_artistas = todos_artistas[:8]  # hasta 8 más
+    
     lines = [
         "🎯  TRACK DE LA SEMANA",
         f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
@@ -700,7 +680,12 @@ def construir_copy_fb(datos: dict) -> str:
     ]
     for s in sel:
         lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
-    lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
+    
+    if mas_artistas:
+        lines.append(f'... y más artistas esta semana: {", ".join(mas_artistas)}.')
+    else:
+        lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
+    
     lines.append("")
     lines.append("🎧  Escucha la playlist completa:")
     lines.append(datos["playlist_url"])
@@ -719,6 +704,14 @@ def construir_copy_ig(datos: dict) -> str:
     track_semana = sel[0]
     menciones = [f"@{s['handle_ig']}" for s in sel if s.get("handle_ig")]
     
+    # Obtener más artistas de la lista completa (sin repetir los 3 principales)
+    todos_artistas = []
+    for t in datos.get("tracks", []):
+        if t["artista"] not in [s["artista"] for s in sel]:
+            if t["artista"] not in todos_artistas:
+                todos_artistas.append(t["artista"])
+    mas_artistas = todos_artistas[:8]  # hasta 8 más
+    
     lines = [
         "🎯  TRACK DE LA SEMANA",
         f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
@@ -730,7 +723,12 @@ def construir_copy_ig(datos: dict) -> str:
     ]
     for s in sel:
         lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
-    lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
+    
+    if mas_artistas:
+        lines.append(f'... y más artistas esta semana: {", ".join(mas_artistas)}.')
+    else:
+        lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
+    
     lines.append("")
     lines.append("🎧  Escucha completa: " + datos["playlist_url"])
     lines.append("👉  Guárdala → no te pierdas la rotación del próximo lunes.")

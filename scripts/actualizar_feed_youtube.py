@@ -23,6 +23,12 @@ MAX_VIDEOS = 5
 
 def main():
     session = SessionLocal()
+    import os
+
+    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
+    if not api_key:
+        print("YOUTUBE_API_KEY no está configurada; no se sincronizó nada.")
+        return
     nuevos = 0
     ya_existentes = 0
     errores = []
@@ -34,7 +40,7 @@ def main():
             if not canales:
                 continue
             try:
-                videos = latest_videos(canales[0].url, max_videos=MAX_VIDEOS)
+                videos = latest_videos(canales[0].url, max_videos=MAX_VIDEOS, api_key=api_key)
             except ScraperError as exc:
                 errores.append(f"{artista.nombre}: {exc}")
                 continue
