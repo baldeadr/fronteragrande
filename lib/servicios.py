@@ -14,7 +14,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from db.models import ESTADOS_ACTIVO, Artist, ActivityCheck, AltaRegistro
-from lib.helpers import TIPOS_FEED, conteo_generos, youtube_thumbnail
+from lib.helpers import (
+    TIPOS_FEED,
+    conteo_generos,
+    dominancia_plataforma,
+    patron_dominancia,
+    ratio_engagement_spotify,
+    ratio_social_musica,
+    ratio_viralidad_yt,
+    TEXTO_PATRON_CONSUMO,
+    youtube_thumbnail,
+)
 from lib.repository import (
     ArtistRepository,
     ChecksRepository,
@@ -351,6 +361,30 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
         "tipo": tipo,
         "confianza": confianza,
         "actualizado": actualizado,
+    }
+
+
+def analisis_consumo(metricas: dict) -> dict:
+    """Análisis de hábitos de consumo por plataforma.
+
+    Devuelve el patrón detectado, ratios derivados, dominancia de plataforma
+    y un texto interpretativo. Todo calculado a partir de datos existentes.
+    """
+    patron = patron_dominancia(metricas)
+    viralidad_yt = ratio_viralidad_yt(metricas)
+    engagement_sp = ratio_engagement_spotify(metricas)
+    gap_social = ratio_social_musica(metricas)
+    dominancia = dominancia_plataforma(metricas)
+
+    return {
+        "patron": patron,
+        "texto": TEXTO_PATRON_CONSUMO.get(patron, TEXTO_PATRON_CONSUMO["sin_datos"]),
+        "ratios": {
+            "viralidad_yt": viralidad_yt,
+            "engagement_spotify": engagement_sp,
+            "gap_social_musica": gap_social,
+        },
+        "dominancia": dominancia,
     }
 
 

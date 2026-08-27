@@ -13,6 +13,7 @@ import ConexionMeta from "@/components/ConexionMeta";
 import ConexionTikTok from "@/components/ConexionTikTok";
 import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
+import ConsumoAnalisis from "@/components/ConsumoAnalisis";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
@@ -482,6 +483,8 @@ export default async function PerfilPage({
           Repórtalo por Facebook
         </a>
       </p>
+
+      <ConsumoAnalisis consumo={artist.consumo} />
 
       <Suspense
         fallback={

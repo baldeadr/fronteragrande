@@ -38,6 +38,17 @@ export interface AnalisisPerfil {
   actualizado: string | null;
 }
 
+export interface ConsumoAnalisis {
+  patron: string;
+  texto: string;
+  ratios: {
+    viralidad_yt: number | null;
+    engagement_spotify: number | null;
+    gap_social_musica: number | null;
+  };
+  dominancia: Record<string, number>;
+}
+
 export interface ArtistCard {
   slug: string;
   nombre: string;
@@ -182,6 +193,7 @@ export interface ArtistDetail {
   ranking: Ranking;
   menciones: string[];
   analisis: AnalisisPerfil;
+  consumo: ConsumoAnalisis;
   igfb: EstadoIgfb;
   tiktok: EstadoTiktok;
   imagen_perfil: string | null;

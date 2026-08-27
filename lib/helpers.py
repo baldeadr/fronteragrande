@@ -380,6 +380,131 @@ def indices_audiencia_consumo(
     return resultado
 
 
+def _valor_seguro(metricas: dict, plataforma: str, tipo: str) -> float:
+    """Valor numérico de una métrica (0 si no existe o no es válida)."""
+    dato = metricas.get(plataforma, {}).get(tipo)
+    try:
+        numero = float(dato)
+    except (TypeError, ValueError):
+        return 0.0
+    return numero if numero > 0 else 0.0
+
+
+def ratio_viralidad_yt(metricas: dict) -> float | None:
+    """Vistas / suscriptores de YouTube. None si no hay datos suficientes."""
+    vistas = _valor_seguro(metricas, "yt", "vistas")
+    suscriptores = _valor_seguro(metricas, "yt", "seguidores")
+    if vistas <= 0 or suscriptores <= 0:
+        return None
+    return round(vistas / suscriptores, 1)
+
+
+def ratio_engagement_spotify(metricas: dict) -> float | None:
+    """Oyentes mensuales / seguidores de Spotify. None si no hay datos."""
+    oyentes = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
+    seguidores = _valor_seguro(metricas, "spotify", "seguidores")
+    if oyentes <= 0 or seguidores <= 0:
+        return None
+    return round(oyentes / seguidores, 1)
+
+
+def ratio_social_musica(metricas: dict) -> float | None:
+    """Seguidores sociales / consumo musical. None si no hay ambos."""
+    sociales = sum(
+        _valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "tt", "yt")
+    )
+    musica = _valor_seguro(metricas, "spotify", "oyentes_mensuales") or _valor_seguro(
+        metricas, "spotify", "reproducciones"
+    )
+    musica += _valor_seguro(metricas, "bandcamp", "reproducciones")
+    musica += _valor_seguro(metricas, "soundcloud", "reproducciones")
+    if sociales <= 0 or musica <= 0:
+        return None
+    return round(sociales / musica, 1)
+
+
+def dominancia_plataforma(metricas: dict) -> dict[str, float]:
+    """Porcentaje de dominancia de cada plataforma sobre el total.
+
+    Usa la métrica de alcance de cada plataforma (seguidores, vistas,
+    reproducciones) y calcula qué % representa del total combinado.
+    Devuelve {plataforma: porcentaje} solo para las que tienen dato.
+    """
+    partes: dict[str, float] = {}
+    for plataforma in PESOS_ALCANCE:
+        bruto = _alcance_bruto(metricas, plataforma)
+        if bruto > 0:
+            partes[plataforma] = bruto
+    total = sum(partes.values())
+    if total <= 0:
+        return {}
+    return {p: round(v / total * 100, 1) for p, v in sorted(
+        partes.items(), key=lambda kv: kv[1], reverse=True
+    )}
+
+
+def patron_dominancia(metricas: dict) -> str:
+    """Detecta el patrón de consumo dominante del artista.
+
+    Devuelve: 'youtube_dominante', 'spotify_dominante', 'social_dominante',
+    'distribuido' o 'sin_datos'.
+    """
+    vistas_yt = _valor_seguro(metricas, "yt", "vistas")
+    oyentes_sp = _valor_seguro(metricas, "spotify", "oyentes_mensuales") or _valor_seguro(
+        metricas, "spotify", "reproducciones"
+    )
+    sociales = sum(
+        _valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "tt", "yt")
+    )
+
+    if vistas_yt <= 0 and oyentes_sp <= 0 and sociales <= 0:
+        return "sin_datos"
+
+    total = vistas_yt + oyentes_sp + sociales
+    if total <= 0:
+        return "sin_datos"
+
+    pct_yt = vistas_yt / total
+    pct_sp = oyentes_sp / total
+    pct_soc = sociales / total
+
+    if pct_yt >= 0.5:
+        return "youtube_dominante"
+    if pct_sp >= 0.5:
+        return "spotify_dominante"
+    if pct_soc >= 0.5:
+        return "social_dominante"
+    return "distribuido"
+
+
+TEXTO_PATRON_CONSUMO = {
+    "youtube_dominante": (
+        "La audiencia se concentra en YouTube, donde el contenido de audio "
+        "genera vistas significativas. Esto refleja un hábito de consumo "
+        "regional: la audiencia busca y escucha gratis en YouTube. "
+        "Oportunidad: convertir vistas en seguidores de Spotify."
+    ),
+    "spotify_dominante": (
+        "Las plataformas de streaming concentran la mayor parte del consumo "
+        "registrado. La audiencia descubre y guarda contenido en playlists, "
+        "lo que indica un consumo más intencional."
+    ),
+    "social_dominante": (
+        "Las redes sociales concentran la mayor audiencia registrada; el "
+        "consumo en plataformas musicales es menor. Existe oportunidad "
+        "para fortalecer la presencia en streaming."
+    ),
+    "distribuido": (
+        "La presencia está distribuida entre redes sociales y plataformas "
+        "musicales sin una dominancia clara, lo que indica una audiencia "
+        "multicanal."
+    ),
+    "sin_datos": (
+        "Aún no hay suficientes datos para detectar un patrón de consumo."
+    ),
+}
+
+
 def slugificar(nombre: str) -> str:
     """Slug simple para identificadores (`"DJ Vikingo"` → `"dj_vikingo"`)."""
     import re
