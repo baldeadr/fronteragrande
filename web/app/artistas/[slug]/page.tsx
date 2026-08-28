@@ -11,6 +11,7 @@ import IconoRed from "@/components/IconoRed";
 import IconoVerificado from "@/components/IconoVerificado";
 import ConexionMeta from "@/components/ConexionMeta";
 import ConexionTikTok from "@/components/ConexionTikTok";
+import EditarPerfilPropio from "@/components/EditarPerfilPropio";
 import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import ConsumoAnalisis from "@/components/ConsumoAnalisis";
@@ -189,6 +190,18 @@ export default async function PerfilPage({
             </div>
             <EstadoBadge estado={artist.estado_activo} size="lg" />
             <BotonEditarAdmin slug={artist.slug} />
+            <EditarPerfilPropio
+              slug={artist.slug}
+              nombre={artist.nombre}
+              ciudad={artist.ciudad}
+              categoria={artist.segmento}
+              generos={artist.generos}
+              bio={artist.bio}
+              logros={artist.logros}
+              redes={redes
+                .filter((l) => !l.es_busqueda)
+                .map((l) => ({ plataforma: l.plataforma, url: l.url }))}
+            />
           </div>
 
           <div className="flex flex-wrap gap-1.5">

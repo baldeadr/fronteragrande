@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
+import { guardarOwner } from "@/lib/owner";
 
 export default function SeleccionarFotoPage() {
   return (
@@ -29,6 +30,11 @@ function SeleccionarFoto() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
+
+  useEffect(() => {
+    if (!owner || !slug) return;
+    guardarOwner(slug, owner);
+  }, [owner, slug]);
 
   useEffect(() => {
     if (!owner) return;

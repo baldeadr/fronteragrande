@@ -125,3 +125,121 @@ def test_foto_propia_de_otro_artista_rechazada(client, monkeypatch):
         headers={"X-Meta-Owner": token},
     )
     assert respuesta.status_code == 403
+
+
+def test_editar_perfil_propio_requiere_sesion(client):
+    """PUT /{slug}/perfil sin la sesión del propietario se rechaza (403)."""
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={"bio": "nueva bio"},
+    )
+    assert respuesta.status_code == 403
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={"bio": "nueva bio"},
+        headers={"X-Meta-Owner": "token-falso"},
+    )
+    assert respuesta.status_code == 403
+
+
+def test_editar_perfil_propio_aplica_campos(client, monkeypatch):
+    """El propietario verificado edita su bio, ciudad, géneros y logros."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={
+            "ciudad": "Matamoros",
+            "generos": "Electrónica, Industrial",
+            "bio": "Bio escrita por el propio artista",
+            "logros": "Un logro propio",
+        },
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"ok": True, "slug": "apex_ultra"}
+
+    detalle = client.get("/api/artists/apex_ultra").json()
+    assert detalle["ciudad"] == "Matamoros"
+    assert detalle["generos"] == ["Electrónica", "Industrial"]
+    assert detalle["bio"] == "Bio escrita por el propio artista"
+    assert detalle["logros"] == "Un logro propio"
+
+
+def test_editar_perfil_propio_no_cambia_nombre(client, monkeypatch):
+    """El propietario no puede renombrarse (la identidad la decide el admin)."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={"nombre": "Otro Nombre"},
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 403
+    detalle = client.get("/api/artists/apex_ultra").json()
+    assert detalle["nombre"] == "Apex Ultra"
+
+
+def test_editar_perfil_propio_de_otro_artista_rechazada(client, monkeypatch):
+    """La sesión de un artista no edita el perfil de otro."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+    respuesta = client.put(
+        "/api/feed/igfb/vaale/perfil",
+        json={"bio": "hack"},
+        headers={"X-Meta-Owner": token},
+    )
+    assert respuesta.status_code == 403
+    detalle = client.get("/api/artists/vaale").json()
+    assert detalle["bio"] != "hack"
+
+
+def test_editar_perfil_propio_conserva_fb_verificado(client, monkeypatch):
+    """El propietario debe conservar su página de Facebook al cambiar URLs."""
+    import backend.feed_meta as feed_meta
+
+    monkeypatch.setattr(feed_meta, "APP_SECRET", "secreto-meta-test")
+    token = feed_meta._crear_sesion_propietario("apex_ultra")
+
+    # Conserva su FB verificado y añade YouTube.
+    ok = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={
+            "redes": [
+                {"plataforma": "fb", "url": "https://www.facebook.com/apexultramusic"},
+                {"plataforma": "yt", "url": "https://www.youtube.com/@apexultramusic"},
+            ]
+        },
+        headers={"X-Meta-Owner": token},
+    )
+    assert ok.status_code == 200
+
+    # Quitar el FB verificado se rechaza (400).
+    sin_fb = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={
+            "redes": [
+                {"plataforma": "yt", "url": "https://www.youtube.com/@otrocanal"}
+            ]
+        },
+        headers={"X-Meta-Owner": token},
+    )
+    assert sin_fb.status_code == 400
+
+    # Cambiarlo por el FB de otro proyecto también se rechaza (400).
+    otro_fb = client.put(
+        "/api/feed/igfb/apex_ultra/perfil",
+        json={
+            "redes": [
+                {"plataforma": "fb", "url": "https://www.facebook.com/otrajente"}
+            ]
+        },
+        headers={"X-Meta-Owner": token},
+    )
+    assert otro_fb.status_code == 400

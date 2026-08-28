@@ -338,6 +338,72 @@ class FotoEntrada(BaseModel):
     imagen_origen: str | None = None
 
 
+class PerfilEntrada(BaseModel):
+    """Entrada para editar la ficha del propio artista (verificado).
+
+    El propietario solo puede tocar su información autodescrita: bio, ciudad,
+    categoría, géneros, logros y sus enlaces. Campos curados (notas, estado_activo,
+    estado_registro, imagen, ranking, métricas) quedan fuera; el nombre tampoco
+    puede cambiarse aquí (la identidad la decide el administrador).
+    """
+
+    nombre: str | None = None
+    ciudad: str | None = None
+    categoria: str | None = None
+    generos: str | None = None
+    bio: str | None = None
+    logros: str | None = None
+    redes: list[dict] | None = None
+
+
+def _urls_fb_artista(artista: Artist) -> set[str]:
+    """URLs de Facebook (no-búsqueda) registradas del artista, normalizadas."""
+    return {
+        l.url.rstrip("/").lower()
+        for l in artista.links
+        if l.plataforma == "fb" and not l.es_busqueda and (l.url or "").strip()
+    }
+
+
+def _validar_redes_verificadas(artista: Artist, redes: list[dict]) -> None:
+    """Ata la identidad del perfil a la página Meta que lo verificó.
+
+    Al reemplazar sus URLs, el propietario debe conservar al menos uno de sus
+    enlaces de Facebook (la página con la que reclamó el perfil). Evita que un
+    perfil verificado cambie su puente hacia el proyecto de otro.
+    """
+    fb_previas = _urls_fb_artista(artista)
+    if not fb_previas:
+        return
+    fb_nuevas: set[str] = set()
+    for red in redes:
+        url = (red.get("url") or "").strip()
+        if not url:
+            continue
+        declarada = (red.get("plataforma") or "").strip().lower()
+        from lib.plataformas import detectar_plataforma
+
+        plataforma = detectar_plataforma(url) or declarada or "otro"
+        if plataforma == "fb":
+            fb_nuevas.add(url.rstrip("/").lower())
+    if not fb_nuevas:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Debes conservar al menos un enlace a tu página de Facebook "
+                "(la que usaste para verificar el perfil)"
+            ),
+        )
+    if not fb_previas.intersection(fb_nuevas):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "El enlace de Facebook que conserves debe ser el de la página "
+                "con la que verificaste tu perfil"
+            ),
+        )
+
+
 @router.put("/{slug}/photo")
 def actualizar_foto_propia(
     slug: str,
@@ -368,6 +434,56 @@ def actualizar_foto_propia(
         return {"ok": True, "imagen_perfil": artista.imagen_perfil, "imagen_origen": artista.imagen_origen}
     finally:
         session.close()
+
+
+@router.put("/{slug}/perfil")
+def editar_perfil_propio(
+    slug: str,
+    body: PerfilEntrada,
+    x_meta_owner: str = Header(default="", alias="X-Meta-Owner"),
+    meta_owner: str | None = Cookie(default=None, alias=OWNER_COOKIE),
+):
+    """Edita la ficha del propio artista (solo el propietario verificado).
+
+    Reutiliza la lógica de `lib.servicios.editar_artista` (validaciones de
+    categoría, géneros y reemplazo de enlaces) pero autorizada por la sesión
+    de propietario emitida por Meta, en vez del token de admin. Los campos
+    curados (notas, estado_activo, estado_registro, imagen) quedan fuera, y el
+    propietario debe conservar su página de Facebook verificada.
+    """
+    if not _sesion_autoriza(x_meta_owner or meta_owner, slug):
+        raise HTTPException(
+            status_code=403,
+            detail="No autorizado: sesión de propietario inválida o expirada",
+        )
+    datos = body.model_dump(exclude_unset=True)
+    if "nombre" in datos:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "El nombre no puede cambiarse desde tu perfil; "
+                "contacta al administrador"
+            ),
+        )
+    from lib.servicios import editar_artista
+
+    session = SessionLocal()
+    try:
+        artista = ArtistRepository(session).por_slug(slug)
+        if artista is None:
+            raise HTTPException(status_code=404, detail="Artista no encontrado")
+        if "redes" in datos:
+            _validar_redes_verificadas(artista, datos.get("redes") or [])
+        try:
+            editar_artista(session, slug, datos)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        session.commit()
+        invalidate_public_cache(get_cache())
+        return {"ok": True, "slug": slug}
+    finally:
+        session.close()
+
 
 @router.post("/desconectar")
 def desconectar(
