@@ -572,21 +572,26 @@ def clasificar_nivel(metricas: dict) -> str:
     La Leyenda de la Frontera NO se asigna aquí: es una decisión editorial
     (retirado/fallecido con legado) que se marca manualmente.
     """
+    followers_ig = _valor_seguro(metricas, "ig", "seguidores")
+    followers_fb = _valor_seguro(metricas, "fb", "seguidores")
+    followers_yt = _valor_seguro(metricas, "yt", "seguidores")
+    followers_tt = _valor_seguro(metricas, "tt", "seguidores")
+    vistas_yt = _valor_seguro(metricas, "yt", "vistas")
+    vistas_tt = _valor_seguro(metricas, "tt", "vistas")
+
     max_red = max(
-        (_valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "yt", "tt")),
-        default=0.0,
+        followers_ig, followers_fb, followers_yt, followers_tt, vistas_yt, vistas_tt
     )
     oyentes = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
     if max_red >= LIGA_MAYOR_MIN_RED or oyentes >= LIGA_MAYOR_MIN_OYENTES:
         return "Ligas Mayores"
 
     total = (
-        max_red
+        followers_ig + followers_fb + followers_yt + followers_tt
         + _valor_seguro(metricas, "spotify", "seguidores")
         + _valor_seguro(metricas, "spotify", "reproducciones")
-        + _valor_seguro(metricas, "spotify", "oyentes_mensuales")
-        + _valor_seguro(metricas, "yt", "vistas")
-        + _valor_seguro(metricas, "tt", "vistas")
+        + oyentes
+        + vistas_yt + vistas_tt
         + _valor_seguro(metricas, "bandcamp", "reproducciones")
         + _valor_seguro(metricas, "soundcloud", "reproducciones")
     )
