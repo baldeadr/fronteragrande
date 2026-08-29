@@ -311,6 +311,48 @@ export default function AcercaDePage() {
           </ul>
         </div>
       </details>
+
+      <details className="group rounded-xl border border-line bg-surface">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-bold sm:p-5">
+          Cómo se clasifican las Ligas
+          <span className="shrink-0 text-lg leading-none text-accent transition-transform duration-200 group-open:rotate-45">
+            +
+          </span>
+        </summary>
+        <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+          <p className="text-sm leading-relaxed text-muted">
+            Algunos proyectos destacan por su alcance o su legado y se
+            catalogan en una <b>Liga</b>. Estos no participan en el ranking de
+            la escena local (para no desbalancearlo); se muestran en una
+            gráfica aparte.
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#f5b301" }}
+            />
+            <b>Ligas Mayores</b> — una red con ≥ 1 millón de seguidores, o ≥ 1
+            millón de oyentes en Spotify, o entrada a charts
+            nacionales/internacionales con fuente.
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#2fb8a6" }}
+            />
+            <b>En Ascenso</b> — suma de señales con fuente entre 10 mil y
+            999 mil (seguidores, oyentes, reproducciones y vistas).
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#8a63d2" }}
+            />
+            <b>Leyenda de la Frontera</b> — retirado/a o fallecido/a con un
+            legado en la región; se asigna por curaduría, no por métricas.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }

@@ -104,6 +104,12 @@ def _asegurar_columnas_extra():
                 conn.execute(
                     text(
                         "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "nivel VARCHAR(40)"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
                         "ultimo_sync_lanzamientos TIMESTAMP"
                     )
                 )
@@ -166,6 +172,9 @@ def _asegurar_columnas_extra():
         if "imagen_candidatas" not in columnas:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE artists ADD COLUMN imagen_candidatas JSON"))
+        if "nivel" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE artists ADD COLUMN nivel VARCHAR(40)"))
         if "ultimo_sync_lanzamientos" not in columnas:
             with engine.begin() as conn:
                 conn.execute(

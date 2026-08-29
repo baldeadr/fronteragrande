@@ -551,3 +551,45 @@ def normalizar_url_para_duplicados(url: str) -> str:
         host = host[4:]
     path = parsed.path.rstrip("/")
     return urlunparse((parsed.scheme.lower(), host, path, "", "", ""))
+
+
+# Umbrales de la catalogación automática de Ligas (con fuente).
+# - Ligas Mayores: alguna red >= 1M seguidores, o >= 1M oyentes/mes en Spotify,
+#   o chart nacional/internacional con fuente (ver docs/scraping.md).
+# - En Ascenso: total de señales con fuente entre 10k y 999,999.
+# - Leyenda de la Frontera: NO se deriva de métricas; se asigna manualmente
+#   (retirado/fallecido con legado regional) exigiendo fuente en `notas`.
+LIGA_MAYOR_MIN_RED = 1_000_000
+LIGA_MAYOR_MIN_OYENTES = 1_000_000
+ASCENSO_MIN = 10_000
+ASCENSO_MAX = 999_999
+
+
+def clasificar_nivel(metricas: dict) -> str:
+    """Clasifica el nivel de liga de un artista según sus métricas con fuente.
+
+    Devuelve "Ligas Mayores", "En Ascenso" o "" (base local, sin etiqueta).
+    La Leyenda de la Frontera NO se asigna aquí: es una decisión editorial
+    (retirado/fallecido con legado) que se marca manualmente.
+    """
+    max_red = max(
+        (_valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "yt", "tt")),
+        default=0.0,
+    )
+    oyentes = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
+    if max_red >= LIGA_MAYOR_MIN_RED or oyentes >= LIGA_MAYOR_MIN_OYENTES:
+        return "Ligas Mayores"
+
+    total = (
+        max_red
+        + _valor_seguro(metricas, "spotify", "seguidores")
+        + _valor_seguro(metricas, "spotify", "reproducciones")
+        + _valor_seguro(metricas, "spotify", "oyentes_mensuales")
+        + _valor_seguro(metricas, "yt", "vistas")
+        + _valor_seguro(metricas, "tt", "vistas")
+        + _valor_seguro(metricas, "bandcamp", "reproducciones")
+        + _valor_seguro(metricas, "soundcloud", "reproducciones")
+    )
+    if ASCENSO_MIN <= total <= ASCENSO_MAX:
+        return "En Ascenso"
+    return ""

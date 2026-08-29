@@ -13,6 +13,7 @@ export default function Directorio({
 }) {
   const [q, setQ] = useState(busquedaInicial);
   const [segmento, setSegmento] = useState("todos");
+  const [nivel, setNivel] = useState("todos");
   const [ciudad, setCiudad] = useState("todos");
   const [estado, setEstado] = useState("todos");
   const [generosSel, setGenerosSel] = useState<string[]>([]);
@@ -20,6 +21,10 @@ export default function Directorio({
 
   const segmentos = useMemo(
     () => [...new Set(artistas.map((a) => a.segmento))].sort(),
+    [artistas],
+  );
+  const niveles = useMemo(
+    () => [...new Set(artistas.map((a) => a.nivel).filter(Boolean))].sort(),
     [artistas],
   );
   const ciudades = useMemo(
@@ -37,6 +42,7 @@ export default function Directorio({
     const ql = q.toLowerCase().trim();
     return artistas.filter((a) => {
       if (segmento !== "todos" && a.segmento !== segmento) return false;
+      if (nivel !== "todos" && a.nivel !== nivel) return false;
       if (ciudad !== "todos" && a.ciudad !== ciudad) return false;
       if (estado !== "todos" && a.estado_activo !== estado) return false;
       if (generosSel.length > 0 && !generosSel.some((g) => a.generos.includes(g)))
@@ -47,7 +53,7 @@ export default function Directorio({
       }
       return true;
     });
-  }, [artistas, q, segmento, ciudad, estado, generosSel]);
+  }, [artistas, q, segmento, nivel, ciudad, estado, generosSel]);
 
   function alternarGenero(g: string) {
     setGenerosSel((actual) =>
@@ -78,6 +84,24 @@ export default function Directorio({
             {segmentos.map((s) => (
               <option key={s} value={s}>
                 {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filtro-liga" className="text-xs font-medium text-muted">
+            Liga
+          </label>
+          <select
+            id="filtro-liga"
+            value={nivel}
+            onChange={(e) => setNivel(e.target.value)}
+            className="rounded-lg border border-line bg-surface px-2 py-2 text-sm outline-none focus:border-accent"
+          >
+            <option value="todos">Todas</option>
+            {niveles.map((n) => (
+              <option key={n} value={n}>
+                {n}
               </option>
             ))}
           </select>

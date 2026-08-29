@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import EstadoBadge from "./EstadoBadge";
 import IconoVerificado from "./IconoVerificado";
+import InsigniaNivel from "./InsigniaNivel";
 
 export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
   const inicial = artist.nombre ? artist.nombre[0].toUpperCase() : "♪";
@@ -47,6 +48,11 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
           {artist.segmento}
           {artist.ciudad ? ` · ${artist.ciudad}` : ""}
         </p>
+        {artist.nivel && (
+          <div>
+            <InsigniaNivel nivel={artist.nivel} />
+          </div>
+        )}
         <p className="flex flex-wrap gap-1">
           {artist.generos.length === 0 && (
             <span className="text-xs text-muted">Géneros por definir</span>

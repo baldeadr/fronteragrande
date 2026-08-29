@@ -38,17 +38,27 @@ def test_artists_shape(client):
     }
     assert isinstance(first["links"], list)
     assert isinstance(first["menciones"], list)
-    assert first["ranking"]["total"] == len(datos)
     assert first["ranking"]["indice"] is not None
     assert first["ranking"]["rank"] is not None
 
 
-def test_artists_ranking_completo(client):
+def test_artists_ranking_grupos(client):
+    """El ranking se calcula por grupo: escena local (sin liga) y Ligas aparte.
+
+    Cada artista tiene `ranking.total` = tamaño de su grupo, y los rangos son
+    consecutivos dentro de cada grupo (no conviven la escena local y las Ligas).
+    """
     datos = client.get("/api/artists").json()
-    ranks = [a["ranking"]["rank"] for a in datos]
-    indices = [a["ranking"]["indice"] for a in datos]
-    assert sorted(ranks) == list(range(1, len(datos) + 1))
-    assert all(i >= 0 and i <= 100 for i in indices)
+    base = [a for a in datos if not a["catalogado"]]
+    ligados = [a for a in datos if a["catalogado"]]
+
+    for grupo in (base, ligados):
+        indices = [a["ranking"]["indice"] for a in grupo]
+        assert all(i >= 0 and i <= 100 for i in indices)
+        if grupo:
+            assert all(a["ranking"]["total"] == len(grupo) for a in grupo)
+            ranks = sorted(a["ranking"]["rank"] for a in grupo)
+            assert ranks == list(range(1, len(grupo) + 1))
 
 
 def test_artists_filtros(client):

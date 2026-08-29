@@ -48,6 +48,7 @@ from lib.servicios import (
     metricas_artista,
     onboarding_artista,
     ranking_global,
+    ranking_ligas,
     recalcular_actividad,
     registrar_alta,
     stats_escena,
@@ -297,9 +298,14 @@ def list_artists(
     ranking = cache.get(cache_key_ranking)
     if ranking is None:
         ranking, menciones = ranking_global(df)
-        cache.set(cache_key_ranking, (ranking, menciones), ttl=300)
+        ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
+        cache.set(
+            cache_key_ranking,
+            (ranking, menciones, ranking_ligas_data, menciones_ligas_data),
+            ttl=300,
+        )
     else:
-        ranking, menciones = ranking
+        ranking, menciones, ranking_ligas_data, menciones_ligas_data = ranking
 
     if q:
         q = q.lower()
@@ -320,11 +326,18 @@ def list_artists(
     tarjetas = []
     for _, fila in df.iterrows():
         artist = artistas_cargados.get(fila["id"])
+        nivel = (fila.get("nivel") or "") if "nivel" in fila else ""
+        catalogado = bool(nivel)
+        ranking_artista = (
+            ranking_ligas_data if catalogado else ranking
+        )
         tarjetas.append(
             {
                 "slug": fila["slug"],
                 "nombre": fila["nombre"],
                 "segmento": fila["segmento"],
+                "nivel": nivel,
+                "catalogado": catalogado,
                 "ciudad": fila["ciudad"],
                 "generos": generos_hashtags(fila["generos"]),
                 "estado_activo": fila["estado_activo"],
@@ -349,17 +362,19 @@ def list_artists(
                 },
                 "imagen_perfil": fila.get("imagen_perfil") or None,
                 "imagen_origen": fila.get("imagen_origen") or None,
-                "ranking": ranking.get(
+                "ranking": ranking_artista.get(
                     fila["slug"],
                     {
                         "indice": None,
                         "audiencia": None,
                         "consumo": None,
                         "rank": None,
-                        "total": len(ranking),
+                        "total": len(ranking_artista),
                     },
                 ),
-                "menciones": menciones.get(fila["slug"], []),
+                "menciones": (
+                    menciones_ligas_data if catalogado else menciones
+                ).get(fila["slug"], []),
                 "link_principal": (
                     artista_link_principal(db, artist) if artist else None
                 ),
@@ -446,9 +461,18 @@ def artist_detail(
     ranking_cacheado = cache.get(cache_key_ranking)
     if ranking_cacheado is None:
         ranking, menciones = ranking_global(df)
-        cache.set(cache_key_ranking, (ranking, menciones), ttl=300)
+        ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
+        cache.set(
+            cache_key_ranking,
+            (ranking, menciones, ranking_ligas_data, menciones_ligas_data),
+            ttl=300,
+        )
     else:
-        ranking, menciones = ranking_cacheado
+        ranking, menciones, ranking_ligas_data, menciones_ligas_data = ranking_cacheado
+    nivel_artista = (fila.get("nivel") or "") if fila is not None else ""
+    catalogado_artista = bool(nivel_artista)
+    ranking_artista = ranking_ligas_data if catalogado_artista else ranking
+    menciones_artista = menciones_ligas_data if catalogado_artista else menciones
     analisis = analisis_artista(
         metricas_artista(fila) if fila is not None else {},
         artist.fecha_captura,
@@ -534,17 +558,19 @@ def artist_detail(
             },
         },
         "fecha_captura": _json_safe(artist.fecha_captura),
-        "ranking": ranking.get(
+        "nivel": nivel_artista,
+        "catalogado": catalogado_artista,
+        "ranking": ranking_artista.get(
             artist.slug,
             {
                 "indice": None,
                 "audiencia": None,
                 "consumo": None,
                 "rank": None,
-                "total": len(ranking),
+                "total": len(ranking_artista),
             },
         ),
-        "menciones": menciones.get(artist.slug, []),
+        "menciones": menciones_artista.get(artist.slug, []),
         "analisis": analisis,
         "consumo": consumo,
         "igfb": {
@@ -800,6 +826,7 @@ def admin_list_artists(
                 "slug": a.slug,
                 "nombre": a.nombre,
                 "segmento": a.segmento,
+                "nivel": a.nivel or "",
                 "ciudad": a.ciudad,
                 "generos": a.generos,
                 "estado_activo": a.estado_activo,

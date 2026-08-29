@@ -9,6 +9,7 @@ import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
 import RankingInteractivo from "@/components/stats/RankingInteractivo";
+import RankingLigas from "@/components/stats/RankingLigas";
 
 export const metadata: Metadata = {
   title: "Stats de la escena",
@@ -28,7 +29,8 @@ export default async function StatsPage() {
   const total = stats.total;
   const activos = stats.estados["activo"] ?? 0;
   const pctActivos = total ? Math.round((activos / total) * 100) : 0;
-  const conRanking = artistas.filter(
+  const escenaLocal = artistas.filter((a) => !a.catalogado);
+  const conRanking = escenaLocal.filter(
     (a) => a.ranking.indice !== null && a.ranking.indice > 0,
   ).length;
   const generos = Object.entries(stats.generos).sort((a, b) => b[1] - a[1]);
@@ -70,7 +72,16 @@ export default async function StatsPage() {
           {conRanking} proyectos con índice calculado. La barra fina muestra de
           qué redes viene el alcance de cada uno.
         </p>
-        <RankingInteractivo artistas={artistas} />
+        <RankingInteractivo artistas={escenaLocal} />
+      </section>
+
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
+        <h2 className="mb-1 font-bold">Ranking de Ligas</h2>
+        <p className="mb-4 text-sm text-muted">
+          Ligas Mayores, En Ascenso y Leyenda de la Frontera en una gráfica aparte,
+          para no desbalancear el ranking de la escena local.
+        </p>
+        <RankingLigas artistas={artistas} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">

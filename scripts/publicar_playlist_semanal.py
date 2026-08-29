@@ -69,25 +69,52 @@ def _fuente(tamano: int):
         return ImageFont.load_default()
 
 
-def _centrar_texto(draw, texto: str, fuente, y: int, lienzo_ancho: int, color, sombra: str = "#00000090") -> int:
-    """Dibuja texto centrado con sombra sutil; devuelve la altura usada."""
+def _texto_glow(lienzo, pos: tuple, texto: str, fuente, color, glow_radius: int = 6, glow_alpha: int = 160):
+    """Renderiza texto con glow (blur de halo) sobre lienzo RGBA."""
+    from PIL import Image, ImageDraw, ImageFilter
+    if isinstance(color, str):
+        r = int(color[1:3], 16)
+        g = int(color[3:5], 16)
+        b = int(color[5:7], 16)
+        rgb = (r, g, b)
+    else:
+        rgb = tuple(color[:3])
+    capa = Image.new("RGBA", lienzo.size, (0, 0, 0, 0))
+    ImageDraw.Draw(capa).text(pos, texto, font=fuente, fill=(*rgb, glow_alpha))
+    capa = capa.filter(ImageFilter.GaussianBlur(glow_radius))
+    lienzo.alpha_composite(capa)
+    ImageDraw.Draw(lienzo).text(pos, texto, font=fuente, fill=color)
+
+
+def _centrar_texto(draw, texto: str, fuente, y: int, lienzo_ancho: int, color, lienzo=None, glow: bool = True) -> int:
+    """Dibuja texto centrado con glow; devuelve la altura usada."""
     caja = draw.textbbox((0, 0), texto, font=fuente)
     ancho = caja[2] - caja[0]
     alto = caja[3] - caja[1]
     x = (lienzo_ancho - ancho) // 2
-    draw.text((x + 3, y + 3), texto, font=fuente, fill=sombra)
-    draw.text((x, y), texto, font=fuente, fill=color)
+    if lienzo is None and hasattr(draw, "image"):
+        lienzo = draw.image
+    if glow and lienzo is not None:
+        _texto_glow(lienzo, (x, y), texto, fuente, color)
+    else:
+        draw.text((x + 3, y + 3), texto, font=fuente, fill="#00000090")
+        draw.text((x, y), texto, font=fuente, fill=color)
     return alto
 
 
-def _centrar_texto_en_caja(draw, texto: str, fuente, y: int, x_inicio: int, ancho_caja: int, color, sombra: str = "#00000090") -> int:
-    """Dibuja texto centrado dentro de una caja [x_inicio, x_inicio + ancho_caja]."""
+def _centrar_texto_en_caja(draw, texto: str, fuente, y: int, x_inicio: int, ancho_caja: int, color, lienzo=None, glow: bool = True) -> int:
+    """Dibuja texto centrado dentro de una caja con glow."""
     caja = draw.textbbox((0, 0), texto, font=fuente)
     ancho = caja[2] - caja[0]
     alto = caja[3] - caja[1]
     x = x_inicio + (ancho_caja - ancho) // 2
-    draw.text((x + 3, y + 3), texto, font=fuente, fill=sombra)
-    draw.text((x, y), texto, font=fuente, fill=color)
+    if lienzo is None and hasattr(draw, "image"):
+        lienzo = draw.image
+    if glow and lienzo is not None:
+        _texto_glow(lienzo, (x, y), texto, fuente, color)
+    else:
+        draw.text((x + 3, y + 3), texto, font=fuente, fill="#00000090")
+        draw.text((x, y), texto, font=fuente, fill=color)
     return alto
 
 
@@ -454,8 +481,8 @@ def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> l
     _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
 
     _pegar_monograma(lienzo, 58, 56, 1016)
-    draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
-    draw.text((LIENZO[0] - 200, 1014), "fronteragrande.mx", font=_fuente(24), fill=(*ACENTO_CLARO, 230))
+    _texto_glow(lienzo, (56 + 58 + 24, 1006), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
+    _texto_glow(lienzo, (LIENZO[0] - 200, 1014), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
 
     PROMOS_DIR.mkdir(parents=True, exist_ok=True)
     slug = f"playlist_semanal_{fecha.replace('-', '')}"
@@ -569,12 +596,7 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
             if caja[2] - caja[0] <= info_w:
                 break
             tam -= 2
-        draw.text(
-            (info_x, y + 20),
-            track,
-            font=_fuente(tam),
-            fill=TEXTO
-        )
+        _texto_glow(lienzo, (info_x, y + 20), track, _fuente(tam), TEXTO, glow_radius=8, glow_alpha=140)
         
         # Artista (pequeño, debajo)
         nombre = sel["artista"]
@@ -584,12 +606,7 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
             if caja[2] - caja[0] <= info_w:
                 break
             tam -= 2
-        draw.text(
-            (info_x, y + 80),
-            nombre,
-            font=_fuente(tam),
-            fill=(*ACENTO_CLARO, 200)
-        )
+        _texto_glow(lienzo, (info_x, y + 80), nombre, _fuente(tam), (*ACENTO_CLARO, 200), glow_radius=6, glow_alpha=120)
         
         # Línea decorativa bajo artista
         draw.line(
@@ -612,13 +629,13 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
             radius=5, fill=(*ACENTO_CLARO, 255)
         )
 
-# Footer estilo editorial - MÁS VISIBLE
-    footer_y = 920
-    # Fondo semi-transparente (más alto para caber artistas extra)
-    footer_bg = Image.new("RGBA", (LIENZO[0] - 160, 120), (8, 5, 18, 200))
+# Footer estilo editorial
+    footer_y = 955
+    footer_bg_h = 100
+    footer_bg = Image.new("RGBA", (LIENZO[0] - 160, footer_bg_h), (8, 5, 18, 200))
     draw_footer = ImageDraw.Draw(footer_bg)
     draw_footer.rounded_rectangle(
-        (0, 0, LIENZO[0] - 160, 120), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+        (0, 0, LIENZO[0] - 160, footer_bg_h), radius=16, outline=(*ACENTO_CLARO, 80), width=2
     )
     lienzo.alpha_composite(footer_bg, (80, footer_y - 10))
     
@@ -626,35 +643,21 @@ def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks:
     if datos:
         adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
         if adicionales:
-            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 30, LIENZO[0], TEXTO)
             _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
-                           _fuente(24), footer_y + 75, LIENZO[0], (*ACENTO_CLARO, 255))
+                           _fuente(24), footer_y + 60, LIENZO[0], (*ACENTO_CLARO, 255))
         else:
             _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
                            _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
     else:
         _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
                        _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
-    
-    # CTA minimalista
-    draw.text(
-        (80, footer_y + 50),
-        "▶  escuchar en spotify",
-        font=_fuente(26),
-        fill=(*ACENTO_CLARO, 255)
-    )
-    
-    # Flecha
-    draw.polygon(
-        [(380, footer_y + 56), (396, footer_y + 66), (380, footer_y + 76)],
-        fill=(*ACENTO_CLARO, 255)
-    )
 
     # Marca FG
-    _pegar_monograma(lienzo, 58, 56, 1016)
-    draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
-    draw.text((LIENZO[0] - 200, 1014), "fronteragrande.mx", font=_fuente(24), fill=(*ACENTO_CLARO, 230))
+    _pegar_monograma(lienzo, 58, 56, 1042)
+    _texto_glow(lienzo, (56 + 58 + 24, 1044), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
+    _texto_glow(lienzo, (LIENZO[0] - 200, 1052), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
 
     PROMOS_DIR.mkdir(parents=True, exist_ok=True)
     slug = f"playlist_semanal_{fecha.replace('-', '')}"
@@ -787,11 +790,11 @@ def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fec
 
         # Footer MÁS VISIBLE - movido arriba, más grande, color destacado
         footer_y = 630
-        # Fondo semi-transparente para el footer (más alto para caber artistas extra)
-        footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 130), (8, 5, 18, 200))
+        # Fondo semi-transparente para el footer
+        footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 120), (8, 5, 18, 200))
         draw_footer = ImageDraw.Draw(footer_bg)
         draw_footer.rounded_rectangle(
-            (0, 0, LIENZO[0] - 120, 130), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+            (0, 0, LIENZO[0] - 120, 120), radius=16, outline=(*ACENTO_CLARO, 80), width=2
         )
         lienzo.alpha_composite(footer_bg, (60, footer_y - 5))
         
@@ -800,18 +803,18 @@ def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fec
             adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
             if adicionales:
                 _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
-                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 70, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 100, LIENZO[0], TEXTO)
+                _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 30, LIENZO[0], TEXTO)
+                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 60, LIENZO[0], (*ACENTO_CLARO, 255))
+                _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 88, LIENZO[0], TEXTO)
             else:
                 _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+                _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
         else:
             _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
+            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
 
         # Botón visual "Escuchar en Spotify"
-        btn_y = 750
+        btn_y = 755
         btn_w = 380
         btn_h = 56
         btn_x = (LIENZO[0] - btn_w) // 2
@@ -823,9 +826,9 @@ def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fec
         # Texto botón
         _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
 
-        _pegar_monograma(lienzo, 58, 56, 1016)
-        draw.text((56 + 58 + 24, 1006), "FRONTERA GRANDE", font=_fuente(34), fill=(255, 255, 255, 255))
-        draw.text((LIENZO[0] - 200, 1014), "fronteragrande.mx", font=_fuente(24), fill=(*ACENTO_CLARO, 230))
+        _pegar_monograma(lienzo, 58, 56, 838)
+        _texto_glow(lienzo, (56 + 58 + 24, 840), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
+        _texto_glow(lienzo, (LIENZO[0] - 200, 848), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
 
         PROMOS_DIR.mkdir(parents=True, exist_ok=True)
         slug = f"playlist_semanal_{fecha.replace('-', '')}"

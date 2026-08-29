@@ -13,7 +13,7 @@ import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from db.models import ESTADOS_ACTIVO, Artist, ActivityCheck, AltaRegistro
+from db.models import ESTADOS_ACTIVO, NIVELES, Artist, ActivityCheck, AltaRegistro
 from lib.helpers import (
     TIPOS_FEED,
     conteo_generos,
@@ -49,6 +49,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "generos": a.generos,
             "estado_registro": a.estado_registro,
             "es_propio": a.es_propio,
+            "nivel": a.nivel,
             "estado_activo": a.estado_activo,
             "metodo_actividad": a.metodo_actividad,
             "ultimo_lanzamiento": a.ultimo_lanzamiento,
@@ -76,7 +77,9 @@ def artistas_df(session: Session) -> pd.DataFrame:
         }
         for a in ArtistRepository(session).todos(con_links=False)
     ]
-    return pd.DataFrame(filas)
+    df = pd.DataFrame(filas)
+    df["nivel"] = df["nivel"].fillna("").astype(str)
+    return df
 
 
 def eventos_de_artista(session: Session, nombre: str) -> pd.DataFrame:
@@ -456,8 +459,12 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
     return menciones
 
 
-def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
-    """Ranking de alcance y menciones de todos los artistas."""
+def _ranking_de(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
+    """Ranking de alcance y menciones sobre un subconjunto del df.
+
+    Normaliza las métricas entre ese subconjunto (no contra toda la escena),
+    así el ranking de Ligas es independiente del de la escena local.
+    """
     from lib.helpers import indices_audiencia_consumo
 
     metricas = {fila["slug"]: metricas_artista(fila) for _, fila in df.iterrows()}
@@ -477,6 +484,27 @@ def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[st
         df, {slug: valores["indice"] for slug, valores in indices.items()}
     )
     return ranking, menciones
+
+
+def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
+    """Ranking de alcance y menciones de la escena local (sin ligas).
+
+    Solo participan los artistas sin nivel (`nivel == ""`). Los catalogados
+    (Ligas Mayores / En Ascenso / Leyenda de la Frontera) van al ranking de Ligas.
+    """
+    base = df[df["nivel"].fillna("") == ""]
+    return _ranking_de(base)
+
+
+def ranking_ligas(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
+    """Ranking de alcance de los artistas catalogados en Ligas.
+
+    Agrupa juntos a Ligas Mayores, En Ascenso y Leyenda de la Frontera en una
+    gráfica aparte (no se subdividen por ahora). Devuelve el ranking y las
+    menciones normalizados solo entre ellos.
+    """
+    catalogados = df[df["nivel"].fillna("") != ""]
+    return _ranking_de(catalogados)
 
 
 CATEGORIAS_VALIDAS = ("Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo")
@@ -692,6 +720,11 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
         artista.estado_activo = estado
     if "estado_registro" in datos:
         artista.estado_registro = datos.get("estado_registro") or ""
+    if "nivel" in datos:
+        nivel = (datos.get("nivel") or "").strip()
+        if nivel and nivel not in NIVELES:
+            raise ValueError(f"Nivel inválido: {nivel}")
+        artista.nivel = nivel
     if "imagen_perfil" in datos:
         artista.imagen_perfil = datos.get("imagen_perfil") or None
     if "imagen_origen" in datos:
@@ -796,8 +829,8 @@ def crear_artista(session: Session, datos: dict) -> Artist:
         parte.strip() for parte in str(datos.get("generos") or "").split(",")
         if parte.strip()
     ]
-    if len(generos_partes) > 3:
-        raise ValueError("Puedes indicar como máximo 3 géneros")
+    if len(generos_partes) > 5:
+        raise ValueError("Puedes indicar como máximo 5 géneros")
     if any(len(genero) > 30 for genero in generos_partes):
         raise ValueError("Cada género puede tener como máximo 30 caracteres")
     generos = ", ".join(generos_partes) or "[PENDIENTE]"

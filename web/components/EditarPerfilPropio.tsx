@@ -264,14 +264,14 @@ export default function EditarPerfilPropio({
 
               <div className="flex flex-col gap-1">
                 <label htmlFor="generos-propios" className="text-xs text-muted">
-                  Géneros (máximo 3, separados por coma)
+                  Géneros (máximo 5, separados por coma)
                 </label>
                 <input
                   id="generos-propios"
                   type="text"
                   value={valorGeneros}
                   onChange={(e) => setValorGeneros(e.target.value)}
-                  maxLength={92}
+                  maxLength={158}
                   placeholder="Ej. Rock, Indie, Alternativo"
                   className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
                 />

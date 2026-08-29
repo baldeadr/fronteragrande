@@ -152,6 +152,7 @@ def cargar_artistas(
         artista.es_propio = _normalizar(fila.get("es_propio")).lower() in (
             "1", "true", "x", "si", "verdadero",
         )
+        artista.nivel = _normalizar(fila.get("nivel")) or ""
         artista.estado_activo = _normalizar(fila.get("estado_activo")) or "en_duda"
         artista.metodo_actividad = _normalizar(fila.get("metodo_actividad")) or "sin datos"
         artista.logros = _normalizar(fila.get("logros"))

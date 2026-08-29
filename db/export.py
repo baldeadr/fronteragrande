@@ -61,6 +61,7 @@ COLUMNAS_ARTISTA = [
     "reproducciones_bandcamp",
     "reproducciones_soundcloud",
     "es_propio",
+    "nivel",
 ]
 
 COLUMNAS_EVENTO = [
@@ -149,6 +150,7 @@ def _fila_artista(artista: Artist) -> dict[str, str]:
         "reproducciones_bandcamp": _int(artista.reproducciones_bandcamp),
         "reproducciones_soundcloud": _int(artista.reproducciones_soundcloud),
         "es_propio": "TRUE" if artista.es_propio else "",
+        "nivel": artista.nivel or "",
     }
 
 

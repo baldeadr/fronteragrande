@@ -24,6 +24,7 @@ import PanelEventos from "@/components/PanelEventos";
 import type { AdminArtist, ArtistaPendiente, LinkAdmin } from "@/lib/types";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"];
+const NIVELES = ["", "Ligas Mayores", "En Ascenso", "Leyenda de la Frontera"];
 
 const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "ig", texto: "Instagram" },
@@ -400,6 +401,7 @@ function FormEditar({
   const [nombre, setNombre] = useState(artista.nombre);
   const [ciudad, setCiudad] = useState(artista.ciudad);
   const [categoria, setCategoria] = useState(artista.segmento);
+  const [nivel, setNivel] = useState(artista.nivel ?? "");
   const [generos, setGeneros] = useState(artista.generos);
   const [estado, setEstado] = useState(artista.estado_activo);
   const [bio, setBio] = useState(artista.bio);
@@ -424,6 +426,7 @@ function FormEditar({
         nombre: nombre.trim(),
         ciudad: ciudad.trim(),
         categoria,
+        nivel,
         generos: generos.trim(),
         estado_activo: estado,
         bio,
@@ -464,6 +467,18 @@ function FormEditar({
           {CATEGORIAS.map((c) => (
             <option key={c} value={c}>
               {c}
+            </option>
+          ))}
+        </select>
+        <select
+          value={nivel}
+          onChange={(e) => setNivel(e.target.value)}
+          title="Liga (opcional)"
+          className="rounded-lg border border-line bg-surface px-2 py-2 text-sm outline-none focus:border-accent"
+        >
+          {NIVELES.map((n) => (
+            <option key={n} value={n}>
+              {n === "" ? "Sin Liga" : n}
             </option>
           ))}
         </select>

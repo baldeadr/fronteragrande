@@ -77,6 +77,7 @@ export async function editarArtista(
     nombre: string;
     ciudad: string;
     categoria: string;
+    nivel: string;
     generos: string;
     bio: string;
     notas: string;

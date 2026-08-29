@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { api } from "@/lib/api";
 import EstadoBadge from "@/components/EstadoBadge";
+import InsigniaNivel from "@/components/InsigniaNivel";
 import Avatar from "@/components/Avatar";
 import ContenidoPerfil from "@/components/ContenidoPerfil";
 import { infoPlataforma } from "@/components/Plataformas";
@@ -182,6 +183,11 @@ export default async function PerfilPage({
                     Propio
                   </span>
                 )}
+                {artist.nivel && (
+                  <span className="ml-2 align-middle">
+                    <InsigniaNivel nivel={artist.nivel} />
+                  </span>
+                )}
               </h1>
               <p className="mt-1 text-muted">
                 {artist.segmento}
@@ -261,9 +267,17 @@ export default async function PerfilPage({
 
           {artist.menciones.length > 0 && (
             <div className="border-t border-line/50 pt-3">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-                Menciones especiales
-              </h2>
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-semibold uppercase tracking-wide text-muted">
+                  Menciones especiales
+                </span>
+                {artist.nivel && (
+                  <>
+                    <span className="text-muted">|</span>
+                    <InsigniaNivel nivel={artist.nivel} size="sm" />
+                  </>
+                )}
+              </div>
               <ul className="flex flex-wrap gap-2">
                 {artist.menciones.map((m) => {
                   const esEscena = tipoMencion(m) === "escena";

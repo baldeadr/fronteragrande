@@ -31,6 +31,15 @@ SEGMENTOS = [
     "Sin confirmar",
 ]
 
+# Niveles de liga (campo interno `nivel`, etiqueta de UI "Liga").
+# Vacío = escena local base (participa en el ranking general). Los tres niveles
+# catalogados se muestran en el ranking de Ligas aparte.
+NIVELES = [
+    "Ligas Mayores",
+    "En Ascenso",
+    "Leyenda de la Frontera",
+]
+
 ESTADOS_ACTIVO = ["activo", "en_duda", "inactivo"]
 
 METODOS_ACTIVIDAD = [
@@ -73,6 +82,7 @@ class Artist(Base):
     generos: Mapped[str] = mapped_column(String(300), default="[PENDIENTE]")
     estado_registro: Mapped[str] = mapped_column(String(80), default="investigado (web)")
     es_propio: Mapped[bool] = mapped_column(Boolean, default=False)
+    nivel: Mapped[str] = mapped_column(String(40), default="", index=True)
 
     followers_ig: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_fb: Mapped[int | None] = mapped_column(Integer, nullable=True)

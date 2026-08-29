@@ -53,6 +53,8 @@ export interface ArtistCard {
   slug: string;
   nombre: string;
   segmento: string;
+  nivel: string;
+  catalogado: boolean;
   ciudad: string;
   generos: string[];
   estado_activo: string;
@@ -177,6 +179,8 @@ export interface ArtistDetail {
   slug: string;
   nombre: string;
   segmento: string;
+  nivel: string;
+  catalogado: boolean;
   ciudad: string;
   generos: string[];
   es_propio: boolean;
@@ -232,6 +236,7 @@ export interface AdminArtist {
   slug: string;
   nombre: string;
   segmento: string;
+  nivel: string;
   ciudad: string;
   generos: string;
   estado_activo: string;
