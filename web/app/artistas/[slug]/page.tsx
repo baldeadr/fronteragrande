@@ -265,34 +265,6 @@ export default async function PerfilPage({
           </div>
           </div>
 
-          {artist.nivel && (
-            <div className="mb-3 flex items-center gap-2 rounded-lg border border-line bg-surface p-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-2">
-                  {artist.nivel === "Ligas Mayores" && (
-                    <svg className="h-5 w-5 text-[#f5b301]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                  )}
-                  {artist.nivel === "En Ascenso" && (
-                    <svg className="h-5 w-5 text-[#2fb8a6]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M7 14l5-5 5 5z"/>
-                    </svg>
-                  )}
-                  {artist.nivel === "Leyenda de la Frontera" && (
-                    <svg className="h-5 w-5 text-[#8a63d2]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/>
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">Liga</p>
-                  <p className="font-bold text-sm">{artist.nivel}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="mb-3 pb-2">
             <ConsumoAnalisis consumo={artist.consumo} />
           </div>
@@ -311,6 +283,33 @@ export default async function PerfilPage({
                   <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                     Menciones especiales
                   </h2>
+                  {artist.nivel && (
+                    <div className="mb-3 flex items-center gap-2 rounded-lg border border-line bg-surface p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-2">
+                          {artist.nivel === "Ligas Mayores" && (
+                            <svg className="h-5 w-5 text-[#f5b301]" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                          )}
+                          {artist.nivel === "En Ascenso" && (
+                            <svg className="h-5 w-5 text-[#2fb8a6]" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                          )}
+                          {artist.nivel === "Leyenda de la Frontera" && (
+                            <svg className="h-5 w-5 text-[#8a63d2]" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Liga</p>
+                          <p className="font-bold text-sm">{artist.nivel}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <ul className="flex flex-wrap gap-2">
                     {mencionesFiltradas.map((m) => {
                       const esEscena = tipoMencion(m) === "escena";
