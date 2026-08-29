@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { crearArtista } from "@/lib/api";
 import type { ResultadoAlta } from "@/lib/types";
+import {
+  FACEBOOK_FRONTERA_GRANDE,
+  INSTAGRAM_FRONTERA_GRANDE,
+} from "@/lib/contacto";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"] as const;
 
@@ -13,6 +17,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "fb", texto: "Facebook" },
   { valor: "yt", texto: "YouTube" },
   { valor: "tt", texto: "TikTok" },
+  { valor: "x", texto: "X (Twitter)" },
   { valor: "spotify", texto: "Spotify" },
   { valor: "bandcamp", texto: "Bandcamp" },
   { valor: "soundcloud", texto: "SoundCloud" },
@@ -20,6 +25,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "mixcloud", texto: "Mixcloud" },
   { valor: "apple", texto: "Apple Music" },
   { valor: "linktree", texto: "Linktree" },
+  { valor: "email", texto: "Correo electrónico" },
   { valor: "otro", texto: "Otra" },
 ];
 
@@ -50,6 +56,13 @@ const CIUDADES_US = [
 interface RedAgregada {
   plataforma: string;
   url: string;
+}
+
+function normalizarCorreo(plataforma: string, url: string): string {
+  if (plataforma === "email" && url && !url.toLowerCase().startsWith("mailto:")) {
+    return `mailto:${url}`;
+  }
+  return url;
 }
 
 export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => void }) {
@@ -109,7 +122,12 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (!nombre.trim()) return;
-    const redesValidas = redes.filter((r) => r.url.trim());
+    const redesValidas = redes
+      .map((r) => ({
+        plataforma: r.plataforma,
+        url: normalizarCorreo(r.plataforma, r.url.trim()),
+      }))
+      .filter((r) => r.url);
     if (redesValidas.length === 0) {
       setError("Incluye al menos un enlace a una red o plataforma.");
       return;
@@ -127,7 +145,7 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
         categoria,
         generos: generos.trim(),
         bio: bio.trim(),
-        redes: redes.map((r) => ({ plataforma: r.plataforma, url: r.url.trim() })),
+        redes: redesValidas,
       });
       setNombre("");
       setCiudad("");
@@ -200,9 +218,10 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                   <div>
                     <h2 className="text-lg font-bold">Suma tu proyecto</h2>
                     <p className="text-xs text-muted">
-                      Regístrate como artista de la escena de la frontera.
-                      Después conecta tu página de Facebook o Instagram desde tu
-                      perfil para verificarlo y que tus posts se sincronicen
+                      Regístrate como artista de la escena de la frontera y
+                      completa ahora todos tus datos y enlaces. Después conecta
+                      tu página de Facebook o Instagram desde tu perfil para
+                      verificarlo y que tus posts se sincronicen
                       automáticamente. También puedes añadir géneros y una bio
                       breve para presentar tu proyecto.
                     </p>
@@ -304,6 +323,32 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
 
                 <div className="flex flex-col gap-2">
                   <p className="text-xs text-muted">Redes</p>
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-500">
+                    <b>Importante:</b> por ahora, el registro es la única
+                    oportunidad de cargar todos tus datos y enlaces. La edición
+                    del perfil no está abierta al público todavía, para evitar
+                    que alguien malintencionado altere tu ficha; estamos
+                    trabajando para que puedas editarla desde tu cuenta. Si
+                    necesitas modificar algo de tu proyecto,{" "}
+                    <a
+                      href={FACEBOOK_FRONTERA_GRANDE}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 hover:text-amber-400"
+                    >
+                      escríbenos por Facebook
+                    </a>{" "}
+                    o por{" "}
+                    <a
+                      href={INSTAGRAM_FRONTERA_GRANDE}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 hover:text-amber-400"
+                    >
+                      Instagram de Frontera Grande
+                    </a>
+                    .
+                  </div>
                   <p className="text-xs text-amber-500">
                     Incluye al menos un enlace. Tu proyecto quedará registrado,
                     pero sin verificar.{" "}
@@ -323,10 +368,10 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                         ))}
                       </select>
                       <input
-                        type="url"
+                        type={r.plataforma === "email" ? "email" : "url"}
                         value={r.url}
                         onChange={(e) => cambiarRed(i, "url", e.target.value)}
-                        placeholder="https://…"
+                        placeholder={r.plataforma === "email" ? "correo@banda.mx" : "https://…"}
                         className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
                       />
                       {redes.length > 1 && (
@@ -346,7 +391,7 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                     onClick={() =>
                       setRedes((prev) => [...prev, { plataforma: "ig", url: "" }])
                     }
-                    className="self-start text-sm text-muted hover:text-text"
+                    className="w-full rounded-lg border border-dashed border-accent/50 px-3 py-2 text-sm font-medium text-accent transition-colors hover:border-accent hover:bg-accent/10"
                   >
                     + Añadir otra red
                   </button>

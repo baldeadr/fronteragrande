@@ -21,6 +21,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "fb", texto: "Facebook" },
   { valor: "yt", texto: "YouTube" },
   { valor: "tt", texto: "TikTok" },
+  { valor: "x", texto: "X (Twitter)" },
   { valor: "spotify", texto: "Spotify" },
   { valor: "bandcamp", texto: "Bandcamp" },
   { valor: "soundcloud", texto: "SoundCloud" },
@@ -28,6 +29,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "mixcloud", texto: "Mixcloud" },
   { valor: "apple", texto: "Apple Music" },
   { valor: "linktree", texto: "Linktree" },
+  { valor: "email", texto: "Correo electrónico" },
   { valor: "web", texto: "Web" },
   { valor: "otro", texto: "Otra" },
 ];
@@ -325,10 +327,10 @@ export default function EditarPerfilPropio({
                       ))}
                     </select>
                     <input
-                      type="url"
+                      type={r.plataforma === "email" ? "email" : "url"}
                       value={r.url}
                       onChange={(e) => cambiarRed(i, "url", e.target.value)}
-                      placeholder="https://…"
+                      placeholder={r.plataforma === "email" ? "correo@banda.mx" : "https://…"}
                       className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
                     />
                     {valorRedes.length > 1 && (

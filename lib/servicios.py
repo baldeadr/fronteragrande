@@ -710,7 +710,7 @@ def _reemplazar_redes(session: Session, artista: Artist, redes: list[dict]) -> N
     de detección de plataforma que el alta). Los enlaces de búsqueda
     (`es_busqueda`) se conservan: son respaldo de "dónde escucharlo".
     """
-    from lib.plataformas import detectar_plataforma
+    from lib.plataformas import plataforma_y_url
 
     links_repo = LinkRepository(session)
     for link in list(artista.links):
@@ -721,7 +721,7 @@ def _reemplazar_redes(session: Session, artista: Artist, redes: list[dict]) -> N
         if not url:
             continue
         declarada = (red.get("plataforma") or "").strip().lower()
-        plataforma = detectar_plataforma(url) or declarada or "otro"
+        plataforma, url = plataforma_y_url(declarada, url)
         es_busqueda = "/results?" in url or "/search?" in url
         links_repo.crear_para_artista(
             artista, plataforma=plataforma, url=url, es_busqueda=es_busqueda
@@ -775,11 +775,12 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     """Alta de artista nuevo desde el formulario (registro voluntario).
 
     Crea el registro y sus enlaces de plataforma en la BD. `segmento` viene
-    como categoría; las redes se mapean a `plataforma` con `detectar_plataforma`
-    (fallback a la plataforma declarada). El artista queda "sin conectar" hasta
-    que reclama el perfil vía OAuth. No hace commit: lo hace el caller.
+    como categoría; las redes se normalizan con `plataforma_y_url` (detección
+    por dominio/correo, fallback a la plataforma declarada). El artista queda
+    "sin conectar" hasta que reclama el perfil vía OAuth. No hace commit: lo
+    hace el caller.
     """
-    from lib.plataformas import detectar_plataforma
+    from lib.plataformas import plataforma_y_url
 
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
@@ -841,7 +842,7 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     for red in redes_limpias:
         url = red["url"]
         declarada = red["plataforma"]
-        plataforma = detectar_plataforma(url) or declarada or "otro"
+        plataforma, url = plataforma_y_url(declarada, url)
         es_busqueda = "/results?" in url or "/search?" in url
         links_repo.crear_para_artista(
             artista, plataforma=plataforma, url=url, es_busqueda=es_busqueda

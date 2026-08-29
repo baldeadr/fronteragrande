@@ -20,6 +20,7 @@ export const plataformas: Record<
   deezer: { icono: "/assets/icons/dark/deezer.svg", nombre: "Deezer" },
   x: { icono: "/assets/icons/dark/x.svg", nombre: "X" },
   web: { icono: "/assets/icons/dark/web.svg", nombre: "Sitio web" },
+  email: { icono: "/assets/icons/dark/email.svg", nombre: "Correo" },
   otro: { icono: "/assets/icons/dark/otro.svg", nombre: "Otro enlace" },
 };
 

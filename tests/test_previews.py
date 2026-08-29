@@ -4,7 +4,7 @@ Se ejercita la lógica sin red: para TikTok se sustituye el oEmbed por `None`
 (fixture `_sin_red` de conftest), cayendo en el fallback del ID de video.
 """
 
-from lib.plataformas import detectar_plataforma, preview_feed
+from lib.plataformas import detectar_plataforma, plataforma_y_url, preview_feed
 
 
 def testdetectar_plataforma():
@@ -13,6 +13,22 @@ def testdetectar_plataforma():
     assert detectar_plataforma("https://www.tiktok.com/@x/video/123") == "tt"
     assert detectar_plataforma("https://youtu.be/abcdefgh123") == "yt"
     assert detectar_plataforma("https://open.spotify.com/artist/x") is None
+
+
+def test_detectar_plataforma_x_y_correo():
+    assert detectar_plataforma("https://x.com/artista") == "x"
+    assert detectar_plataforma("https://twitter.com/artista") == "x"
+    assert detectar_plataforma("mailto:correo@banda.mx") == "email"
+    assert detectar_plataforma("correo@banda.mx") == "email"
+    assert detectar_plataforma("https://sitio-ejemplo.com") is None
+
+
+def test_plataforma_y_url_normaliza():
+    assert plataforma_y_url("email", "correo@banda.mx") == ("email", "mailto:correo@banda.mx")
+    assert plataforma_y_url("email", "mailto:correo@banda.mx") == ("email", "mailto:correo@banda.mx")
+    assert plataforma_y_url("ig", "https://x.com/artista") == ("x", "https://x.com/artista")
+    assert plataforma_y_url("", "https://twitter.com/artista") == ("x", "https://twitter.com/artista")
+    assert plataforma_y_url("", "https://sitio-ejemplo.com") == ("otro", "https://sitio-ejemplo.com")
 
 
 def test_detectar_plataforma_djs():

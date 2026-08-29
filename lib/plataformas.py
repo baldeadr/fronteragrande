@@ -35,6 +35,8 @@ FUENTES_DETECTADAS = {
     "facebook.com": "fb",
     "tiktok.com": "tt",
     "youtu": "yt",
+    "x.com": "x",
+    "twitter.com": "x",
     "soundcloud.com": "soundcloud",
     "beatport.com": "beatport",
     "mixcloud.com": "mixcloud",
@@ -49,6 +51,9 @@ FUENTE_CANONICA = {
     "facebook": "fb",
     "tt": "tt",
     "tiktok": "tt",
+    "x": "x",
+    "twitter": "x",
+    "email": "email",
     "spotify": "spotify",
     "soundcloud": "soundcloud",
     "beatport": "beatport",
@@ -61,11 +66,15 @@ MARCA_URL_A_PLATAFORMA = [
     ("instagram.com", "ig"),
     ("facebook.com", "fb"),
     ("tiktok.com", "tt"),
+    ("x.com", "x"),
+    ("twitter.com", "x"),
     ("spotify.com", "spotify"),
     ("soundcloud.com", "soundcloud"),
     ("beatport.com", "beatport"),
     ("mixcloud.com", "mixcloud"),
 ]
+
+_CORREO_RE = re.compile(r"^[^@\s/:]+@[^@\s]+\.[^@\s]+$")
 
 
 def detectar_plataforma(url: str) -> str | None:
@@ -73,7 +82,25 @@ def detectar_plataforma(url: str) -> str | None:
     for dominio, fuente in FUENTES_DETECTADAS.items():
         if dominio in url:
             return fuente
+    if url.startswith("mailto:") or _CORREO_RE.match(url):
+        return "email"
     return None
+
+
+def plataforma_y_url(declarada: str, url: str) -> tuple[str, str]:
+    """Plataforma y URL normalizadas a partir de lo declarado por el usuario.
+
+    Detecta la plataforma desde la URL (dominio o correo). Un correo se
+    almacena como enlace `mailto:` con plataforma `email` para que se pueda
+    renderizar directamente. Las URLs de X/Twitter se mapean a `x`. Si no hay
+    señal clara, usa la plataforma declarada (fallback `otro`).
+    """
+    if url.startswith("mailto:"):
+        return "email", url
+    if _CORREO_RE.match(url) and declarada == "email":
+        return "email", f"mailto:{url}"
+    plataforma = detectar_plataforma(url) or declarada or "otro"
+    return plataforma, url
 
 
 def miniatura_oembed(fuente: str, url: str) -> str:

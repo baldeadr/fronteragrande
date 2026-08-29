@@ -149,7 +149,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
 ## Modelo de datos
 
 - **artists** — nombre, categoría de proyecto (Banda / Solista / DJ / Colectivo / Covers / Tributo; MC y Productor como Solista por ahora), ciudad, géneros, estado de registro, métricas por red (seguidores y reproducciones/vistas: `followers_*`, `vistas_yt`, `vistas_tt`, `reproducciones_spotify`, `reproducciones_bandcamp`, `reproducciones_soundcloud`), fechas de último lanzamiento/evento, estado de actividad, foto de perfil (`imagen_perfil` + `imagen_origen` + `imagen_actualizada`, obtenidas como URL desde las redes sin descargar). El campo interno sigue llamándose `segmento` (nombre de etiqueta de UI: **categoría**); `es_propio` (proyecto del propio universo) es un flag booleano derivado de la columna CSV del mismo nombre.
-- **artist_links** — enlaces por plataforma (`ig`, `fb`, `yt`, `tt`, `spotify`, `bandcamp`, `soundcloud`, `beatport`, `mixcloud`, `apple`, `linktree`, `x`…); marca si es un enlace de búsqueda y no la página oficial.
+- **artist_links** — enlaces por plataforma (`ig`, `fb`, `yt`, `tt`, `x`, `spotify`, `bandcamp`, `soundcloud`, `beatport`, `mixcloud`, `apple`, `linktree`, `deezer`, `web`, `email`…); marca si es un enlace de búsqueda y no la página oficial. Los correos se guardan como `mailto:` con plataforma `email`.
 - **events** — eventos de la escena: fecha, lugar, ciudad, cartel y qué demuestran.
 - **activity_checks** — historial de chequeos del scraper (snapshots).
 - **feed_items** — contenido reciente de los proyectos (videos, posts), sincronizado del artista conectado (Meta Graph API) o del feed de YouTube (onboarding).

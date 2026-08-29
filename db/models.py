@@ -47,6 +47,7 @@ PLATAFORMAS = [
     "fb",
     "yt",
     "tt",
+    "x",
     "spotify",
     "bandcamp",
     "soundcloud",
@@ -56,6 +57,7 @@ PLATAFORMAS = [
     "linktree",
     "deezer",
     "web",
+    "email",
     "otro",
 ]
 

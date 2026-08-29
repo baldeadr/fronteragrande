@@ -30,6 +30,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "fb", texto: "Facebook" },
   { valor: "yt", texto: "YouTube" },
   { valor: "tt", texto: "TikTok" },
+  { valor: "x", texto: "X (Twitter)" },
   { valor: "spotify", texto: "Spotify" },
   { valor: "bandcamp", texto: "Bandcamp" },
   { valor: "soundcloud", texto: "SoundCloud" },
@@ -39,6 +40,7 @@ const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "linktree", texto: "Linktree" },
   { valor: "deezer", texto: "Deezer" },
   { valor: "web", texto: "Sitio web" },
+  { valor: "email", texto: "Correo electrónico" },
   { valor: "otro", texto: "Otra" },
 ];
 
@@ -602,10 +604,10 @@ function FormEditar({
               ))}
             </select>
             <input
-              type="url"
+              type={r.plataforma === "email" ? "email" : "url"}
               value={r.url}
               onChange={(e) => cambiarRed(i, "url", e.target.value)}
-              placeholder="https://…"
+              placeholder={r.plataforma === "email" ? "correo@banda.mx" : "https://…"}
               className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
             />
             <button
@@ -621,7 +623,7 @@ function FormEditar({
         <button
           type="button"
           onClick={() => setRedes((prev) => [...prev, { plataforma: "ig", url: "" }])}
-          className="self-start text-sm text-muted hover:text-text"
+          className="w-full rounded-lg border border-dashed border-accent/50 px-3 py-2 text-sm font-medium text-accent transition-colors hover:border-accent hover:bg-accent/10"
         >
           + Añadir otra red
         </button>

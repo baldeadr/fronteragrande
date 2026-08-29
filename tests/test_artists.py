@@ -106,6 +106,7 @@ def _sin_red_onboarding(monkeypatch):
 
 _SLUGS_PRUEBA = (
     "banda_de_prueba",
+    "banda_con_x",
     "equipo_doble",
     "equipo_doble_2",
     "equipo_tres",
@@ -176,6 +177,29 @@ def test_crear_artista_formulario(client):
     assert detalle["generos"] == ["Rock", "Indie"]
     assert detalle["bio"] == "Una bio breve de la banda de prueba."
     assert any(l["plataforma"] == "ig" for l in detalle["links"])
+    _limpiar_altas()
+
+
+def test_crear_artista_con_x_y_correo(client):
+    respuesta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda con X",
+            "ciudad": "Reynosa",
+            "categoria": "Banda",
+            "redes": [
+                {"plataforma": "ig", "url": "https://www.instagram.com/bandaconx/"},
+                {"plataforma": "x", "url": "https://x.com/bandaconx"},
+                {"plataforma": "email", "url": "contacto@bandaconx.mx"},
+            ],
+        },
+    )
+    assert respuesta.status_code == 201
+    detalle = client.get("/api/artists/banda_con_x").json()
+    links = {(l["plataforma"], l["url"]) for l in detalle["links"]}
+    assert ("ig", "https://www.instagram.com/bandaconx/") in links
+    assert ("x", "https://x.com/bandaconx") in links
+    assert ("email", "mailto:contacto@bandaconx.mx") in links
     _limpiar_altas()
 
 

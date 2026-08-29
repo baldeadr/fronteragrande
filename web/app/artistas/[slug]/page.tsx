@@ -238,8 +238,8 @@ export default async function PerfilPage({
                   <a
                     key={l.url}
                     href={l.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target={l.plataforma === "email" ? undefined : "_blank"}
+                    rel={l.plataforma === "email" ? undefined : "noopener noreferrer"}
                     aria-label={p.nombre}
                     className="group relative grid h-11 w-11 place-items-center rounded-full border border-line bg-surface/80 transition-colors hover:border-accent"
                   >
