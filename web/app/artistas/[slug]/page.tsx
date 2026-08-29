@@ -278,59 +278,73 @@ export default async function PerfilPage({
                 return true;
               });
 
-              return insigniasFiltradas.length > 0 ? (
+              // Construir lista completa de insignias: Liga (si existe) + menciones filtradas
+              const todasLasInsignias = [
+                ...(artist.nivel
+                  ? [
+                      {
+                        key: `liga-${artist.nivel}`,
+                        titulo: "Liga",
+                        valor: artist.nivel,
+                        color: 
+                          artist.nivel === "Ligas Mayores" ? "#f5b301" :
+                          artist.nivel === "En Ascenso" ? "#2fb8a6" : "#8a63d2",
+                        icono: (
+                          artist.nivel === "Ligas Mayores" && (
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                          ),
+                          artist.nivel === "En Ascenso" && (
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                          ),
+                          artist.nivel === "Leyenda de la Frontera" && (
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/>
+                            </svg>
+                          )
+                        ),
+                        esLiga: true,
+                      },
+                    ]
+                  : []),
+                ...insigniasFiltradas.map((m) => ({
+                  key: m,
+                  titulo: tipoMencion(m),
+                  valor: m,
+                  color: tipoMencion(m) === "escena" ? "var(--en-duda)" : "var(--accent)",
+                  icono: <IconoMencion tipo={tipoMencion(m)} className="h-5 w-5 shrink-0" />,
+                  esLiga: false,
+                })),
+              ];
+
+              return todasLasInsignias.length > 0 ? (
                 <div className="border-t border-line/50 pt-3">
                   <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                     Insignias
                   </h2>
-                  {artist.nivel && (
-                    <div className="mb-3 flex items-center gap-2 rounded-lg border border-line bg-surface p-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-2">
-                          {artist.nivel === "Ligas Mayores" && (
-                            <svg className="h-5 w-5 text-[#f5b301]" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                          )}
-                          {artist.nivel === "En Ascenso" && (
-                            <svg className="h-5 w-5 text-[#2fb8a6]" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 14l5-5 5 5z"/>
-                            </svg>
-                          )}
-                          {artist.nivel === "Leyenda de la Frontera" && (
-                            <svg className="h-5 w-5 text-[#8a63d2]" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/>
-                            </svg>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Liga</p>
-                          <p className="font-bold text-sm">{artist.nivel}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   <ul className="flex flex-wrap gap-2">
-                    {insigniasFiltradas.map((m) => {
-                      const esEscena = tipoMencion(m) === "escena";
-                      return (
-                        <li
-                          key={m}
-                          title={m}
-                          className={`flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight ${
-                            esEscena
-                              ? "border-en-duda/50 bg-en-duda/10 font-medium text-en-duda"
-                              : "border-accent/40 bg-accent-soft/40 text-accent"
-                          }`}
-                        >
-                          <IconoMencion
-                            tipo={tipoMencion(m)}
-                            className="h-5 w-5 shrink-0"
-                          />
-                          <span className="line-clamp-3">{m}</span>
-                        </li>
-                      );
-                    })}
+                    {todasLasInsignias.map((insignia) => (
+                      <li
+                        key={insignia.key}
+                        title={insignia.valor}
+                        className={`flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight ${
+                          insignia.esLiga
+                            ? `border-${insignia.color.replace("#", "")}/50 bg-${insignia.color.replace("#", "")}/10 text-[${insignia.color}]`
+                            : insignia.titulo === "escena"
+                            ? "border-en-duda/50 bg-en-duda/10 text-en-duda"
+                            : "border-accent/40 bg-accent-soft/40 text-accent"
+                        }`}
+                      >
+                        <div className="h-5 w-5 shrink-0" style={{ color: insignia.color }}>
+                          {insignia.icono}
+                        </div>
+                        <span className="line-clamp-3 font-medium">{insignia.valor}</span>
+                        {!insignia.esLiga && <span className="text-[9px] text-muted uppercase">{insignia.titulo}</span>}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               ) : null;
