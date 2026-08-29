@@ -271,17 +271,17 @@ export default async function PerfilPage({
 
           {(() => {
               // Filtrar menciones: excluir "Frontera Grande" para Ligas Mayores y En Ascenso
-              const mencionesFiltradas = artist.menciones.filter((m) => {
+              const insigniasFiltradas = artist.menciones.filter((m) => {
                 if (esMencionFronteraGrande(m)) {
                   return !["Ligas Mayores", "En Ascenso"].includes(artist.nivel || "");
                 }
                 return true;
               });
 
-              return mencionesFiltradas.length > 0 ? (
+              return insigniasFiltradas.length > 0 ? (
                 <div className="border-t border-line/50 pt-3">
                   <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-                    Menciones especiales
+                    Insignias
                   </h2>
                   {artist.nivel && (
                     <div className="mb-3 flex items-center gap-2 rounded-lg border border-line bg-surface p-3">
@@ -311,7 +311,7 @@ export default async function PerfilPage({
                     </div>
                   )}
                   <ul className="flex flex-wrap gap-2">
-                    {mencionesFiltradas.map((m) => {
+                    {insigniasFiltradas.map((m) => {
                       const esEscena = tipoMencion(m) === "escena";
                       return (
                         <li
