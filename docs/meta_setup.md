@@ -13,6 +13,9 @@ post y el botón "Abrir en {red}" lleva al origen).
 > producción, el OAuth ya fue probado, **Apex Ultra quedó verificado** y sus
 > publicaciones de Facebook ya aparecen en el perfil. GitHub Actions ejecuta
 > la sincronización cada 6 horas. Falta conectar al resto de artistas.
+> **2026-08-29:** la app entró en **validación/registro** de Meta
+> (Business Verification); mientras Meta procesa ese estado, el **Facebook
+> Login queda temporalmente deshabilitado** para toda la app (ver § 10).
 
 ---
 
@@ -146,3 +149,56 @@ Reinicia la API después de cambiar el `.env`:
   del admin (`POST /api/admin/events`).
 - **Seguridad:** los tokens se guardan solo en la BD y **nunca** se exponen
   por la API (`/api/artists/{slug}` solo reporta el estado de conexión).
+
+## 10. Validación de la app y error "Feature Unavailable"
+
+Cuando la app de Meta entra en **validación/registro** (Business
+Verification / App Review en curso), Meta **desactiva temporalmente el
+Facebook Login** para toda la app mientras "actualiza las configuraciones
+adicionales de la app". En ese lapso, cualquier intento de conexión muestra:
+
+> **Feature Unavailable**
+> Facebook Login is currently unavailable for this app, since we are
+> updating additional details for this app. Please try again later.
+
+**Qué significa:**
+
+- Es un **bloqueo temporal impuesto por Meta**, no un problema del proyecto,
+  de la cuenta, ni del código.
+- Afecta a **todos** los usuarios mientras la app está en ese estado
+  intermedio (aunque el usuario tenga rol de admin/test).
+- **Plazos orientativos** (tiempo no oficial garantizado de Meta):
+  - Revisión de permisos (App Review): **3–7 días** (a veces hasta 2 semanas).
+  - Verificación de negocio (Business Verification): la más larga,
+    **1–3 semanas o más**, según la documentación enviada (puede pedir
+    comprobantes). El estado "updating additional details" suele resolverse
+    en **unos pocos días**.
+
+**Qué hacer:**
+
+- **Esperar** a que Meta complete el proceso; cuando la app quede aprobada
+  y en modo público/activo, el login se desbloquea para todos.
+- Si en **+2 semanas** sigue igual, revisar el estado en el dashboard de la
+  app (posible documento pendiente de la verificación de negocio).
+- **No reintentar en bucle**: no hay acción de código posible; es un proceso
+  de Meta.
+- Para pruebas locales aprovecha el **modo desarrollo** (solo admins/test de
+  la app) una vez desbloqueado.
+
+### Roles de app y cuenta de prueba
+
+Para probar el login en modo desarrollo hace falta que la cuenta secundaria
+tenga un rol de app que permita "probar todos los permisos, funciones y
+productos". En Meta (en español) estos roles **sirven para pruebas**:
+
+- **Administrador** / **Desarrollador**: además de probar, pueden modificar
+  configuración de la app.
+- **Evaluador** (en inglés "Tester"): puede probar todos los permisos,
+  funciones y productos — el rol mínimo recomendado para una cuenta de
+  prueba secundaria.
+
+> El "Evaluador" de la lista de roles **sí** es válido para login en
+> desarrollo (es el antiguo "Tester"). No es el rol de "App Review
+> reviewer". Si una cuenta con rol **Evaluador** recibe el error
+> "Feature Unavailable" y la app está en validación, es **por el bloqueo
+> temporal de § 10**, no por el rol.
