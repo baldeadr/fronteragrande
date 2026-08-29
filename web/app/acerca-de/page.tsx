@@ -395,19 +395,47 @@ export default function AcercaDePage() {
             su categoría/ciudad/género.
           </p>
 
-          <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted">
-            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
-              <span className="h-3 w-3 rounded-full bg-accent"></span> Categoría
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
-              <span className="h-3 w-3 rounded-full bg-accent"></span> Género
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
-              <span className="h-3 w-3 rounded-full bg-accent"></span> Ciudad
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
-              <span className="h-3 w-3 rounded-full bg-en-duda"></span> Escena
-            </span>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {/* Liga badges - exact same style as artist profile */}
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-[#f5b301]/50 bg-[#f5b301]/10 text-[#f5b301]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span className="line-clamp-3 font-medium">Ligas Mayores</span>
+            </div>
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-[#2fb8a6]/50 bg-[#2fb8a6]/10 text-[#2fb8a6]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
+              <span className="line-clamp-3 font-medium">En Ascenso</span>
+            </div>
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-[#8a63d2]/50 bg-[#8a63d2]/10 text-[#8a63d2]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/></svg>
+              <span className="line-clamp-3 font-medium">Leyenda</span>
+            </div>
+          </div>
+
+          <p className="text-sm leading-relaxed text-muted mt-2">
+            <b>Artistas sin Liga</b> compiten por estas insignias (mismo estilo):
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+              <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+              <span className="line-clamp-3 font-medium">Nº 1 Categoría Banda</span>
+              <span className="text-[9px] text-muted uppercase">Categoría</span>
+            </div>
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+              <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+              <span className="line-clamp-3 font-medium">Nº 1 en Norteño</span>
+              <span className="text-[9px] text-muted uppercase">Género</span>
+            </div>
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+              <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+              <span className="line-clamp-3 font-medium">Nº 1 en Reynosa</span>
+              <span className="text-[9px] text-muted uppercase">Ciudad</span>
+            </div>
+            <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-en-duda/50 bg-en-duda/10 text-en-duda">
+              <span className="h-5 w-5 shrink-0 bg-en-duda rounded-full"></span>
+              <span className="line-clamp-3 font-medium">Nº 3 Frontera Grande</span>
+              <span className="text-[9px] text-muted uppercase">Escena</span>
+            </div>
           </div>
         </div>
       </details>
