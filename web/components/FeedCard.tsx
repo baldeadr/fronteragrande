@@ -90,7 +90,7 @@ export default function FeedCard({
             loading="lazy"
           />
         </div>
-      ) : enPerfil && item.preview.tipo === "youtube" && item.preview.embed_url ? (
+      ) : item.preview.tipo === "youtube" && item.preview.embed_url ? (
         <div className="overflow-hidden rounded-xl bg-surface-2">
           <iframe
             src={item.preview.embed_url}
