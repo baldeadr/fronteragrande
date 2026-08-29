@@ -366,6 +366,22 @@ export default function AcercaDePage() {
             En el perfil de cada artista hay una sección <b>Insignias</b> que
             reconoce su posición en la escena. Funcionan con <b>mutua exclusión</b>:
           </p>
+
+          <div className="flex flex-wrap gap-3 mb-2">
+            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#f5b301]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span className="font-medium text-xs">Ligas Mayores</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#2fb8a6]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
+              <span className="font-medium text-xs">En Ascenso</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#8a63d2]">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/></svg>
+              <span className="font-medium text-xs">Leyenda</span>
+            </div>
+          </div>
+
           <p className="text-sm leading-relaxed text-muted">
             Los tres niveles de Liga (ver <b>«Cómo se clasifican las Ligas»</b>
             arriba) son <b>exclusivos</b>: un artista con Liga <b>solo muestra
@@ -378,6 +394,21 @@ export default function AcercaDePage() {
             Así la meta es alcanzable: quien no tiene Liga aún puede brillar en
             su categoría/ciudad/género.
           </p>
+
+          <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
+              <span className="h-3 w-3 rounded-full bg-accent"></span> Categoría
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
+              <span className="h-3 w-3 rounded-full bg-accent"></span> Género
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
+              <span className="h-3 w-3 rounded-full bg-accent"></span> Ciudad
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2 py-1">
+              <span className="h-3 w-3 rounded-full bg-en-duda"></span> Escena
+            </span>
+          </div>
         </div>
       </details>
     </div>
