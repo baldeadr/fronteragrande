@@ -377,7 +377,7 @@ export default function AcercaDePage() {
               <span className="font-medium text-xs">En Ascenso</span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#8a63d2]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 7h-4v4H7v-4H3V9h4V5h4v4h4v4h-4v4h-4v4h-2v-4H7v-4h4V7z"/></svg>
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 10.54L12 21.35z"/></svg>
               <span className="font-medium text-xs">Leyenda</span>
             </div>
           </div>
