@@ -114,8 +114,12 @@ def feed_df(
     """Feed unificado: contenido scrapeado + eventos + lanzamientos + chequeos.
 
     Con `artista` se filtra todo a ese proyecto (feed del perfil); sin él,
-    es el feed global. El tope `limite` aplica al resultado final.
+    es el feed global. El tope `limite` aplica al resultado final. La fuente
+    se normaliza a la clave canónica (ej. `youtube` → `yt`) para que la API
+    nunca exponga aliases duplicados.
     """
+    from lib.plataformas import FUENTE_CANONICA
+
     feed_repo = FeedRepository(session)
     artist_repo = ArtistRepository(session)
     artista_id: int | None = None
@@ -142,7 +146,7 @@ def feed_df(
                 "fecha": fi.fecha,
                 "tipo": TIPOS_FEED.get(fi.tipo, fi.tipo),
                 "tipo_bruto": fi.tipo,
-                "fuente": fi.fuente,
+                "fuente": FUENTE_CANONICA.get(fi.fuente, fi.fuente),
                 "titulo": fi.titulo,
                 "url": fi.url,
                 "imagen": imagen,

@@ -5,6 +5,7 @@ export const plataformas: Record<
   ig: { icono: "/assets/icons/dark/instagram.svg", nombre: "Instagram" },
   fb: { icono: "/assets/icons/dark/facebook.svg", nombre: "Facebook" },
   yt: { icono: "/assets/icons/dark/youtube.svg", nombre: "YouTube" },
+  youtube: { icono: "/assets/icons/dark/youtube.svg", nombre: "YouTube" },
   tt: { icono: "/assets/icons/dark/tiktok.svg", nombre: "TikTok" },
   spotify: { icono: "/assets/icons/dark/spotify.svg", nombre: "Spotify" },
   bandcamp: { icono: "/assets/icons/dark/bandcamp.svg", nombre: "Bandcamp" },

@@ -3,7 +3,7 @@
 from datetime import date
 
 from scraper.adapters import spotify
-from scripts.sync_lanzamientos import MAX_ITEMS
+from scripts.sync_bandcamp import MAX_ITEMS
 
 
 def test_fecha_lanzamiento_formatos():
@@ -17,6 +17,8 @@ def test_fecha_lanzamiento_formatos():
 
 
 class Respuesta:
+    status_code = 200
+
     def raise_for_status(self):
         return None
 
