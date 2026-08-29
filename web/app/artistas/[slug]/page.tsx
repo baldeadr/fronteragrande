@@ -280,12 +280,12 @@ export default async function PerfilPage({
                     : artist.nivel === "En Ascenso"
                     ? "#2fb8a6"
                     : "#8a63d2";
-                const icono =
+const icono =
                   artist.nivel === "Ligas Mayores"
                     ? <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  : artist.nivel === "En Ascenso"
+                    : artist.nivel === "En Ascenso"
                     ? <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
-                    : <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H9V9H3L12 3L21 9Z"/></svg>;
+                    : <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 7h-4v4H7v-4H3V9h4V5h4v4h4v4h-4v4h-2v-4H7v-4h4V7z"/></svg>;
 
                 return (
                   <div className="border-t border-line/50 pt-3">
