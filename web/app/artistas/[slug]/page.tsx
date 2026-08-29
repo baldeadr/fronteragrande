@@ -289,9 +289,20 @@ export default async function PerfilPage({
 
                 return (
                   <div className="border-t border-line/50 pt-3">
-                    <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-                      Insignias
-                    </h2>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                        Insignias
+                      </h2>
+                      <span
+                        className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
+                        title="Artistas CON Liga (Ligas Mayores, En Ascenso, Leyenda): solo muestran su badge de Liga. Artistas SIN Liga: compiten por insignias de categoría, género, ciudad y 'Nº X de la Frontera Grande'."
+                      >
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 16v-4M12 8h.01"/>
+                        </svg>
+                      </span>
+                    </div>
                     <ul className="flex flex-wrap gap-2">
                       <li
                         key={`liga-${artist.nivel}`}
@@ -315,9 +326,20 @@ const insigniasFiltradas = artist.menciones;
 
               return (
                 <div className="border-t border-line/50 pt-3">
-                  <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-                    Insignias
-                  </h2>
+                  <div className="mb-3 flex items-center gap-2">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      Insignias
+                    </h2>
+                    <span
+                      className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
+                      title="Artistas SIN Liga compiten por insignias: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Quien gane su grupo (mínimo 3 participantes) gana la insignia. Si el artista obtiene una Liga, estas insignias se ocultan y solo se muestra la Liga."
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4M12 8h.01"/>
+                      </svg>
+                    </span>
+                  </div>
                   <ul className="flex flex-wrap gap-2">
                     {insigniasFiltradas.map((m) => {
                       const tipo = tipoMencion(m);

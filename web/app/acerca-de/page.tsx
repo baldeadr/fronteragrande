@@ -353,6 +353,54 @@ export default function AcercaDePage() {
           </p>
         </div>
       </details>
+
+      <details className="group rounded-xl border border-line bg-surface">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-bold sm:p-5">
+          Qué son las Insignias y cómo funcionan
+          <span className="shrink-0 text-lg leading-none text-accent transition-transform duration-200 group-open:rotate-45">
+            +
+          </span>
+        </summary>
+        <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+          <p className="text-sm leading-relaxed text-muted">
+            En el perfil de cada artista hay una sección <b>Insignias</b> que
+            reconoce su posición en la escena. Funcionan con mutua exclusión:
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#f5b301" }}
+            />
+            <b>Ligas Mayores</b> — estrella dorada. Se asigna automáticamente
+            al alcanzar ≥ 1M seguidores en alguna red, ≥ 1M oyentes en Spotify,
+            o chart nacional/internacional con fuente.
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#2fb8a6" }}
+            />
+            <b>En Ascenso</b> — triángulo verde. Suma de señales con fuente
+            entre 10 mil y 999 mil (seguidores, oyentes, reproducciones, vistas).
+          </p>
+          <p className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: "#8a63d2" }}
+            />
+            <b>Leyenda de la Frontera</b> — corona púrpura. Retirado/a o
+            fallecido/a con legado; se asigna por curaduría manual.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            <b>Regla clave:</b> un artista con Liga <b>solo muestra su badge de
+            Liga</b> (no acumula insignias de categoría, género, ciudad ni
+            "Nº X de la Frontera Grande"). Los artistas <b>sin Liga</b> compiten
+            por esas insignias: categoría, género, ciudad y <b>Nº X de la
+            Frontera Grande</b>. Así la meta es alcanzable: quien no tiene Liga
+            aún puede brillar en su categoría/ciudad/género.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }
