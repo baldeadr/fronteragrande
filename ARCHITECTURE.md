@@ -125,7 +125,7 @@ flowchart TD
 
     %% Ranking & Ligas
     SV -->|ranking_global / ranking_ligas| API
-    HP -->|clasificar_nivel| SV
+    HP -->|calcular_indice_universal + clasificar_por_indice| SV
 
     %% Activity check
     RECALC -.-->|Actualiza estado_activo| DB
@@ -171,7 +171,7 @@ flowchart TD
 | Servicios | `lib/servicios.py` | Read-models (`artistas_df`, `feed_df`), rankings (`ranking_global`, `ranking_ligas`), métricas, edición, onboarding |
 | Plataformas | `lib/plataformas.py` | Registro `PREVIEWS` (OCP) -> previews YouTube/TikTok/IG/FB/Spotify/SC/Mixcloud; detección plataforma; helper URLs |
 | Repositorio | `lib/repository.py` | **Todo** el SQL: `ArtistRepository`, `EventRepository`, `FeedRepository`, `LinkRepository`, `ChecksRepository` |
-| Helpers | `lib/helpers.py` | `indice_alcance`, `clasificar_nivel`, normalización URLs, géneros, slug, `es_bio_clara` |
+| Helpers | `lib/helpers.py` | `calcular_indice_universal`, `clasificar_por_indice`, normalización URLs, géneros, slug, `es_bio_clara` |
 
 ### 3. Base de Datos (SQLAlchemy + SQLite / PostgreSQL)
 - **SQLite** por defecto (`instance/local_scene.db`).
@@ -220,8 +220,8 @@ flowchart TD
 2. **Verificación Meta** -> OAuth callback -> guarda `fb_page_token`/`ig_user_id` -> `verificado = true` -> dispara `sync_feed_igfb` + promo IG.
 3. **Verificación TikTok** -> PKCE callback -> guarda `tt_user_id`/`tt_refresh_token` -> `verificado = true` -> dispara `sync_feed_tiktok`.
 3. **Feed automático** -> GH Action cada 6h -> adapters -> `FeedRepository.crear_si_nuevo` (anti-dup por URL) -> `recalcular_actividad` actualiza `estado_activo`.
-4. **Ranking** -> `lib/servicios.ranking_global` (escena base, sin `nivel`) + `ranking_ligas` (catalogados) -> `indice_alcance` (pesos: IG 29, FB 24, Spotify 19, YT 9, TT 9, BC 2.5, SC 2.5, BP 3, MC 2) -> normalizado 0-100.
-5. **Ligas** -> `clasificar_nivel(metricas)` -> **Ligas Mayores** (≥1M red/oyentes/chart), **En Ascenso** (10k–999k total), **Leyenda** (manual + fuente en `notas`).
+4. **Ranking** -> `lib/servicios.ranking_global` (escena base, sin `nivel`) + `ranking_ligas` (catalogados) -> `indice_alcance` (dentro de cada grupo, normalizado 0-100).
+5. **Ligas** -> `calcular_indice_universal` (techos fijos: IG/FB/TT/YT 50M, Spotify oyentes 50M, etc.) + `clasificar_por_indice` (umbrales fijos: **≥60 Ligas Mayores**, **≥50 En Ascenso**) + **Leyenda** (manual con fuente en `notas`).
 6. **Push** -> PWA registra suscripción -> `lib/notificaciones` envía VAPID -> admin broadcast / nuevo verificado / nuevo post Meta.
 
 ---

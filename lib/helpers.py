@@ -227,37 +227,38 @@ def generos_desde_texto(texto: str) -> list[str]:
 
 
 # Pesos globales de las señales de audiencia y consumo (suman 100).
+# Ajuste 2026-08: más peso a consumo real (Spotify oyentes, YT vistas) y menos a seguidores sociales.
 PESOS_ALCANCE = {
-    "ig": 0.29,
-    "fb": 0.24,
-    "spotify": 0.19,
-    "yt": 0.09,
-    "tt": 0.09,
-    "bandcamp": 0.025,
-    "soundcloud": 0.025,
-    "beatport": 0.03,
-    "mixcloud": 0.02,
+    "ig": 0.18,
+    "fb": 0.12,
+    "spotify": 0.28,
+    "yt": 0.20,
+    "tt": 0.08,
+    "bandcamp": 0.03,
+    "soundcloud": 0.03,
+    "beatport": 0.04,
+    "mixcloud": 0.04,
 }
 
 PESOS_AUDIENCIA = {
-    ("ig", "seguidores"): 0.29,
-    ("fb", "seguidores"): 0.24,
-    ("tt", "seguidores"): 0.09,
-    ("yt", "seguidores"): 0.027,
-    ("spotify", "seguidores"): 0.0475,
+    ("ig", "seguidores"): 0.15,
+    ("fb", "seguidores"): 0.10,
+    ("tt", "seguidores"): 0.08,
+    ("yt", "seguidores"): 0.02,
+    ("spotify", "seguidores"): 0.03,
     ("beatport", "seguidores"): 0.03,
     ("mixcloud", "seguidores"): 0.02,
 }
 
 PESOS_CONSUMO = {
-    ("yt", "vistas"): 0.063,
-    ("spotify", "consumo"): 0.1425,
-    ("bandcamp", "reproducciones"): 0.025,
-    ("soundcloud", "reproducciones"): 0.025,
+    ("yt", "vistas"): 0.12,
+    ("spotify", "consumo"): 0.25,
+    ("bandcamp", "reproducciones"): 0.03,
+    ("soundcloud", "reproducciones"): 0.03,
 }
 
-PESO_GRUPO_AUDIENCIA = 0.55
-PESO_GRUPO_CONSUMO = 0.45
+PESO_GRUPO_AUDIENCIA = 0.40
+PESO_GRUPO_CONSUMO = 0.60
 
 # Métrica de alcance por plataforma, en orden de prioridad.
 METRICA_ALCANCE_POR_PLATAFORMA = {
@@ -553,48 +554,131 @@ def normalizar_url_para_duplicados(url: str) -> str:
     return urlunparse((parsed.scheme.lower(), host, path, "", "", ""))
 
 
-# Umbrales de la catalogación automática de Ligas (con fuente).
-# - Ligas Mayores: alguna red >= 1M seguidores, o >= 1M oyentes/mes en Spotify,
-#   o chart nacional/internacional con fuente (ver docs/scraping.md).
-# - En Ascenso: total de señales con fuente entre 10k y 999,999.
-# - Leyenda de la Frontera: NO se deriva de métricas; se asigna manualmente
-#   (retirado/fallecido con legado regional) exigiendo fuente en `notas`.
-LIGA_MAYOR_MIN_RED = 1_000_000
-LIGA_MAYOR_MIN_OYENTES = 1_000_000
-ASCENSO_MIN = 10_000
-ASCENSO_MAX = 999_999
+# Clasificación por índice universal (techos de referencia fijos)
+# Cada señal se normaliza contra un techo mundial absoluto (no contra el máximo
+# local de la escena, que inflaba números semilla como seguidores de FB):
+# IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
+# seguidores 20M · Spotify reproducciones 1B · SoundCloud 10M · Bandcamp 1M ·
+# Beatport 100K · Mixcloud 50K.
+TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
+    ("ig", "seguidores"): 50_000_000,
+    ("fb", "seguidores"): 50_000_000,
+    ("tt", "seguidores"): 50_000_000,
+    ("yt", "seguidores"): 50_000_000,
+    ("yt", "vistas"): 10_000_000_000,
+    ("spotify", "seguidores"): 20_000_000,
+    ("spotify", "oyentes_mensuales"): 50_000_000,
+    ("spotify", "reproducciones"): 1_000_000_000,
+    ("soundcloud", "reproducciones"): 10_000_000,
+    ("bandcamp", "reproducciones"): 1_000_000,
+    ("beatport", "seguidores"): 100_000,
+    ("mixcloud", "seguidores"): 50_000,
+}
+
+# Señales de audiencia social "comprable" (la normalizan la regla anti-trampa).
+SEÑALES_SOCIALES = {"ig", "fb", "tt"}
+
+# Señales de consumo real (lo que evidencia que la gente consume la música).
+SEÑALES_CONSUMO = {
+    ("yt", "vistas"),
+    ("spotify", "oyentes_mensuales"),
+    ("spotify", "reproducciones"),
+    ("soundcloud", "reproducciones"),
+    ("bandcamp", "reproducciones"),
+}
+
+# Regla anti-trampa: la audiencia social (IG/FB/TT) no puede exceder el consumo
+# real × este factor (audiencia comprada o perfil de influencer no infla el índice).
+FACTOR_COHERENCIA_AUDIENCIA = 3.0
+
+# Índice híbrido: 70% la señal dominante (mejor ratio) + 30% cobertura (media).
+PESO_SEÑAL_DOMINANTE = 0.7
+PESO_COBERTURA = 0.3
+
+# Umbrales fijos de clasificación (documentados en AGENTS.md y en la web):
+UMBRAL_LIGAS_MAYORES = 60.0   # ≥ 60 = Ligas Mayores
+UMBRAL_EN_ASCENSO = 50.0      # ≥ 50 = En Ascenso
 
 
-def clasificar_nivel(metricas: dict) -> str:
-    """Clasifica el nivel de liga de un artista según sus métricas con fuente.
+def _ratio_frente_techo(valor: float, techo: float) -> float:
+    """Ratio 0-1 de un valor contra su techo de referencia (escala log10)."""
+    if not _es_metrico(valor) or valor <= 0:
+        return 0.0
+    return min(1.0, math.log10(float(valor) + 1.0) / math.log10(float(techo) + 1.0))
 
-    Devuelve "Ligas Mayores", "En Ascenso" o "" (base local, sin etiqueta).
-    La Leyenda de la Frontera NO se asigna aquí: es una decisión editorial
-    (retirado/fallecido con legado) que se marca manualmente.
+
+def calcular_indice_universal(
+    metricas_por_artista: dict[str, dict],
+) -> dict[str, float]:
+    """Índice universal 0-100 normalizado contra techos de referencia fijos.
+
+    Para cada artista se calcula el ratio de cada señal contra su techo mundial
+    (escala log10). El índice híbrido combina el 70% de la señal dominante
+    (la mejor ratio) con el 30% de cobertura (media de ratios, contar 0 las
+    señales ausentes penaliza no tener la plataforma). La regla anti-trampa
+    limita las señales sociales (IG/FB/TT) a `consumo real × 3` cuando existe
+    consumo registrado, para que una audiencia comprada o el perfil de un
+    influencer no inflen el índice. No se expone públicamente (solo admin);
+    los rankings visibles (Ligas/Rookies) se normalizan dentro de cada grupo.
     """
-    followers_ig = _valor_seguro(metricas, "ig", "seguidores")
-    followers_fb = _valor_seguro(metricas, "fb", "seguidores")
-    followers_yt = _valor_seguro(metricas, "yt", "seguidores")
-    followers_tt = _valor_seguro(metricas, "tt", "seguidores")
-    vistas_yt = _valor_seguro(metricas, "yt", "vistas")
-    vistas_tt = _valor_seguro(metricas, "tt", "vistas")
+    resultado: dict[str, float] = {}
+    for slug, metricas in metricas_por_artista.items():
+        ratios: list[tuple[tuple[str, str], float]] = []
+        consumo_max = 0.0
+        for señal, techo in TECHOS_REFERENCIA.items():
+            plataforma, tipo = señal
+            valor = _valor_seguro(metricas, plataforma, tipo)
+            ratio = _ratio_frente_techo(valor, techo)
+            ratios.append((señal, ratio))
+            if señal in SEÑALES_CONSUMO and ratio > 0:
+                consumo_max = max(consumo_max, ratio)
 
-    max_red = max(
-        followers_ig, followers_fb, followers_yt, followers_tt, vistas_yt, vistas_tt
-    )
-    oyentes = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
-    if max_red >= LIGA_MAYOR_MIN_RED or oyentes >= LIGA_MAYOR_MIN_OYENTES:
-        return "Ligas Mayores"
+        # Anti-trampa: límite a las señales sociales cuando hay consumo real.
+        if consumo_max > 0:
+            tope_social = consumo_max * FACTOR_COHERENCIA_AUDIENCIA
+            ratios = [
+                (señal, min(ratio, tope_social) if plataforma in SEÑALES_SOCIALES else ratio)
+                for (señal, ratio) in ratios
+                for plataforma in [señal[0]]
+            ]
 
-    total = (
-        followers_ig + followers_fb + followers_yt + followers_tt
-        + _valor_seguro(metricas, "spotify", "seguidores")
-        + _valor_seguro(metricas, "spotify", "reproducciones")
-        + oyentes
-        + vistas_yt + vistas_tt
-        + _valor_seguro(metricas, "bandcamp", "reproducciones")
-        + _valor_seguro(metricas, "soundcloud", "reproducciones")
-    )
-    if ASCENSO_MIN <= total <= ASCENSO_MAX:
-        return "En Ascenso"
-    return ""
+        dominante = max((ratio for _, ratio in ratios), default=0.0)
+        if dominante <= 0:
+            resultado[slug] = 0.0
+            continue
+        cobertura = sum(ratio for _, ratio in ratios) / len(ratios)
+        resultado[slug] = round(
+            (PESO_SEÑAL_DOMINANTE * dominante + PESO_COBERTURA * cobertura) * 100.0,
+            1,
+        )
+    return resultado
+
+
+def clasificar_por_indice(
+    indice_universal: dict[str, float],
+    umbral_ligas: float = UMBRAL_LIGAS_MAYORES,
+    umbral_ascenso: float = UMBRAL_EN_ASCENSO,
+) -> dict[str, str]:
+    """Clasifica artistas en tres niveles según umbrales fijos del índice.
+
+    Args:
+        indice_universal: {slug: índice 0-100} calculado contra techos fijos.
+        umbral_ligas: Índice mínimo para Ligas Mayores (≥ 60).
+        umbral_ascenso: Índice mínimo para En Ascenso (≥ 50).
+
+    Returns:
+        {slug: "Ligas Mayores" | "En Ascenso" | ""}
+
+    Los umbrales son absolutos y no dependen de la distribución de la escena:
+    quien supera el umbral lo supera aunque la escena crezca. Nota: "Leyenda de
+    la Frontera" se gestiona aparte (flag editorial `es_leyenda`).
+    """
+    resultado: dict[str, str] = {}
+    for slug, idx in indice_universal.items():
+        if idx >= umbral_ligas:
+            resultado[slug] = "Ligas Mayores"
+        elif idx >= umbral_ascenso:
+            resultado[slug] = "En Ascenso"
+        else:
+            resultado[slug] = ""
+    return resultado

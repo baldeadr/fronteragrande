@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from db.models import ESTADOS_ACTIVO, NIVELES, Artist, ActivityCheck, AltaRegistro
 from lib.helpers import (
     TIPOS_FEED,
+    calcular_indice_universal,
+    clasificar_por_indice,
     conteo_generos,
     dominancia_plataforma,
     patron_dominancia,
@@ -38,7 +40,13 @@ TIPOS_FEED_CONTENIDO = ("video", "lanzamiento", "post", "evento")
 
 
 def artistas_df(session: Session) -> pd.DataFrame:
-    """DataFrame plano de artistas para tablas y gráficas."""
+    """DataFrame plano de artistas para tablas y gráficas.
+
+    Incluye índice universal (0-100 contra TODOS) y clasificación on-the-fly
+    (nivel_calculado) para separar Ligas vs Rookies. El índice universal
+    es solo para clasificación/admin; los rankings visibles se normalizan
+    independientemente por grupo.
+    """
     filas = [
         {
             "id": a.id,
@@ -50,6 +58,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "estado_registro": a.estado_registro,
             "es_propio": a.es_propio,
             "nivel": a.nivel,
+            "es_leyenda": a.es_leyenda,
             "estado_activo": a.estado_activo,
             "metodo_actividad": a.metodo_actividad,
             "ultimo_lanzamiento": a.ultimo_lanzamiento,
@@ -78,7 +87,29 @@ def artistas_df(session: Session) -> pd.DataFrame:
         for a in ArtistRepository(session).todos(con_links=False)
     ]
     df = pd.DataFrame(filas)
+    if df.empty:
+        df["nivel"] = pd.Series(dtype=str)
+        df["es_leyenda"] = pd.Series(dtype=bool)
+        df["nivel_calculado"] = pd.Series(dtype=str)
+        df["indice_universal"] = pd.Series(dtype=float)
+        return df
+
     df["nivel"] = df["nivel"].fillna("").astype(str)
+    df["es_leyenda"] = df["es_leyenda"].fillna(False).astype(bool)
+
+    # Índice universal (0-100 contra techos fijos) - solo para clasificación/admin
+    metricas = {fila["slug"]: metricas_artista(fila) for _, fila in df.iterrows()}
+    indice_universal = calcular_indice_universal(metricas)
+    df["indice_universal"] = df["slug"].map(indice_universal).fillna(0.0)
+
+    # Clasificación on-the-fly por umbrales fijos del índice universal
+    clasificacion = clasificar_por_indice(indice_universal)
+    # Leyenda manual tiene prioridad
+    for slug, es_leyenda in df.set_index("slug")["es_leyenda"].items():
+        if es_leyenda:
+            clasificacion[slug] = "Leyenda de la Frontera"
+    df["nivel_calculado"] = df["slug"].map(clasificacion).fillna("")
+
     return df
 
 
@@ -487,12 +518,13 @@ def _ranking_de(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]
 
 
 def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
-    """Ranking de alcance y menciones de la escena local (sin ligas).
+    """Ranking de alcance y menciones de la escena local (Rookies).
 
-    Solo participan los artistas sin nivel (`nivel == ""`). Los catalogados
-    (Ligas Mayores / En Ascenso / Leyenda de la Frontera) van al ranking de Ligas.
+    Solo participan los artistas sin nivel calculado (`nivel_calculado == ""`).
+    Los catalogados (Ligas Mayores / En Ascenso / Leyenda de la Frontera) van
+    al ranking de Ligas.
     """
-    base = df[df["nivel"].fillna("") == ""]
+    base = df[df["nivel_calculado"].fillna("") == ""]
     return _ranking_de(base)
 
 
@@ -503,7 +535,7 @@ def ranking_ligas(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str
     gráfica aparte (no se subdividen por ahora). Devuelve el ranking y las
     menciones normalizados solo entre ellos.
     """
-    catalogados = df[df["nivel"].fillna("") != ""]
+    catalogados = df[df["nivel_calculado"].fillna("") != ""]
     return _ranking_de(catalogados)
 
 
@@ -645,6 +677,23 @@ def stats_escena(session: Session) -> dict:
         if a.fb_page_token and a.estado_registro
     )
 
+    # Stats separados por grupo (Ligas vs Rookies)
+    ligas_df = df[df["nivel_calculado"].fillna("") != ""]
+    rookies_df = df[df["nivel_calculado"].fillna("") == ""]
+
+    ligas = {
+        "total": len(ligas_df),
+        "por_nivel": ligas_df["nivel_calculado"].value_counts().to_dict() if not ligas_df.empty else {},
+        "por_segmento": ligas_df["segmento"].value_counts().to_dict() if not ligas_df.empty else {},
+        "por_ciudad": ligas_df["ciudad"].value_counts().to_dict() if not ligas_df.empty else {},
+    }
+    rookies = {
+        "total": len(rookies_df),
+        "por_segmento": rookies_df["segmento"].value_counts().to_dict() if not rookies_df.empty else {},
+        "por_ciudad": rookies_df["ciudad"].value_counts().to_dict() if not rookies_df.empty else {},
+        "por_estado_activo": rookies_df["estado_activo"].value_counts().to_dict() if not rookies_df.empty else {},
+    }
+
     return {
         "total": total,
         "verificados": verificados,
@@ -661,6 +710,8 @@ def stats_escena(session: Session) -> dict:
         "posts_90dias": posts_90dias,
         "por_ciudad": por_ciudad,
         "eventos_proximos": eventos_proximos,
+        "ligas": ligas,
+        "rookies": rookies,
     }
 
 
@@ -725,6 +776,8 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
         if nivel and nivel not in NIVELES:
             raise ValueError(f"Nivel inválido: {nivel}")
         artista.nivel = nivel
+    if "es_leyenda" in datos:
+        artista.es_leyenda = bool(datos.get("es_leyenda"))
     if "imagen_perfil" in datos:
         artista.imagen_perfil = datos.get("imagen_perfil") or None
     if "imagen_origen" in datos:

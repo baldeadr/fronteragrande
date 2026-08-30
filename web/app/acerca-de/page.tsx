@@ -13,17 +13,17 @@ export const metadata: Metadata = {
 };
 
 const pesos = [
-  { clave: "ig", plataforma: "Instagram", peso: "0,29" },
-  { clave: "fb", plataforma: "Facebook", peso: "0,24" },
-  { clave: "spotify", plataforma: "Spotify · seguidores", peso: "0,0475" },
-  { clave: "spotify", plataforma: "Spotify · consumo", peso: "0,1425" },
-  { clave: "yt", plataforma: "YouTube · suscriptores", peso: "0,027" },
-  { clave: "yt", plataforma: "YouTube · vistas", peso: "0,063" },
-  { clave: "tt", plataforma: "TikTok", peso: "0,09" },
-  { clave: "bandcamp", plataforma: "Bandcamp", peso: "0,025" },
-  { clave: "soundcloud", plataforma: "SoundCloud", peso: "0,025" },
-  { clave: "beatport", plataforma: "Beatport", peso: "0,03" },
-  { clave: "mixcloud", plataforma: "Mixcloud", peso: "0,02" },
+  { clave: "ig", plataforma: "Instagram · seguidores", peso: "0,18" },
+  { clave: "fb", plataforma: "Facebook · seguidores", peso: "0,12" },
+  { clave: "spotify", plataforma: "Spotify · seguidores", peso: "0,03" },
+  { clave: "spotify", plataforma: "Spotify · oyentes/consumo", peso: "0,25" },
+  { clave: "yt", plataforma: "YouTube · suscriptores", peso: "0,02" },
+  { clave: "yt", plataforma: "YouTube · vistas", peso: "0,12" },
+  { clave: "tt", plataforma: "TikTok · seguidores", peso: "0,08" },
+  { clave: "bandcamp", plataforma: "Bandcamp · reproducciones", peso: "0,03" },
+  { clave: "soundcloud", plataforma: "SoundCloud · reproducciones", peso: "0,03" },
+  { clave: "beatport", plataforma: "Beatport · seguidores", peso: "0,04" },
+  { clave: "mixcloud", plataforma: "Mixcloud · seguidores", peso: "0,04" },
 ];
 
 const que_es = [
@@ -321,35 +321,45 @@ export default function AcercaDePage() {
         </summary>
         <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
           <p className="text-sm leading-relaxed text-muted">
-            Algunos proyectos destacan por su alcance o su legado y se
-            catalogan en una <b>Liga</b>. Estos no participan en el ranking de
-            la escena local (para no desbalancearlo); se muestran en una
-            gráfica aparte.
+            Algunos proyectos destacan por su alcance real y se catalogan en
+            una <b>Liga</b>. Estos no participan en el ranking de la escena
+            local (para no desbalancearlo); se muestran en una gráfica aparte
+            con su propio ranking normalizado 0-100.
+          </p>
+          <p className="text-sm leading-relaxed text-muted">
+            <b>Índice universal (oculto)</b>: índice 0-100 donde cada señal se
+            normaliza contra un <b>techo de referencia mundial</b> (IG/FB/TT/YT
+            seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
+            seguidores 20M · reproducciones 1B · SoundCloud 10M · Bandcamp 1M ·
+            Beatport 100K · Mixcloud 50K). El índice combina el <b>70 % de la
+            señal dominante</b> (la de mejor ratio) con el <b>30 % de cobertura</b>
+            (media de ratios). Regla anti-trampa: cuando hay consumo registrado,
+            la audiencia social (IG/FB/TT) no puede superar <b>consumo real × 3</b>.
+            Este índice solo se usa para clasificación y no se expone públicamente
+            (solo admin).
           </p>
           <p className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: "#f5b301" }}
             />
-            <b>Ligas Mayores</b> — una red con ≥ 1 millón de seguidores, o ≥ 1
-            millón de oyentes en Spotify, o entrada a charts
-            nacionales/internacionales con fuente.
+            <b>Ligas Mayores</b> — índice universal <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: "#2fb8a6" }}
             />
-            <b>En Ascenso</b> — suma de señales con fuente entre 10 mil y
-            999 mil (seguidores, oyentes, reproducciones y vistas).
+            <b>En Ascenso</b> — índice universal <b>≥ 50</b> (y menor a 60).
           </p>
           <p className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: "#8a63d2" }}
             />
-            <b>Leyenda de la Frontera</b> — retirado/a o fallecido/a con un
-            legado en la región; se asigna por curaduría, no por métricas.
+            <b>Leyenda de la Frontera</b> — retirado/a o fallecido/a con
+            legado regional; se asigna por curaduría (flag <code>es_leyenda</code>
+            en BD, editable en panel admin), no por métricas.
           </p>
         </div>
       </details>

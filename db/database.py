@@ -110,6 +110,12 @@ def _asegurar_columnas_extra():
                 conn.execute(
                     text(
                         "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "es_leyenda BOOLEAN DEFAULT FALSE"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
                         "ultimo_sync_lanzamientos TIMESTAMP"
                     )
                 )
@@ -175,6 +181,9 @@ def _asegurar_columnas_extra():
         if "nivel" not in columnas:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE artists ADD COLUMN nivel VARCHAR(40)"))
+        if "es_leyenda" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE artists ADD COLUMN es_leyenda BOOLEAN DEFAULT FALSE"))
         if "ultimo_sync_lanzamientos" not in columnas:
             with engine.begin() as conn:
                 conn.execute(

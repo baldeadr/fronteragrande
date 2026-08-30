@@ -237,6 +237,7 @@ export interface AdminArtist {
   nombre: string;
   segmento: string;
   nivel: string;
+  es_leyenda: boolean;
   ciudad: string;
   generos: string;
   estado_activo: string;

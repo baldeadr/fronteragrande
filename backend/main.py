@@ -160,6 +160,7 @@ class EditarArtistaEntrada(BaseModel):
     estado_activo: str | None = None
     estado_registro: str | None = None
     redes: list[RedEntrada] | None = None
+    es_leyenda: bool | None = None
 
 
 class EventoEntrada(BaseModel):
@@ -280,6 +281,7 @@ def list_artists(
     genero: str | None = None,
     estado: str | None = None,
     q: str | None = None,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     db: Session = Depends(get_db),
     artistas: ArtistRepository = Depends(get_artist_repo),
     cache: MemoryCache = Depends(get_cache_dependency),
@@ -287,9 +289,12 @@ def list_artists(
     """Listado de artistas (tarjetas para el directorio)."""
     cache_key = _cache_key_artists(segmento, ciudad, genero, estado, q)
     cache_key_ranking = "ranking:global"
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return cached
+    # No usar cache si hay token de admin (para exponer indice_universal)
+    is_admin = bool(x_admin_token and ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD)
+    if not is_admin:
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
 
     df = artistas_df(db)
     if df.empty:
@@ -326,67 +331,70 @@ def list_artists(
     tarjetas = []
     for _, fila in df.iterrows():
         artist = artistas_cargados.get(fila["id"])
-        nivel = (fila.get("nivel") or "") if "nivel" in fila else ""
-        catalogado = bool(nivel)
+        nivel_calculado = (fila.get("nivel_calculado") or "") if "nivel_calculado" in fila else ""
+        catalogado = bool(nivel_calculado)
         ranking_artista = (
             ranking_ligas_data if catalogado else ranking
         )
-        tarjetas.append(
-            {
-                "slug": fila["slug"],
-                "nombre": fila["nombre"],
-                "segmento": fila["segmento"],
-                "nivel": nivel,
-                "catalogado": catalogado,
-                "ciudad": fila["ciudad"],
-                "generos": generos_hashtags(fila["generos"]),
-                "estado_activo": fila["estado_activo"],
-                "color_estado": ESTADO_COLORES.get(fila["estado_activo"], "#888"),
-                "metodo_actividad": fila["metodo_actividad"],
-                "estado_registro": fila.get("estado_registro") or "",
-                "verificado": bool(
-                    artist
-                    and (artist.fb_page_token or artist.tt_refresh_token)
-                    and artist.estado_registro
-                ),
-                "ultimo_lanzamiento": _json_safe(fila["ultimo_lanzamiento"]),
-                "ultimo_evento": _json_safe(fila["ultimo_evento"]),
-                "followers": {
-                    "ig": fila["followers_ig"],
-                    "fb": fila["followers_fb"],
-                    "yt": fila["followers_yt"],
-                    "spotify": fila["followers_spotify"],
-                    "tt": fila["followers_tt"],
-                    "beatport": fila["followers_beatport"],
-                    "mixcloud": fila["followers_mixcloud"],
+        tarjeta = {
+            "slug": fila["slug"],
+            "nombre": fila["nombre"],
+            "segmento": fila["segmento"],
+            "nivel": nivel_calculado,
+            "catalogado": catalogado,
+            "ciudad": fila["ciudad"],
+            "generos": generos_hashtags(fila["generos"]),
+            "estado_activo": fila["estado_activo"],
+            "color_estado": ESTADO_COLORES.get(fila["estado_activo"], "#888"),
+            "metodo_actividad": fila["metodo_actividad"],
+            "estado_registro": fila.get("estado_registro") or "",
+            "verificado": bool(
+                artist
+                and (artist.fb_page_token or artist.tt_refresh_token)
+                and artist.estado_registro
+            ),
+            "ultimo_lanzamiento": _json_safe(fila["ultimo_lanzamiento"]),
+            "ultimo_evento": _json_safe(fila["ultimo_evento"]),
+            "followers": {
+                "ig": fila["followers_ig"],
+                "fb": fila["followers_fb"],
+                "yt": fila["followers_yt"],
+                "spotify": fila["followers_spotify"],
+                "tt": fila["followers_tt"],
+                "beatport": fila["followers_beatport"],
+                "mixcloud": fila["followers_mixcloud"],
+            },
+            "imagen_perfil": fila.get("imagen_perfil") or None,
+            "imagen_origen": fila.get("imagen_origen") or None,
+            "ranking": ranking_artista.get(
+                fila["slug"],
+                {
+                    "indice": None,
+                    "audiencia": None,
+                    "consumo": None,
+                    "rank": None,
+                    "total": len(ranking_artista),
                 },
-                "imagen_perfil": fila.get("imagen_perfil") or None,
-                "imagen_origen": fila.get("imagen_origen") or None,
-                "ranking": ranking_artista.get(
-                    fila["slug"],
-                    {
-                        "indice": None,
-                        "audiencia": None,
-                        "consumo": None,
-                        "rank": None,
-                        "total": len(ranking_artista),
-                    },
-                ),
-                "menciones": (
-                    menciones_ligas_data if catalogado else menciones
-                ).get(fila["slug"], []),
-                "link_principal": (
-                    artista_link_principal(db, artist) if artist else None
-                ),
-                "links": [
-                    {"plataforma": l.plataforma, "url": l.url}
-                    for l in (artist.links if artist else [])
-                    if not l.es_busqueda
-                ],
-            }
-        )
+            ),
+            "menciones": (
+                menciones_ligas_data if catalogado else menciones
+            ).get(fila["slug"], []),
+            "link_principal": (
+                artista_link_principal(db, artist) if artist else None
+            ),
+            "links": [
+                {"plataforma": l.plataforma, "url": l.url}
+                for l in (artist.links if artist else [])
+                if not l.es_busqueda
+            ],
+        }
+        # Índice universal solo para admin (oculto en público)
+        if is_admin:
+            tarjeta["indice_universal"] = round(fila.get("indice_universal", 0.0), 1)
+        tarjetas.append(tarjeta)
     resultado = _json_safe(tarjetas)
-    cache.set(cache_key, resultado, ttl=300)
+    if not is_admin:
+        cache.set(cache_key, resultado, ttl=300)
     return resultado
 
 
@@ -440,6 +448,7 @@ def crear_artista_endpoint(
 @app.get("/api/artists/{slug}")
 def artist_detail(
     slug: str,
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     db: Session = Depends(get_db),
     artistas: ArtistRepository = Depends(get_artist_repo),
     cache: MemoryCache = Depends(get_cache_dependency),
@@ -469,8 +478,8 @@ def artist_detail(
         )
     else:
         ranking, menciones, ranking_ligas_data, menciones_ligas_data = ranking_cacheado
-    nivel_artista = (fila.get("nivel") or "") if fila is not None else ""
-    catalogado_artista = bool(nivel_artista)
+    nivel_calculado = (fila.get("nivel_calculado") or "") if fila is not None else ""
+    catalogado_artista = bool(nivel_calculado)
     ranking_artista = ranking_ligas_data if catalogado_artista else ranking
     menciones_artista = menciones_ligas_data if catalogado_artista else menciones
     analisis = analisis_artista(
@@ -558,7 +567,7 @@ def artist_detail(
             },
         },
         "fecha_captura": _json_safe(artist.fecha_captura),
-        "nivel": nivel_artista,
+        "nivel": nivel_calculado,
         "catalogado": catalogado_artista,
         "ranking": ranking_artista.get(
             artist.slug,
@@ -598,6 +607,9 @@ def artist_detail(
         perfil["stats"]["spotify"]["fecha_captura"] = _json_safe(
             artist.fecha_oyentes_spotify
         )
+    # Índice universal solo para admin
+    if x_admin_token and ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD:
+        perfil["indice_universal"] = round(fila.get("indice_universal", 0.0), 1) if fila is not None else 0.0
     resultado = _json_safe(perfil)
     cache.set(cache_key, resultado, ttl=300)
     return resultado
@@ -827,6 +839,7 @@ def admin_list_artists(
                 "nombre": a.nombre,
                 "segmento": a.segmento,
                 "nivel": a.nivel or "",
+                "es_leyenda": a.es_leyenda,
                 "ciudad": a.ciudad,
                 "generos": a.generos,
                 "estado_activo": a.estado_activo,

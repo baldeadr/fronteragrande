@@ -402,6 +402,7 @@ function FormEditar({
   const [ciudad, setCiudad] = useState(artista.ciudad);
   const [categoria, setCategoria] = useState(artista.segmento);
   const [nivel, setNivel] = useState(artista.nivel ?? "");
+  const [esLeyenda, setEsLeyenda] = useState(artista.es_leyenda ?? false);
   const [generos, setGeneros] = useState(artista.generos);
   const [estado, setEstado] = useState(artista.estado_activo);
   const [bio, setBio] = useState(artista.bio);
@@ -427,6 +428,7 @@ function FormEditar({
         ciudad: ciudad.trim(),
         categoria,
         nivel,
+        es_leyenda: esLeyenda,
         generos: generos.trim(),
         estado_activo: estado,
         bio,
@@ -482,6 +484,14 @@ function FormEditar({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Leyenda de la Frontera */}
+      <div className="flex flex-wrap items-end gap-4">
+        <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-[200px]">
+          <ToggleSwitch checked={esLeyenda} onChange={setEsLeyenda} />
+          <span className="text-sm">Leyenda de la Frontera</span>
+        </label>
       </div>
 
       <div className="flex flex-wrap gap-2">

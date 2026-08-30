@@ -83,6 +83,7 @@ class Artist(Base):
     estado_registro: Mapped[str] = mapped_column(String(80), default="investigado (web)")
     es_propio: Mapped[bool] = mapped_column(Boolean, default=False)
     nivel: Mapped[str] = mapped_column(String(40), default="", index=True)
+    es_leyenda: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     followers_ig: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_fb: Mapped[int | None] = mapped_column(Integer, nullable=True)
