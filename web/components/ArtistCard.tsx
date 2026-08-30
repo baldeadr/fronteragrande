@@ -44,15 +44,15 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
             />
           )}
         </h3>
-        <p className="truncate text-xs text-muted">
-          {artist.segmento}
-          {artist.ciudad ? ` · ${artist.ciudad}` : ""}
+        <p className="flex items-center gap-1.5 text-xs text-muted">
+          <span className="truncate">
+            {artist.segmento}
+            {artist.ciudad ? ` · ${artist.ciudad}` : ""}
+          </span>
+          {artist.nivel && (
+            <InsigniaNivel nivel={artist.nivel} className="shrink-0" />
+          )}
         </p>
-        {artist.nivel && (
-          <div>
-            <InsigniaNivel nivel={artist.nivel} />
-          </div>
-        )}
         <p className="flex flex-wrap gap-1">
           {artist.generos.length === 0 && (
             <span className="text-xs text-muted">Géneros por definir</span>
