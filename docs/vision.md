@@ -20,6 +20,10 @@
   benchmarks por género; ver `docs/habitos_consumo.md`).
 - Una **herramienta de detección de actividad**: a partir de internet se
   determina si un proyecto sigue activo (regla de actividad documentada).
+- Un **registro de los espacios donde se toca** (venues y lugares de presentación,
+  activos e históricos): parte de la historia cultural de la escena, fuente de
+  publicaciones de eventos (carteles/toquines) y puente hacia patrocinadores
+  locales. Ver `docs/venues.md`.
 - Una **pieza del propio universo artístico** (`architecting-a-band`): sirve
   para documentar, **medir y posicionar el proyecto propio** frente a la
   competencia, además de aportar valor público.
