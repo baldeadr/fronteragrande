@@ -313,43 +313,51 @@ export default function AcercaDePage() {
         </div>
       </details>
 
-      <details className="group rounded-xl border border-line bg-surface">
+      <details className="group rounded-xl border border-line bg-surface" open>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-bold sm:p-5">
           Cómo se clasifican las Ligas
           <span className="shrink-0 text-lg leading-none text-accent transition-transform duration-200 group-open:rotate-45">
             +
           </span>
         </summary>
-        <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
-          <p className="text-sm leading-relaxed text-muted">
-            Algunos proyectos destacan por su alcance real y se catalogan en
-            una <b>Liga</b>. Estos no participan en el ranking de la escena
-            local (para no desbalancearlo); se muestran en una gráfica aparte
-            con su propio ranking normalizado 0-100.
+        <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
+          <p>
+            Las <b>Ligas</b> catalogan a los proyectos que destacan por su
+            alcance real. Salen del ranking de la escena local y viven en una
+            gráfica aparte, para no aplastar a los Rookies.
           </p>
-          <p className="text-sm leading-relaxed text-muted">
-            <b>Índice universal (oculto)</b>: índice 0-100 donde cada señal se
-            normaliza contra un <b>techo de referencia mundial</b> (IG/FB/TT/YT
-            seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
-            seguidores 20M · reproducciones 1B · SoundCloud 10M · Bandcamp 1M ·
-            Beatport 100K · Mixcloud 50K). El índice combina el <b>70 % de la
-            señal dominante</b> (la de mejor ratio) con el <b>30 % de cobertura</b>
-            (media de ratios). Regla anti-trampa: cuando hay consumo registrado,
-            la audiencia social (IG/FB/TT) no puede superar <b>consumo real × 3</b>.
-            Este índice solo se usa para clasificación y no se expone públicamente
-            (solo admin).
+          <p>
+            Se miden con un <b>índice universal 0-100</b>: cada señal
+            (seguidores, oyentes, vistas…) se normaliza contra un{" "}
+            <b>techo mundial fijo</b> en escala logarítmica
+          </p>
+          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+            <FormulaLatex tex="\text{ratio} = \frac{\log_{10}(v+1)}{\log_{10}(\text{techo}+1)}" />
+          </div>
+          <p>
+            y el índice combina el <b>70 % de la señal dominante</b> (la mejor
+            ratio) con el <b>30 % de cobertura</b> (media de ratios: no tener
+            una plataforma baja la nota).
+          </p>
+          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+            <FormulaLatex tex="\text{índice} = 0.7 \cdot \max(\text{ratio}) + 0.3 \cdot \text{media}(\text{ratios})" />
+          </div>
+          <p>
+            Regla anti-trampa: con consumo registrado, la audiencia social
+            (IG/FB/TikTok) no puede superar <b>consumo real × 3</b> (un perfil
+            de seguidores comprados no infla el índice).
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#f5b301" }}>
               <IconoLiga nivel="Ligas Mayores" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>Ligas Mayores</b> — índice universal <b>≥ 60</b>.
+            <b>Ligas Mayores</b> — índice <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#2fb8a6" }}>
               <IconoLiga nivel="En Ascenso" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>En Ascenso</b> — índice universal <b>≥ 50</b> (y menor a 60).
+            <b>En Ascenso</b> — índice <b>≥ 50</b> (y menor a 60).
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#8a63d2" }}>
@@ -358,97 +366,65 @@ export default function AcercaDePage() {
                 className="h-3.5 w-3.5 shrink-0"
               />
             </span>
-            <b>Leyenda de la Frontera</b> — retirado/a o fallecido/a con
-            legado regional; se asigna por curaduría (
-            <code>es_leyenda</code>
-            en BD, editable en panel admin), no por métricas.
+            <b>Leyenda de la Frontera</b> — por curaduría, no por métricas:
+            retirado/a o fallecido/a con legado regional (flag{" "}
+            <code>es_leyenda</code> en BD, editable en el panel admin).
           </p>
         </div>
       </details>
 
 <details className="group rounded-xl border border-line bg-surface">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-bold sm:p-5">
-          Qué son las Insignias y cómo funcionan
+          Qué son las Insignias y cómo se ganan
           <span className="shrink-0 text-lg leading-none text-accent transition-transform duration-200 group-open:rotate-45">
             +
           </span>
         </summary>
-        <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="flex flex-col gap-3 px-4 pb-4 sm:px-5 sm:pb-5">
           <p className="text-sm leading-relaxed text-muted">
-            En el perfil de cada artista hay una sección <b>Insignias</b> que
-            reconoce su posición en la escena. Funcionan con <b>mutua exclusión</b>:
+            Los artistas <b>sin Liga</b> compiten por estas cuatro insignias
+            (mínimo 3 artistas en el grupo):
           </p>
 
-          <div className="flex flex-wrap gap-3 mb-2">
-            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#f5b301]">
-              <IconoLiga nivel="Ligas Mayores" className="h-5 w-5" />
-              <span className="font-medium text-xs">Ligas Mayores</span>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col items-center gap-1 w-[80px]">
+              <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <span className="line-clamp-3 font-medium">No. 1 Categoría Banda</span>
+                <span className="text-[9px] text-muted uppercase">Categoría</span>
+              </div>
+              <p className="text-[10px] text-muted text-center">Top 1 en su categoría</p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#2fb8a6]">
-              <IconoLiga nivel="En Ascenso" className="h-5 w-5" />
-              <span className="font-medium text-xs">En Ascenso</span>
+            <div className="flex flex-col items-center gap-1 w-[80px]">
+              <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <span className="line-clamp-3 font-medium">No. 1 en Norteño</span>
+                <span className="text-[9px] text-muted uppercase">Género</span>
+              </div>
+              <p className="text-[10px] text-muted text-center">Top 1 en su género</p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#8a63d2]">
-              <IconoLiga nivel="Leyenda de la Frontera" className="h-5 w-5" />
-              <span className="font-medium text-xs">Leyenda</span>
+            <div className="flex flex-col items-center gap-1 w-[80px]">
+              <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
+                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <span className="line-clamp-3 font-medium">No. 1 en Reynosa</span>
+                <span className="text-[9px] text-muted uppercase">Ciudad</span>
+              </div>
+              <p className="text-[10px] text-muted text-center">Top 1 en su ciudad</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 w-[80px]">
+              <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-en-duda/50 bg-en-duda/10 text-en-duda">
+                <span className="h-5 w-5 shrink-0 bg-en-duda rounded-full"></span>
+                <span className="line-clamp-3 font-medium">No. 3 Frontera Grande</span>
+                <span className="text-[9px] text-muted uppercase">Escena</span>
+              </div>
+              <p className="text-[10px] text-muted text-center">Top 3 global</p>
             </div>
           </div>
 
           <p className="text-sm leading-relaxed text-muted">
-            Los tres niveles de Liga (ver <b>«Cómo se clasifican las Ligas»</b>
-            arriba) son <b>exclusivos</b>: un artista con Liga <b>solo muestra
-            su badge de Liga</b> (no acumula insignias de categoría, género,
-            ciudad ni <b>No. X de la Frontera Grande</b>).
+            Quien tiene <b>Liga</b> (ver «Cómo se clasifican las Ligas» arriba)
+            solo muestra su badge de Liga y no acumula estas cuatro.
           </p>
-          <p className="text-sm leading-relaxed text-muted">
-            Los artistas <b>sin Liga</b> compiten por insignias de ranking:
-            categoría, género, ciudad y <b>No. X de la Frontera Grande</b>.
-            Así la meta es alcanzable: quien no tiene Liga aún puede brillar en
-            su categoría/ciudad/género.
-          </p>
-
-          <div className="mt-3 flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
-              <div className="flex flex-col items-center gap-1 w-[80px]">
-                <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                  <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
-                  <span className="line-clamp-3 font-medium">No. 1 Categoría Banda</span>
-                  <span className="text-[9px] text-muted uppercase">Categoría</span>
-                </div>
-                <p className="text-[10px] text-muted text-center">Top 1 en su categoría (mín. 3 artistas)</p>
-              </div>
-              <div className="flex flex-col items-center gap-1 w-[80px]">
-                <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                  <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
-                  <span className="line-clamp-3 font-medium">No. 1 en Norteño</span>
-                  <span className="text-[9px] text-muted uppercase">Género</span>
-                </div>
-                <p className="text-[10px] text-muted text-center">Top 1 en su género (mín. 3 artistas)</p>
-              </div>
-              <div className="flex flex-col items-center gap-1 w-[80px]">
-                <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                  <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
-                  <span className="line-clamp-3 font-medium">No. 1 en Reynosa</span>
-                  <span className="text-[9px] text-muted uppercase">Ciudad</span>
-                </div>
-                <p className="text-[10px] text-muted text-center">Top 1 en su ciudad (mín. 3 artistas)</p>
-              </div>
-              <div className="flex flex-col items-center gap-1 w-[80px]">
-                <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-en-duda/50 bg-en-duda/10 text-en-duda">
-                  <span className="h-5 w-5 shrink-0 bg-en-duda rounded-full"></span>
-                  <span className="line-clamp-3 font-medium">No. 3 Frontera Grande</span>
-                  <span className="text-[9px] text-muted uppercase">Escena</span>
-                </div>
-                <p className="text-[10px] text-muted text-center">Top 3 global de la escena (mín. 3 artistas)</p>
-              </div>
-            </div>
-
-            <p className="text-sm leading-relaxed text-muted text-center mt-2">
-              <i>Los badges de Liga (Ligas Mayores, En Ascenso, Leyenda) se muestran en
-              <b>«Cómo se clasifican las Ligas»</b> arriba. Un artista con Liga solo
-              muestra su badge de Liga; los sin Liga compiten por estas 4 insignias.</i>
-            </p>
-          </div>
         </div>
       </details>
     </div>

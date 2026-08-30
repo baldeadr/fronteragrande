@@ -5,8 +5,9 @@ página del artista en cada plataforma y la guarda. La web carga la imagen
 directamente desde la URL remota.
 
 Fuentes probadas:
-- Spotify: la página *embed* del artista incluye su foto (image-cdn-ak.spotifycdn.com);
-  si el embed no responde, se usa el oEmbed público (`thumbnail_url`).
+- Spotify: si hay credenciales en `.env`, la Web API oficial devuelve la foto del
+  artista en alta resolución; si no, la página *embed* del artista incluye su foto
+  (i.scdn.co) y el oEmbed público (`thumbnail_url`) sirve de respaldo.
 - Bandcamp, SoundCloud, YouTube, Instagram, Facebook, TikTok, X: se intenta `og:image` de la página.
 - Instagram/Facebook/TikTok suelen bloquear scrapers (se omite si fallan).
 """
@@ -73,30 +74,72 @@ def _spotify_oembed(url_artista: str) -> str:
         miniatura = (respuesta.json().get("thumbnail_url") or "").strip()
     except ValueError:
         return ""
-    return miniatura if miniatura.startswith("https://image-cdn") else ""
+    # Spotify sirve hoy `i.scdn.co` (antes `image-cdn-ak.spotifycdn.com`).
+    if not miniatura.startswith(("https://i.scdn.co", "https://image-cdn")):
+        return ""
+    return miniatura
+
+
+def _spotify_api(url_artista: str) -> str:
+    """Foto del artista en mayor resolución vía Spotify Web API (client credentials).
+
+    Devuelve la imagen más grande de `images`. Requiere `SPOTIFY_CLIENT_ID` /
+    `SPOTIFY_CLIENT_SECRET` y spotipy; si falta cualquiera, devuelve "" para que
+    el embed/oEmbed sigan de respaldo (CI usa `requirements-prod.txt`, sin
+    spotipy).
+    """
+    client_id = os.getenv("SPOTIFY_CLIENT_ID", "").strip()
+    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        return ""
+    try:
+        from spotipy import Spotify
+        from spotipy.oauth2 import SpotifyClientCredentials
+    except Exception:
+        return ""
+    m = re.search(r"artist/([0-9A-Za-z]+)", url_artista or "")
+    if not m:
+        return ""
+    try:
+        spotify = Spotify(
+            auth_manager=SpotifyClientCredentials(
+                client_id=client_id, client_secret=client_secret
+            )
+        )
+        imagenes = (spotify.artist(m.group(1)) or {}).get("images") or []
+    except Exception:
+        return ""
+    con_url = [im for im in imagenes if im.get("url")]
+    if not con_url:
+        return ""
+    mayor = max(con_url, key=lambda im: (im.get("width") or 0) * (im.get("height") or 0))
+    return mayor.get("url") or ""
 
 
 def _spotify(url: str) -> str:
-    """Foto del artista desde la página embed de Spotify.
+    """Foto del artista: Web API (alta resolución) → página embed → oEmbed.
 
-    Prefiere la foto de perfil (`ab676161`); si el artista no tiene, usa su
-    imagen de cabecera (`ab67616d0000b273`, recorte grande). Si el embed no
-    responde (Spotify bloquea IPs de datacenter a veces), cae al oEmbed.
+    El embed ya no expone `image-cdn-ak.spotifycdn.com` (hoy sirve `i.scdn.co`);
+    el oEmbed devuelve una miniatura pequeña. Con credenciales en `.env`, la Web
+    API es la fuente preferida porque trae la foto en su mayor resolución.
     """
     m = re.search(r"artist/([0-9A-Za-z]+)", url or "")
     if not m:
         return ""
     url_artista = f"https://open.spotify.com/artist/{m.group(1)}"
+    foto = _spotify_api(url_artista)
+    if foto:
+        return foto
     respuesta = _get(f"https://open.spotify.com/embed/artist/{m.group(1)}")
     if respuesta is not None and respuesta.status_code == 200:
         foto = re.search(
-            r"https://image-cdn-ak\.spotifycdn\.com/image/ab676161[0-9a-f]+",
+            r"https://(?:image-cdn-ak\.spotifycdn\.com|i\.scdn\.co)/image/ab676161[0-9a-f]+",
             respuesta.text,
         )
         if foto:
             return foto.group(0)
         cabecera = re.search(
-            r"https://image-cdn-ak\.spotifycdn\.com/image/ab67616d0000b273[0-9a-f]+",
+            r"https://(?:image-cdn-ak\.spotifycdn\.com|i\.scdn\.co)/image/ab67616d0000b273[0-9a-f]+",
             respuesta.text,
         )
         if cabecera:
