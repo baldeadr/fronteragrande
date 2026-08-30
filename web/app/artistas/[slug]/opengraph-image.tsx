@@ -1,5 +1,6 @@
 import { ImageResponse } from "@vercel/og";
 import type { ArtistDetail } from "@/lib/types";
+import { ciudadBase } from "@/lib/ciudades";
 import { ARCHIVO_BLACK_B64 } from "@/lib/fuente-archivo-black";
 
 export const runtime = "edge";
@@ -127,7 +128,7 @@ export default async function Image({
 
   const nombre = artist?.nombre ?? "Frontera Grande";
   const segmento = artist?.segmento ?? "Artista de la escena";
-  const ciudad = artist?.ciudad ?? "";
+  const ciudad = artist?.ciudad ? ciudadBase(artist.ciudad) : "";
   const generos = (artist?.generos ?? []).slice(0, 5);
   const rawImagen = artist?.imagen_perfil ?? null;
   const imagen = rawImagen ? await imageToBase64(rawImagen) : null;

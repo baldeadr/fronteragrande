@@ -4,7 +4,7 @@ import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import EstadoBadge from "./EstadoBadge";
 import IconoVerificado from "./IconoVerificado";
 import InsigniaNivel from "./InsigniaNivel";
-import { abreviaturaDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
 
 export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
   const inicial = artist.nombre ? artist.nombre[0].toUpperCase() : "♪";
@@ -50,7 +50,7 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
           <span className="truncate">
             {artist.segmento}
             {artist.ciudad
-              ? ` · ${artist.ciudad}${abrev ? ` ${abrev}` : ""}`
+              ? ` · ${ciudadBase(artist.ciudad)}${abrev ? ` ${abrev}` : ""}`
               : ""}
           </span>
           {artist.nivel && (

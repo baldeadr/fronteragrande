@@ -18,7 +18,7 @@ import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import ConsumoAnalisis from "@/components/ConsumoAnalisis";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
-import { abreviaturaDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
 function tipoMencion(
@@ -89,10 +89,10 @@ export async function generateMetadata({
     const artist = await api.artist(slug);
     return {
       title: artist.nombre,
-      description: `${artist.nombre} — ${artist.segmento} · ${artist.ciudad}. Escúchalo y síguelo en sus redes.`,
+      description: `${artist.nombre} — ${artist.segmento} · ${ciudadBase(artist.ciudad)}. Escúchalo y síguelo en sus redes.`,
       openGraph: {
         title: `${artist.nombre} · Frontera Grande`,
-        description: `${artist.segmento} de ${artist.ciudad} en la escena de la frontera grande.`,
+        description: `${artist.segmento} de ${ciudadBase(artist.ciudad)} en la escena de la frontera grande.`,
         type: "profile",
         images: [`/artistas/${slug}/opengraph-image.png`],
       },
@@ -198,7 +198,9 @@ export default async function PerfilPage({
               <p className="mt-1 text-muted">
                 {artist.segmento}
                 {artist.ciudad
-                  ? ` · ${artist.ciudad} ${abreviaturaDeCiudad(artist.ciudad) ?? ""}`
+                  ? ` · ${ciudadBase(artist.ciudad)} ${
+                      abreviaturaDeCiudad(artist.ciudad) ?? ""
+                    }`
                   : ""}
               </p>
             </div>

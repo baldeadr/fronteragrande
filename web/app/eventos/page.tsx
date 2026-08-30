@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { api } from "@/lib/api";
 import { fechaCorta } from "@/lib/formato";
-import { abreviaturaDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
 import type { Evento } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -20,7 +20,9 @@ function TarjetaEvento({ e }: { e: Evento }) {
       <p className="mt-1 text-sm text-muted">
         {[
           e.lugar,
-          e.ciudad ? `${e.ciudad} ${abreviaturaDeCiudad(e.ciudad) ?? ""}`.trim() : null,
+          e.ciudad
+            ? `${ciudadBase(e.ciudad)}${abreviaturaDeCiudad(e.ciudad) ? ` ${abreviaturaDeCiudad(e.ciudad)}` : ""}`
+            : null,
         ]
           .filter(Boolean)
           .join(" · ") || "Lugar por confirmar"}

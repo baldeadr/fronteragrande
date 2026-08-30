@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import ArtistCard from "./ArtistCard";
-import { abreviaturaDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
 
 export default function Directorio({
   artistas,
@@ -122,7 +122,8 @@ export default function Directorio({
               const abrev = abreviaturaDeCiudad(c);
               return (
                 <option key={c} value={c}>
-                  {c} {abrev ?? ""}
+                  {ciudadBase(c)}
+                  {abrev ? ` ${abrev}` : ""}
                 </option>
               );
             })}

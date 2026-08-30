@@ -2,6 +2,13 @@
 
 export type Pais = "MX" | "US";
 
+/** Ciudad base sin el sufijo de estado incrustado ("Roma, Texas" → "Roma"). */
+export function ciudadBase(ciudad: string | null): string {
+  if (!ciudad) return "";
+  const prima = ciudad.split(",")[0].trim();
+  return prima || ciudad;
+}
+
 /** Ciudad → país, en minúsculas y sin acentos para comparar robusto. */
 const PAIS_CIUDAD: Record<string, Pais> = {
   reynosa: "MX",
@@ -18,7 +25,7 @@ const PAIS_CIUDAD: Record<string, Pais> = {
 
 export function paisDeCiudad(ciudad: string | null): Pais | null {
   if (!ciudad) return null;
-  const clave = ciudad
+  const clave = ciudadBase(ciudad)
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
