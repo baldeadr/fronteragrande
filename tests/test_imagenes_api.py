@@ -23,12 +23,16 @@ class LinkFake:
 
 
 def test_meta_picture_devuelve_url_final(monkeypatch):
-    monkeypatch.setattr(
-        imagenes.requests,
-        "get",
-        lambda url, **kw: Respuesta(url="https://scontent.xx/fb.jpg"),
-    )
+    capturado = {}
+
+    def get(url, **kw):
+        capturado.update(kw)
+        return Respuesta(url="https://scontent.xx/fb.jpg")
+
+    monkeypatch.setattr(imagenes.requests, "get", get)
     assert imagenes.meta_picture("123", "tok") == "https://scontent.xx/fb.jpg"
+    assert capturado["params"]["width"] == 800
+    assert capturado["params"]["height"] == 800
 
 
 def test_meta_picture_sin_red_devuelve_vacio(monkeypatch):

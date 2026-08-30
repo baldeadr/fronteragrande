@@ -158,12 +158,19 @@ def _og(url: str) -> str:
 def meta_picture(page_id: str, page_token: str) -> str:
     """Foto de la página de Facebook vía Graph API (`picture` redirige al CDN).
 
-    Requiere el token de la página (artistas conectados). Devuelve la URL
+    Requiere el token de la página (artistas conectados). Pide `width=800`
+    para que la URL del CDN llegue en alta resolución (`type=large` por sí
+    solo devuelve ~200px, que se ve borrosa en las tarjetas). Devuelve la URL
     final tras el redirect de Meta.
     """
     respuesta = _get_con_params(
         f"{META_GRAPH}/{page_id}/picture",
-        {"access_token": page_token, "type": "large"},
+        {
+            "access_token": page_token,
+            "type": "large",
+            "width": 800,
+            "height": 800,
+        },
     )
     if respuesta is None or respuesta.status_code != 200:
         return ""
