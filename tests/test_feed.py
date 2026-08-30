@@ -10,11 +10,28 @@ def test_feed_shape(client):
         return
     primero = items[0]
     for clave in ("fecha", "tipo", "fuente", "titulo", "url", "detalle",
-                  "artista", "artista_slug", "preview"):
+                  "artista", "artista_slug", "nivel", "preview"):
         assert clave in primero
     assert primero["preview"]["tipo"] in (
         "youtube", "tiktok", "instagram", "facebook", "imagen", "texto"
     )
+
+
+def test_feed_expone_nivel(client):
+    """El feed trae el nivel calculado del artista en cada ítem."""
+    items = client.get("/api/feed").json()
+    if not items:
+        return
+    artistas = client.get("/api/artists").json()
+    nivel_por_slug = {
+        a["slug"]: (a.get("nivel") or "")
+        for a in artistas
+        if a.get("slug")
+    }
+    for item in items:
+        assert "nivel" in item
+        slug = item.get("artista_slug") or ""
+        assert (item.get("nivel") or "") == nivel_por_slug.get(slug, "")
 
 
 def test_feed_fechas_desc(client):

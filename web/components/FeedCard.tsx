@@ -4,6 +4,7 @@ import type { FeedItem } from "@/lib/types";
 import { fechaHora, fechaRelativa } from "@/lib/formato";
 import { infoPlataforma } from "./Plataformas";
 import IconoRed from "./IconoRed";
+import InsigniaNivel from "./InsigniaNivel";
 
 export default function FeedCard({
   item,
@@ -27,23 +28,34 @@ export default function FeedCard({
   const url = item.url ?? "";
   const fuente = infoPlataforma(item.fuente);
   const inicial = item.artista ? item.artista[0].toUpperCase() : "♪";
+  const avatar = item.imagen_artista ? (
+    <Image
+      src={item.imagen_artista}
+      alt={`Foto de ${item.artista}`}
+      width={40}
+      height={40}
+      className="h-10 w-10 shrink-0 rounded-full object-cover"
+      unoptimized
+    />
+  ) : (
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-soft text-lg font-bold text-accent">
+      {inicial}
+    </div>
+  );
 
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:p-5">
       <header className="flex items-center gap-3">
-        {item.imagen_artista ? (
-          <Image
-            src={item.imagen_artista}
-            alt={`Foto de ${item.artista}`}
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 rounded-full object-cover"
-            unoptimized
-          />
+        {item.artista && item.artista_slug ? (
+          <Link
+            href={`/artistas/${item.artista_slug}`}
+            title={`Perfil de ${item.artista}`}
+            className="shrink-0 transition-opacity hover:opacity-80"
+          >
+            {avatar}
+          </Link>
         ) : (
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-soft text-lg font-bold text-accent">
-            {inicial}
-          </div>
+          avatar
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -60,6 +72,9 @@ export default function FeedCard({
             <span title={fuente.nombre}>
               <IconoRed src={fuente.icono} alt={fuente.nombre} size={16} />
             </span>
+            {item.nivel && (
+              <InsigniaNivel nivel={item.nivel} size="sm" className="shrink-0" />
+            )}
           </div>
           <p className="text-xs text-muted">
             {fechaHora(item.fecha)}

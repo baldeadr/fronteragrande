@@ -134,11 +134,11 @@ Umbrales **fijos y documentados** (no dependen de la composición de la escena):
 - **Ligas Mayores**: índice universal **≥ 60**.
 - **En Ascenso**: índice universal **≥ 50** (y < 60).
 - **Leyenda de la Frontera**: **manual/editorial** (flag `es_leyenda` en BD + fuente en `notas`).
-- **Rookies (escena base)**: índice < 50 (sin nivel calculado).
+- **Escena (base)**: índice < 50 (sin nivel calculado).
 
 ### Rankings visibles (independientes por grupo)
 - **Ranking de Ligas**: normaliza 0-100 solo entre catalogados (Ligas Mayores + En Ascenso + Leyenda).
-- **Ranking de Rookies**: normaliza 0-100 solo entre la escena base.
+- **Ranking de la escena**: normaliza 0-100 solo entre la escena base.
 - Cada grupo tiene su #1 con índice 100 (descubrimiento justo dentro del grupo).
 
 ### Techos de referencia (documentados)

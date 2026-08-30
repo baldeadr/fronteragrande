@@ -6,6 +6,7 @@ import { FormulaInline, FormulaLatex } from "@/components/Formula";
 import IconoRed from "@/components/IconoRed";
 import { infoPlataforma } from "@/components/Plataformas";
 import { IconoLiga } from "@/components/IconoLiga";
+import IconoMencion from "@/components/IconoMencion";
 
 export const metadata: Metadata = {
   title: "Acerca de",
@@ -323,8 +324,8 @@ export default function AcercaDePage() {
         <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
           <p>
             Las <b>Ligas</b> catalogan a los proyectos que destacan por su
-            alcance real. Salen del ranking de la escena local y viven en una
-            gráfica aparte, para no aplastar a los Rookies.
+            alcance real. Salen del ranking de la escena base y en Stats se
+            muestran en su propio grupo, para no aplastar a la escena.
           </p>
           <p>
             Se miden con un <b>índice universal 0-100</b>: cada señal
@@ -389,7 +390,7 @@ export default function AcercaDePage() {
           <div className="flex flex-wrap gap-2">
             <div className="flex flex-col items-center gap-1 w-[80px]">
               <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <IconoMencion tipo="categoria" className="h-5 w-5 shrink-0" />
                 <span className="line-clamp-3 font-medium">No. 1 Categoría Banda</span>
                 <span className="text-[9px] text-muted uppercase">Categoría</span>
               </div>
@@ -397,7 +398,7 @@ export default function AcercaDePage() {
             </div>
             <div className="flex flex-col items-center gap-1 w-[80px]">
               <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <IconoMencion tipo="genero" className="h-5 w-5 shrink-0" />
                 <span className="line-clamp-3 font-medium">No. 1 en Norteño</span>
                 <span className="text-[9px] text-muted uppercase">Género</span>
               </div>
@@ -405,7 +406,7 @@ export default function AcercaDePage() {
             </div>
             <div className="flex flex-col items-center gap-1 w-[80px]">
               <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-accent/40 bg-accent-soft/40 text-accent">
-                <span className="h-5 w-5 shrink-0 bg-accent rounded-full"></span>
+                <IconoMencion tipo="ciudad" className="h-5 w-5 shrink-0" />
                 <span className="line-clamp-3 font-medium">No. 1 en Reynosa</span>
                 <span className="text-[9px] text-muted uppercase">Ciudad</span>
               </div>
@@ -413,7 +414,7 @@ export default function AcercaDePage() {
             </div>
             <div className="flex flex-col items-center gap-1 w-[80px]">
               <div className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-en-duda/50 bg-en-duda/10 text-en-duda">
-                <span className="h-5 w-5 shrink-0 bg-en-duda rounded-full"></span>
+                <IconoMencion tipo="escena" className="h-5 w-5 shrink-0" />
                 <span className="line-clamp-3 font-medium">No. 3 Frontera Grande</span>
                 <span className="text-[9px] text-muted uppercase">Escena</span>
               </div>

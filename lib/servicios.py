@@ -43,7 +43,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
     """DataFrame plano de artistas para tablas y gráficas.
 
     Incluye índice universal (0-100 contra TODOS) y clasificación on-the-fly
-    (nivel_calculado) para separar Ligas vs Rookies. El índice universal
+    (nivel_calculado) para separar Ligas vs Escena (base). El índice universal
     es solo para clasificación/admin; los rankings visibles se normalizan
     independientemente por grupo.
     """
@@ -518,7 +518,7 @@ def _ranking_de(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]
 
 
 def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
-    """Ranking de alcance y menciones de la escena local (Rookies).
+    """Ranking de alcance y menciones de la escena local (Escena).
 
     Solo participan los artistas sin nivel calculado (`nivel_calculado == ""`).
     Los catalogados (Ligas Mayores / En Ascenso / Leyenda de la Frontera) van
@@ -677,7 +677,7 @@ def stats_escena(session: Session) -> dict:
         if a.fb_page_token and a.estado_registro
     )
 
-    # Stats separados por grupo (Ligas vs Rookies)
+    # Stats separados por grupo (Ligas vs Escena)
     ligas_df = df[df["nivel_calculado"].fillna("") != ""]
     rookies_df = df[df["nivel_calculado"].fillna("") == ""]
 

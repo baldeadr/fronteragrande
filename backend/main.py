@@ -508,7 +508,12 @@ def artist_detail(
     feed = feed_df(db, limite=200, artista=artist.nombre)
     feed_propio = feed.to_dict(orient="records")
     feed_propio = [
-        {**f, "preview": preview_feed(f), "fecha": _json_safe(f["fecha"])}
+        {
+            **f,
+            "preview": preview_feed(f),
+            "fecha": _json_safe(f["fecha"]),
+            "nivel": nivel_calculado,
+        }
         for f in feed_propio
     ]
 
@@ -629,6 +634,11 @@ def get_feed(
     feed = feed_df(db, limite=500)
     if feed.empty:
         return []
+    nivel_por_slug = (
+        artistas_df(db)[["slug", "nivel_calculado"]]
+        .set_index("slug")["nivel_calculado"]
+        .to_dict()
+    )
     filas = [
         {
             "fecha": _json_safe(f["fecha"]),
@@ -640,6 +650,7 @@ def get_feed(
             "artista": f.get("artista") or "",
             "artista_slug": f.get("artista_slug") or None,
             "imagen_artista": f.get("imagen_artista") or None,
+            "nivel": nivel_por_slug.get(f.get("artista_slug") or "", ""),
             "preview": preview_feed(f),
         }
         for f in feed.to_dict(orient="records")

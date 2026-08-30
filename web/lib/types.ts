@@ -92,6 +92,7 @@ export interface FeedItem {
   artista: string;
   artista_slug: string | null;
   imagen_artista: string | null;
+  nivel?: string;
   preview: Preview;
 }
 
@@ -142,6 +143,18 @@ export interface Stats {
   posts_90dias: number;
   por_ciudad: CiudadActividad[];
   eventos_proximos: { total: number; ciudad: string | null; proximos: EventoProximo[] };
+  ligas: {
+    total: number;
+    por_nivel: Record<string, number>;
+    por_segmento: Record<string, number>;
+    por_ciudad: Record<string, number>;
+  };
+  rookies: {
+    total: number;
+    por_segmento: Record<string, number>;
+    por_ciudad: Record<string, number>;
+    por_estado_activo: Record<string, number>;
+  };
 }
 
 export interface LinkRed {

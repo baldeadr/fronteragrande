@@ -8,8 +8,7 @@ import DonaCategorias from "@/components/stats/DonaCategorias";
 import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
-import RankingInteractivo from "@/components/stats/RankingInteractivo";
-import RankingLigas from "@/components/stats/RankingLigas";
+import RankingFiltrable from "@/components/stats/RankingFiltrable";
 
 export const metadata: Metadata = {
   title: "Stats de la escena",
@@ -33,6 +32,7 @@ export default async function StatsPage() {
   const conRanking = escenaLocal.filter(
     (a) => a.ranking.indice !== null && a.ranking.indice > 0,
   ).length;
+  const catalogados = artistas.filter((a) => a.catalogado).length;
   const generos = Object.entries(stats.generos).sort((a, b) => b[1] - a[1]);
 
   const kpis = [
@@ -69,19 +69,12 @@ export default async function StatsPage() {
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 font-bold">Ranking de alcance</h2>
         <p className="mb-4 text-sm text-muted">
-          {conRanking} proyectos con índice calculado. La barra fina muestra de
-          qué redes viene el alcance de cada uno.
+          {conRanking} proyectos de la escena con índice calculado ·{" "}
+          {catalogados} en las Ligas. Elige un grupo para ver su propio
+          ranking: la barra fina muestra de qué redes viene el alcance de cada
+          uno.
         </p>
-        <RankingInteractivo artistas={escenaLocal} />
-      </section>
-
-      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-        <h2 className="mb-1 font-bold">Ranking de Ligas</h2>
-        <p className="mb-4 text-sm text-muted">
-          Ligas Mayores, En Ascenso y Leyenda de la Frontera en una gráfica aparte,
-          para no desbalancear el ranking de la escena local.
-        </p>
-        <RankingLigas artistas={artistas} />
+        <RankingFiltrable artistas={artistas} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">

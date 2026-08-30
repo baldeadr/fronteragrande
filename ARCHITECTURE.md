@@ -160,7 +160,7 @@ flowchart TD
 
 ### 1. Frontend (Next.js 16, App Router)
 - **Páginas**: Directorio (`/artistas`), Perfil (`/artistas/[slug]`), Stats (`/stats`), Admin (`/admin`), Acerca de, Onboarding.
-- **Componentes clave**: `InsigniaNivel`, `RankingLigas`, `Directorio` (filtros: Liga, Categoría, Ciudad, Géneros, Estado), `ContenidoPerfil` (pestañas Todo/Posts/Video/Música/Eventos), `EstadoBadge`, `Avatar`, `ConsumoAnalisis`.
+- **Componentes clave**: `InsigniaNivel`, `RankingFiltrable` (ranking por grupos Escena/Ligas), `Directorio` (filtros: Liga, Categoría, Ciudad, Géneros, Estado), `ContenidoPerfil` (pestañas Todo/Posts/Video/Música/Eventos), `EstadoBadge`, `Avatar`, `ConsumoAnalisis`.
 - **PWA**: `manifest.ts`, `sw.js` (cache shell + estáticos), iconos en `public/icons/`, Web Push (VAPID) con suscripciones en `push_subscriptions`.
 - **API Client**: `web/lib/api.ts` (typed fetch wrappers).
 
