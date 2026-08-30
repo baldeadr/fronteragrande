@@ -50,6 +50,20 @@ def _asegurar_columnas_extra():
                 )
         if "artists" in inspector.get_table_names():
             with engine.begin() as conn:
+                # Contadores grandes (vistas/reproducciones) a BIGINT: un
+                # canal como Grupo Frontera supera el INTEGER de Postgres.
+                for columna in (
+                    "vistas_yt",
+                    "vistas_tt",
+                    "reproducciones_spotify",
+                    "reproducciones_bandcamp",
+                    "reproducciones_soundcloud",
+                ):
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE artists ALTER COLUMN {columna} TYPE BIGINT"
+                        )
+                    )
                 conn.execute(
                     text("ALTER TABLE artists ALTER COLUMN imagen_perfil TYPE TEXT")
                 )

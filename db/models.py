@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Date,
     DateTime,
@@ -96,11 +97,11 @@ class Artist(Base):
     fecha_oyentes_spotify: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     fuente_oyentes_spotify: Mapped[str] = mapped_column(String(80), default="")
 
-    vistas_yt: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    vistas_tt: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    reproducciones_spotify: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    reproducciones_bandcamp: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    reproducciones_soundcloud: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    vistas_yt: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    vistas_tt: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    reproducciones_spotify: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    reproducciones_bandcamp: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    reproducciones_soundcloud: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     fecha_captura: Mapped[datetime | None] = mapped_column(Date, nullable=True)
 
     ultimo_lanzamiento: Mapped[datetime | None] = mapped_column(Date, nullable=True)
