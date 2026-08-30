@@ -148,8 +148,6 @@ export default async function PerfilPage({
     .filter((s) => s.metricas.length > 0);
 
   const infoActividad = [
-    artist.metodo_actividad &&
-      `Método de actividad: ${artist.metodo_actividad}`,
     artist.ultimo_lanzamiento &&
       `Último lanzamiento: ${fechaCorta(artist.ultimo_lanzamiento)}`,
     artist.ultimo_evento && `Último evento: ${fechaCorta(artist.ultimo_evento)}`,

@@ -41,6 +41,15 @@ export interface AnalisisPerfil {
 export interface ConsumoAnalisis {
   patron: string;
   texto: string;
+  balance: string;
+  audiencia: {
+    patron: string;
+    dominancia: Record<string, number>;
+  };
+  consumo: {
+    patron: string;
+    dominancia: Record<string, number>;
+  };
   ratios: {
     viralidad_yt: number | null;
     engagement_spotify: number | null;

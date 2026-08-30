@@ -424,12 +424,163 @@ def ratio_social_musica(metricas: dict) -> float | None:
     return round(sociales / musica, 1)
 
 
+# Señales de audiencia y consumo separadas por dimensión.
+#
+# Cada dimensión compara SOLO unidades equivalentes (seguidores vs seguidores,
+# reproducciones vs reproducciones) en escala log10, para que la comparativa sea
+# justa. Históricamente se mezclaban vistas de YouTube (enormes por naturaleza)
+# con oyentes de Spotify o seguidores sociales, lo que sesgaba siempre hacia YouTube.
+
+MAPEO_AUDIENCIA = {
+    "ig": ("seguidores",),
+    "fb": ("seguidores",),
+    "tt": ("seguidores",),
+    "yt": ("seguidores",),
+    "spotify": ("seguidores",),
+    "beatport": ("seguidores",),
+    "mixcloud": ("seguidores",),
+}
+
+MAPEO_CONSUMO = {
+    "yt": ("vistas",),
+    "spotify": ("reproducciones", "oyentes_mensuales"),
+    "bandcamp": ("reproducciones",),
+    "soundcloud": ("reproducciones",),
+}
+
+NOMBRE_DIMENSION_PATRON = {
+    "ig": "instagram_dominante",
+    "fb": "facebook_dominante",
+    "tt": "tiktok_dominante",
+    "yt": "youtube_dominante",
+    "spotify": "spotify_dominante",
+    "beatport": "beatport_dominante",
+    "mixcloud": "mixcloud_dominante",
+    "bandcamp": "bandcamp_dominante",
+    "soundcloud": "soundcloud_dominante",
+}
+
+
+def _share_log(metricas: dict, señales: dict) -> tuple[dict[str, float], str]:
+    """Reparto % por plataforma en escala log10 dentro de una dimensión.
+
+    Devuelve (shares, patron). El patrón es 'sin_datos' si no hay señal, el
+    nombre de la plataforma dominante si supera ~50% con diferencia clara, o
+    'distribuido' cuando el peso está repartido.
+    """
+    brutos: dict[str, float] = {}
+    for plataforma, tipos in señales.items():
+        met = metricas.get(plataforma) or {}
+        for tipo in tipos:
+            valor = met.get(tipo)
+            if _es_metrico(valor):
+                brutos[plataforma] = float(valor)
+                break
+    if not brutos:
+        return {}, "sin_datos"
+    logs = {p: math.log10(v + 1.0) for p, v in brutos.items()}
+    total = sum(logs.values())
+    shares = {p: round(l / total * 100.0, 1) for p, l in logs.items()}
+    shares = dict(sorted(shares.items(), key=lambda kv: kv[1], reverse=True))
+    primero, primero_v = next(iter(shares.items()))
+    segundo_v = (list(shares.values())[1] if len(shares) > 1 else 0.0)
+    if primero_v >= 50.0 and primero_v - segundo_v >= 15.0:
+        patron = NOMBRE_DIMENSION_PATRON.get(primero, "distribuido")
+        return shares, patron
+    return shares, "distribuido"
+
+
+def dominancia_audiencia(metricas: dict) -> tuple[dict[str, float], str]:
+    """Reparto de seguidores por red social (IG/FB/TT/YT/Spotify/Beatport/Mixcloud)
+    y patrón resultante. Compara solo seguidores en escala log10."""
+    return _share_log(metricas, MAPEO_AUDIENCIA)
+
+
+def dominancia_consumo(metricas: dict) -> tuple[dict[str, float], str]:
+    """Reparto de reproducciones/vistas entre plataformas musicales
+    (YT/Spotify/Bandcamp/SoundCloud) y patrón resultante. Compara solo consumo
+    en escala log10."""
+    return _share_log(metricas, MAPEO_CONSUMO)
+
+
+def balance_audiencia_consumo(metricas: dict) -> str:
+    """Lectura global de la comparativa entre audiencia (seguidores) y consumo
+    (reproducciones). Devuelve una clave legible para el texto combinado."""
+    sociales = sum(
+        _valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "tt", "yt")
+    )
+    consumo = (
+        _valor_seguro(metricas, "yt", "vistas")
+        + _valor_seguro(metricas, "spotify", "reproducciones")
+        + _valor_seguro(metricas, "spotify", "oyentes_mensuales")
+        + _valor_seguro(metricas, "bandcamp", "reproducciones")
+        + _valor_seguro(metricas, "soundcloud", "reproducciones")
+    )
+    if sociales <= 0 and consumo <= 0:
+        return "sin_datos"
+    if sociales <= 0 or consumo <= 0:
+        return "parcial"
+    ratio = consumo / sociales
+    if ratio >= 10:
+        return "consumo_dominante"
+    if ratio >= 3:
+        return "inclinado_consumo"
+    if ratio >= 1 / 3:
+        return "equilibrado"
+    if ratio >= 1 / 10:
+        return "inclinado_social"
+    return "social_dominante"
+
+
+TEXTO_BALANCE_AUDIENCIA_CONSUMO = {
+    "consumo_dominante": (
+        "El consumo (reproducciones y vistas) es claramente mayor que los "
+        "seguidores registrados: la música se escucha más de lo que se sigue. "
+        "La audiencia descubre y consume el contenido, pero aún hay oportunidad "
+        "de convertir esas escuchas en comunidad."
+    ),
+    "inclinado_consumo": (
+        "El consumo supera ligeramente a la audiencia social registrada. La "
+        "gente consume la música, aunque la comunidad que la sigue es menor. "
+        "Reforzar el vínculo entre escucha y seguidores ayudaría a fidelizar."
+    ),
+    "equilibrado": (
+        "Audiencia y consumo están equilibrados: los seguidores que se acumulan "
+        "en redes guardan proporción con las reproducciones que se generan. "
+        "Una base sana sobre la que construir."
+    ),
+    "inclinado_social": (
+        "Hay más seguidores que consumo registrado. La comunidad sigue al "
+        "proyecto en redes, pero el consumo musical es menor: distribuir y "
+        "enlazar la música desde los perfiles ayudaría a convertir seguidores "
+        "en reproducciones."
+    ),
+    "social_dominante": (
+        "La audiencia social (seguidores) supera ampliamente al consumo "
+        "registrado. La comunidad sigue al proyecto en redes, pero la música "
+        "apenas se reproduce: es el caso típico de perfil de influencia sin "
+        "conversión musical todavía."
+    ),
+    "parcial": (
+        "Solo hay señal en una de las dos dimensiones (audiencia o consumo), "
+        "así que la comparativa está incompleta. Conecta más plataformas para "
+        "tener una lectura equilibrada."
+    ),
+    "sin_datos": (
+        "Aún no hay suficientes datos conectados para comparar audiencia y consumo."
+    ),
+}
+
+
 def dominancia_plataforma(metricas: dict) -> dict[str, float]:
     """Porcentaje de dominancia de cada plataforma sobre el total.
 
     Usa la métrica de alcance de cada plataforma (seguidores, vistas,
     reproducciones) y calcula qué % representa del total combinado.
     Devuelve {plataforma: porcentaje} solo para las que tienen dato.
+
+    Legado: mezcla unidades incomparables; se mantiene por compatibilidad pero
+    el análisis nuevo usa `dominancia_audiencia`/`dominancia_consumo` por separado.
     """
     partes: dict[str, float] = {}
     for plataforma in PESOS_ALCANCE:

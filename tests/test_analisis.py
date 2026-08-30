@@ -3,6 +3,9 @@
 from datetime import date
 
 from lib.helpers import (
+    balance_audiencia_consumo,
+    dominancia_audiencia,
+    dominancia_consumo,
     dominancia_plataforma,
     patron_dominancia,
     ratio_engagement_spotify,
@@ -117,13 +120,65 @@ def test_patron_sin_datos():
 def test_analisis_consumo_youtube_dominante():
     metricas = {"yt": {"vistas": 5000, "seguidores": 500}}
     resultado = analisis_consumo(metricas)
-    assert resultado["patron"] == "youtube_dominante"
+    assert resultado["consumo"]["patron"] == "youtube_dominante"
     assert resultado["ratios"]["viralidad_yt"] == 10.0
-    assert "YouTube" in resultado["texto"]
+    assert resultado["balance"] == "consumo_dominante"
+    assert "consumo" in resultado["texto"]
 
 
 def test_analisis_consumo_sin_datos():
     resultado = analisis_consumo({})
     assert resultado["patron"] == "sin_datos"
+    assert resultado["consumo"]["patron"] == "sin_datos"
+    assert resultado["audiencia"]["patron"] == "sin_datos"
+    assert resultado["audiencia"]["dominancia"] == {}
+    assert resultado["consumo"]["dominancia"] == {}
     assert resultado["ratios"]["viralidad_yt"] is None
-    assert resultado["dominancia"] == {}
+
+
+def test_analisis_separa_audiencia_de_consumo():
+    metricas = {
+        "ig": {"seguidores": 100_000},
+        "spotify": {"seguidores": 500, "reproducciones": 1_000},
+        "yt": {"vistas": 5_000_000, "seguidores": 10_000},
+    }
+    resultado = analisis_consumo(metricas)
+    # El consumo compara solo reproducciones/vistas (no seguidores sociales).
+    assert set(resultado["consumo"]["dominancia"]) == {"yt", "spotify"}
+    # La audiencia compara solo seguidores (no vistas).
+    assert set(resultado["audiencia"]["dominancia"]) == {"ig", "yt", "spotify"}
+    # Las vistas de YouTube ya no pisan a la audiencia social dentro de consumo.
+    assert "ig" not in resultado["consumo"]["dominancia"]
+
+
+def test_balance_audiencia_consumo():
+    assert balance_audiencia_consumo({}) == "sin_datos"
+    assert balance_audiencia_consumo(
+        {"ig": {"seguidores": 1000}, "spotify": {"reproducciones": 100_000}}
+    ) == "consumo_dominante"
+    assert balance_audiencia_consumo(
+        {"ig": {"seguidores": 100_000}, "spotify": {"reproducciones": 1000}}
+    ) == "social_dominante"
+    assert balance_audiencia_consumo(
+        {"ig": {"seguidores": 1000}, "spotify": {"reproducciones": 4000}}
+    ) == "inclinado_consumo"
+    assert balance_audiencia_consumo(
+        {"ig": {"seguidores": 5000}, "spotify": {"reproducciones": 8000}}
+    ) == "equilibrado"
+
+
+def test_dominancia_dimensiones_reparte_en_escala_log():
+    shares_aud, patron_aud = dominancia_audiencia(
+        {"ig": {"seguidores": 1_000_000}, "yt": {"seguidores": 1_000}}
+    )
+    assert shares_aud["ig"] > 50.0
+    # La diferencia de orden de magnitud no anula a la otra red.
+    assert shares_aud["yt"] > 0.0
+    assert patron_aud == "instagram_dominante"
+
+    shares_cons, _ = dominancia_consumo(
+        {"yt": {"vistas": 5_000_000}, "spotify": {"reproducciones": 100_000}}
+    )
+    # Ambas cuentan aunque YouTube tenga más reproducciones brutas.
+    assert "spotify" in shares_cons
+    assert round(shares_cons["yt"] + shares_cons["spotify"], 1) == 100.0

@@ -5,14 +5,6 @@ import { infoPlataforma } from "@/components/Plataformas";
 import IconoRed from "@/components/IconoRed";
 import type { ConsumoAnalisis as ConsumoTipo } from "@/lib/types";
 
-const ETIQUETAS_PATRON: Record<string, string> = {
-  youtube_dominante: "YouTube-dominante",
-  spotify_dominante: "Spotify-dominante",
-  social_dominante: "Social-dominante",
-  distribuido: "Distribuido",
-  sin_datos: "Sin datos",
-};
-
 const NOMBRE_PLATAFORMA: Record<string, string> = {
   ig: "Instagram",
   fb: "Facebook",
@@ -23,6 +15,30 @@ const NOMBRE_PLATAFORMA: Record<string, string> = {
   soundcloud: "SoundCloud",
   beatport: "Beatport",
   mixcloud: "Mixcloud",
+};
+
+const ETIQUETA_PATRON: Record<string, string> = {
+  instagram_dominante: "Instagram-dominante",
+  facebook_dominante: "Facebook-dominante",
+  tiktok_dominante: "TikTok-dominante",
+  youtube_dominante: "YouTube-dominante",
+  spotify_dominante: "Spotify-dominante",
+  beatport_dominante: "Beatport-dominante",
+  mixcloud_dominante: "Mixcloud-dominante",
+  bandcamp_dominante: "Bandcamp-dominante",
+  soundcloud_dominante: "SoundCloud-dominante",
+  distribuido: "Distribuido",
+  sin_datos: "Sin datos",
+};
+
+const ETIQUETA_BALANCE: Record<string, string> = {
+  consumo_dominante: "Consumo mayor que audiencia",
+  inclinado_consumo: "Ligado al consumo",
+  equilibrado: "Audiencia y consumo equilibrados",
+  inclinado_social: "Ligado a la audiencia",
+  social_dominante: "Audiencia mayor que consumo",
+  parcial: "Señal incompleta",
+  sin_datos: "Sin datos suficientes",
 };
 
 function RatioEtiqueta({ valor, numero }: { valor: number | null; numero: number }) {
@@ -46,43 +62,76 @@ function RatioEtiqueta({ valor, numero }: { valor: number | null; numero: number
   );
 }
 
+function Dimension({
+  titulo,
+  patron,
+  dominancia,
+}: {
+  titulo: string;
+  patron: string;
+  dominancia: Record<string, number>;
+}) {
+  const entradas = Object.entries(dominancia);
+  return (
+    <div>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+        {titulo}
+        {patron && patron !== "sin_datos" && patron !== "distribuido" && (
+          <span className="ml-2 normal-case text-accent">
+            · {ETIQUETA_PATRON[patron] ?? patron}
+          </span>
+        )}
+      </h3>
+      {entradas.length === 0 ? (
+        <p className="text-sm text-muted">Sin datos suficientes.</p>
+      ) : (
+        <div className="space-y-2">
+          {entradas.map(([plataforma, porcentaje]) => {
+            const info = infoPlataforma(plataforma);
+            return (
+              <div key={plataforma} className="flex items-center gap-2">
+                <IconoRed src={info.icono} alt={info.nombre} size={14} />
+                <span className="w-20 text-xs text-muted">
+                  {NOMBRE_PLATAFORMA[plataforma] ?? plataforma}
+                </span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full bg-accent"
+                    style={{ width: `${porcentaje}%` }}
+                  />
+                </div>
+                <span className="w-12 text-right text-xs font-semibold tabular-nums">
+                  {porcentaje}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ConsumoAnalisis({
   consumo,
 }: {
   consumo: ConsumoTipo;
 }) {
   const [abierto, setAbierto] = useState(false);
-  if (consumo.patron === "sin_datos") return null;
+  const datosConsumo = consumo.consumo?.dominancia ?? {};
+  const datosAudiencia = consumo.audiencia?.dominancia ?? {};
+  const sinDatos = Object.keys(datosConsumo).length === 0 && Object.keys(datosAudiencia).length === 0;
+  if (sinDatos) return null;
 
-  const dominancia = Object.entries(consumo.dominancia);
+  const tieneDatos = Object.keys(datosConsumo).length > 0 || Object.keys(datosAudiencia).length > 0;
 
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <span className="font-bold">Consumo: </span>
+        <span className="font-bold">Consumo y audiencia: </span>
         <span className="font-bold text-text">
-          {ETIQUETAS_PATRON[consumo.patron] ?? consumo.patron}
+          {ETIQUETA_BALANCE[consumo.balance] ?? "Análisis"}
         </span>
-
-        {dominancia.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {dominancia.slice(0, 4).map(([plataforma, porcentaje]) => {
-              const info = infoPlataforma(plataforma);
-              return (
-                <span
-                  key={plataforma}
-                  className="flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] text-muted"
-                  title={`${NOMBRE_PLATAFORMA[plataforma] ?? plataforma}: ${porcentaje}%`}
-                >
-                  <IconoRed src={info.icono} alt={info.nombre} size={12} />
-                  <b className="font-semibold tabular-nums text-text">
-                    {porcentaje}%
-                  </b>
-                </span>
-              );
-            })}
-          </div>
-        )}
 
         <button
           type="button"
@@ -98,51 +147,41 @@ export default function ConsumoAnalisis({
         <div className="mt-3 space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
           <p className="text-sm leading-relaxed text-muted">{consumo.texto}</p>
 
-          <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              Ratios clave
-            </h3>
-            <div className="space-y-2">
-              <RatioEtiqueta valor={consumo.ratios.viralidad_yt} numero={0} />
-              <RatioEtiqueta
-                valor={consumo.ratios.engagement_spotify}
-                numero={1}
+          {tieneDatos ? (
+            <>
+              <Dimension
+                titulo="Consumo (reproducciones y vistas)"
+                patron={consumo.consumo.patron}
+                dominancia={consumo.consumo.dominancia}
               />
-              <RatioEtiqueta
-                valor={consumo.ratios.gap_social_musica}
-                numero={2}
+              <Dimension
+                titulo="Audiencia (seguidores)"
+                patron={consumo.audiencia.patron}
+                dominancia={consumo.audiencia.dominancia}
               />
-            </div>
-          </div>
 
-          {dominancia.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                Dominancia por plataforma
-              </h3>
-              <div className="space-y-2">
-                {dominancia.map(([plataforma, porcentaje]) => {
-                  const info = infoPlataforma(plataforma);
-                  return (
-                    <div key={plataforma} className="flex items-center gap-2">
-                      <IconoRed src={info.icono} alt={info.nombre} size={14} />
-                      <span className="w-20 text-xs text-muted">
-                        {NOMBRE_PLATAFORMA[plataforma] ?? plataforma}
-                      </span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
-                        <div
-                          className="h-full rounded-full bg-accent"
-                          style={{ width: `${porcentaje}%` }}
-                        />
-                      </div>
-                      <span className="w-12 text-right text-xs font-semibold tabular-nums">
-                        {porcentaje}%
-                      </span>
-                    </div>
-                  );
-                })}
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                  Ratios clave
+                </h3>
+                <div className="space-y-2">
+                  <RatioEtiqueta valor={consumo.ratios.viralidad_yt} numero={0} />
+                  <RatioEtiqueta
+                    valor={consumo.ratios.engagement_spotify}
+                    numero={1}
+                  />
+                  <RatioEtiqueta
+                    valor={consumo.ratios.gap_social_musica}
+                    numero={2}
+                  />
+                </div>
               </div>
-            </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted">
+              Conecta tus plataformas y añade enlaces de streaming para que el
+              análisis compare tu consumo y tu audiencia.
+            </p>
           )}
         </div>
       )}

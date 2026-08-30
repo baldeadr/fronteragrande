@@ -137,15 +137,31 @@ ratio_social_musica = (IG + FB + TT + YT followers) /
 - **<1**: la audiencia musical supera la social; el artista es
   "descubrible" pero no "seguible".
 
-### 3.4 Dominancia de plataforma
+### 3.4 Dominancia por dimensión (audiencia vs. consumo)
+
+Para que la comparativa sea justa, ya **no** se mezclan unidades
+incomparables en una sola cifra (históricamente las vistas de YouTube,
+enormes por naturaleza, sepultaban a los seguidores sociales o a los
+oyentes de Spotify). Ahora se analizan dos dimensiones por separado,
+cada una comparando solo unidades equivalentes en escala `log10`:
 
 ```
-dominancia = plataforma_metrica / total_metricas * 100
+dominancia_audiencia = reparto de seguidores (IG/FB/TT/YT/Spotify/Beatport/Mixcloud) en escala log
+dominancia_consumo   = reparto de reproducciones/vistas (YT/Spotify/Bandcamp/SoundCloud) en escala log
+patron               = plataforma dominante de la dimensión, o "distribuido"
 ```
 
-Para cada plataforma, qué % del total de métricas representa. Esto
-permite ver si un artista depende de una sola plataforma o está
-diversificado.
+Cada dimensión produce su propio patrón (p. ej. "Instagram-dominante"
+en audiencia y "YouTube-dominante" en consumo), y una lectura global
+(`balance_audiencia_consumo`) compara ambas: consumo≫audiencia
+(consumo_dominante), equilibrio, o audiencia≫consumo (social_dominante).
+
+Implementación:
+
+- `lib/helpers.py`: `dominancia_audiencia()`, `dominancia_consumo()`,
+  `balance_audiencia_consumo()`, `_share_log()`.
+- `lib/servicios.py` → `analisis_consumo()` devuelve `{audiencia,
+  consumo, balance, texto, ratios}` en lugar de una dominancia única.
 
 ### 3.5 Benchmark por género
 
@@ -227,8 +243,8 @@ de redes.
 
 | Archivo | Acción |
 |---------|--------|
-| `lib/helpers.py` | Agregar funciones puras: `ratio_viralidad_yt()`, `ratio_engagement_spotify()`, `dominancia_plataforma()`. |
-| `lib/servicios.py` | Enriquecer `analisis_artista()` con patrón detectado + ratios + benchmark. |
+| `lib/helpers.py` | Funciones puras: `ratio_viralidad_yt()`, `ratio_engagement_spotify()`, `dominancia_audiencia()`, `dominancia_consumo()`, `balance_audiencia_consumo()`. |
+| `lib/servicios.py` | Enriquecer `analisis_artista()` con patrón detectado + ratios + benchmark; `analisis_consumo()` separa audiencia y consumo. |
 | `backend/main.py` | Agregar campo `consumo` al endpoint de detalle de artista. |
 
 ### 5.3 Frontend

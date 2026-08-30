@@ -16,15 +16,16 @@ from sqlalchemy.orm import Session
 from db.models import ESTADOS_ACTIVO, NIVELES, Artist, ActivityCheck, AltaRegistro
 from lib.helpers import (
     TIPOS_FEED,
+    TEXTO_BALANCE_AUDIENCIA_CONSUMO,
+    balance_audiencia_consumo,
     calcular_indice_universal,
     clasificar_por_indice,
     conteo_generos,
-    dominancia_plataforma,
-    patron_dominancia,
+    dominancia_audiencia,
+    dominancia_consumo,
     ratio_engagement_spotify,
     ratio_social_musica,
     ratio_viralidad_yt,
-    TEXTO_PATRON_CONSUMO,
     youtube_thumbnail,
 )
 from lib.repository import (
@@ -403,26 +404,44 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
 
 
 def analisis_consumo(metricas: dict) -> dict:
-    """Análisis de hábitos de consumo por plataforma.
+    """Análisis de audiencia y consumo por plataforma (balanceado).
 
-    Devuelve el patrón detectado, ratios derivados, dominancia de plataforma
-    y un texto interpretativo. Todo calculado a partir de datos existentes.
+    Separa las dos dimensiones que antes se mezclaban en una sola cifra
+    sesgada hacia YouTube:
+    - Audiencia: reparto de seguidores entre redes sociales (IG/FB/TT/YT/Spotify).
+    - Consumo: reparto de reproducciones/vistas entre plataformas musicales.
+
+    Cada dimensión compara solo unidades equivalentes en escala log10. Además
+    devuelve una lectura global que compara audiencia contra consumo y los
+    ratios derivados de siempre.
     """
-    patron = patron_dominancia(metricas)
+    shares_audiencia, patron_aud = dominancia_audiencia(metricas)
+    shares_consumo, patron_consumo = dominancia_consumo(metricas)
+    balance = balance_audiencia_consumo(metricas)
     viralidad_yt = ratio_viralidad_yt(metricas)
     engagement_sp = ratio_engagement_spotify(metricas)
     gap_social = ratio_social_musica(metricas)
-    dominancia = dominancia_plataforma(metricas)
 
     return {
-        "patron": patron,
-        "texto": TEXTO_PATRON_CONSUMO.get(patron, TEXTO_PATRON_CONSUMO["sin_datos"]),
+        "patron": patron_consumo,
+        "texto": TEXTO_BALANCE_AUDIENCIA_CONSUMO.get(
+            balance, TEXTO_BALANCE_AUDIENCIA_CONSUMO["sin_datos"]
+        ),
+        "balance": balance,
+        "audiencia": {
+            "patron": patron_aud,
+            "dominancia": shares_audiencia,
+        },
+        "consumo": {
+            "patron": patron_consumo,
+            "dominancia": shares_consumo,
+        },
         "ratios": {
             "viralidad_yt": viralidad_yt,
             "engagement_spotify": engagement_sp,
             "gap_social_musica": gap_social,
         },
-        "dominancia": dominancia,
+        "dominancia": shares_consumo,
     }
 
 
