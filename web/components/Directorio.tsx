@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import ArtistCard from "./ArtistCard";
+import { banderaEmoji, paisDeCiudad } from "@/lib/ciudades";
 
 export default function Directorio({
   artistas,
@@ -119,7 +120,7 @@ export default function Directorio({
             <option value="todos">Todas</option>
             {ciudades.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {c} {banderaEmoji(paisDeCiudad(c))}
               </option>
             ))}
           </select>

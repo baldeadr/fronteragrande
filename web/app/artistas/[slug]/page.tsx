@@ -18,6 +18,7 @@ import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import ConsumoAnalisis from "@/components/ConsumoAnalisis";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
+import { banderaEmoji, paisDeCiudad } from "@/lib/ciudades";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
 
 function tipoMencion(
@@ -196,7 +197,9 @@ export default async function PerfilPage({
               </h1>
               <p className="mt-1 text-muted">
                 {artist.segmento}
-                {artist.ciudad ? ` · ${artist.ciudad}` : ""}
+                {artist.ciudad
+                  ? ` · ${artist.ciudad} ${banderaEmoji(paisDeCiudad(artist.ciudad))}`
+                  : ""}
               </p>
             </div>
             <EstadoBadge estado={artist.estado_activo} size="lg" />

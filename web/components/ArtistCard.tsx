@@ -4,6 +4,7 @@ import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import EstadoBadge from "./EstadoBadge";
 import IconoVerificado from "./IconoVerificado";
 import InsigniaNivel from "./InsigniaNivel";
+import { BanderaCiudad } from "./Bandera";
 
 export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
   const inicial = artist.nombre ? artist.nombre[0].toUpperCase() : "♪";
@@ -49,6 +50,7 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
             {artist.segmento}
             {artist.ciudad ? ` · ${artist.ciudad}` : ""}
           </span>
+          {artist.ciudad && <BanderaCiudad ciudad={artist.ciudad} className="shrink-0" />}
           {artist.nivel && (
             <InsigniaNivel nivel={artist.nivel} className="shrink-0" />
           )}

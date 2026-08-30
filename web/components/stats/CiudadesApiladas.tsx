@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import type { CiudadActividad } from "@/lib/types";
+import { banderaEmoji, paisDeCiudad } from "@/lib/ciudades";
 
 const ESTADOS: { clave: "activo" | "en_duda" | "inactivo"; etiqueta: string }[] =
   [
@@ -83,7 +84,7 @@ export default function CiudadesApiladas({
               className="flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-1 py-1 transition-colors hover:border-line"
             >
               <span className="w-28 shrink-0 truncate text-sm text-muted sm:w-36">
-                {c.nombre}
+                {c.nombre} {banderaEmoji(paisDeCiudad(c.nombre))}
               </span>
               <div className="flex h-5 flex-1 overflow-hidden rounded bg-surface-2">
                 {ESTADOS.map((e) =>
