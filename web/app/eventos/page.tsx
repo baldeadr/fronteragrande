@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { api } from "@/lib/api";
 import { fechaCorta } from "@/lib/formato";
-import { banderaEmoji, paisDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad } from "@/lib/ciudades";
 import type { Evento } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -18,7 +18,10 @@ function TarjetaEvento({ e }: { e: Evento }) {
         {e.fecha && <span className="text-xs text-accent">{fechaCorta(e.fecha)}</span>}
       </div>
       <p className="mt-1 text-sm text-muted">
-        {[e.lugar, e.ciudad ? `${e.ciudad} ${banderaEmoji(paisDeCiudad(e.ciudad))}` : null]
+        {[
+          e.lugar,
+          e.ciudad ? `${e.ciudad} ${abreviaturaDeCiudad(e.ciudad) ?? ""}`.trim() : null,
+        ]
           .filter(Boolean)
           .join(" · ") || "Lugar por confirmar"}
       </p>

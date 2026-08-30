@@ -1,4 +1,4 @@
-/** Países de las ciudades de la escena (región cerrada: Tamaulipas + Valle del Río Grande). */
+/** Estados de la escena (región cerrada: Tamaulipas + Valle del Río Grande). */
 
 export type Pais = "MX" | "US";
 
@@ -26,18 +26,20 @@ export function paisDeCiudad(ciudad: string | null): Pais | null {
   return PAIS_CIUDAD[clave] ?? null;
 }
 
+/** Abreviatura corta del estado: TM (Tamaulipas) o TX (Texas). */
+const ABREVIATURAS: Record<Pais, string> = {
+  MX: "TM",
+  US: "TX",
+};
+
+export function abreviaturaDeCiudad(ciudad: string | null): string | null {
+  const pais = paisDeCiudad(ciudad);
+  return pais ? ABREVIATURAS[pais] : null;
+}
+
 export function etiquetaCiudad(ciudad: string | null): string {
   if (!ciudad) return "";
   const pais = paisDeCiudad(ciudad);
   if (!pais) return ciudad;
   return pais === "MX" ? `${ciudad}, Tamaulipas` : `${ciudad}, Texas`;
-}
-
-const EMOJIS: Record<Pais, string> = {
-  MX: "🇲🇽",
-  US: "🇺🇸",
-};
-
-export function banderaEmoji(pais: Pais | null): string {
-  return pais ? EMOJIS[pais] : "";
 }

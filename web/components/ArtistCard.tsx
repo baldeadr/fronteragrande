@@ -4,10 +4,11 @@ import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import EstadoBadge from "./EstadoBadge";
 import IconoVerificado from "./IconoVerificado";
 import InsigniaNivel from "./InsigniaNivel";
-import { BanderaCiudad } from "./Bandera";
+import { abreviaturaDeCiudad } from "@/lib/ciudades";
 
 export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
   const inicial = artist.nombre ? artist.nombre[0].toUpperCase() : "♪";
+  const abrev = artist.ciudad ? abreviaturaDeCiudad(artist.ciudad) : null;
 
   return (
     <Link
@@ -48,9 +49,10 @@ export default function ArtistCard({ artist }: { artist: ArtistCardData }) {
         <p className="flex items-center gap-1.5 text-xs text-muted">
           <span className="truncate">
             {artist.segmento}
-            {artist.ciudad ? ` · ${artist.ciudad}` : ""}
+            {artist.ciudad
+              ? ` · ${artist.ciudad}${abrev ? ` ${abrev}` : ""}`
+              : ""}
           </span>
-          {artist.ciudad && <BanderaCiudad ciudad={artist.ciudad} className="shrink-0" />}
           {artist.nivel && (
             <InsigniaNivel nivel={artist.nivel} className="shrink-0" />
           )}

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ArtistCard as ArtistCardData } from "@/lib/types";
 import ArtistCard from "./ArtistCard";
-import { banderaEmoji, paisDeCiudad } from "@/lib/ciudades";
+import { abreviaturaDeCiudad } from "@/lib/ciudades";
 
 export default function Directorio({
   artistas,
@@ -118,11 +118,14 @@ export default function Directorio({
             className="rounded-lg border border-line bg-surface px-2 py-2 text-sm outline-none focus:border-accent"
           >
             <option value="todos">Todas</option>
-            {ciudades.map((c) => (
-              <option key={c} value={c}>
-                {c} {banderaEmoji(paisDeCiudad(c))}
-              </option>
-            ))}
+            {ciudades.map((c) => {
+              const abrev = abreviaturaDeCiudad(c);
+              return (
+                <option key={c} value={c}>
+                  {c} {abrev ?? ""}
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="flex flex-col gap-1">
