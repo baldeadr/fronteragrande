@@ -17,7 +17,13 @@ const COLOR_NIVEL: Record<string, string> = {
   "Leyenda de la Frontera": "#8a63d2",
 };
 
-type ClaveGrupo = "escena" | "ligas_mayores" | "en_ascenso" | "leyenda" | "ligas";
+type ClaveGrupo =
+  | "todos"
+  | "escena"
+  | "ligas_mayores"
+  | "en_ascenso"
+  | "leyenda"
+  | "ligas";
 
 const GRUPOS: {
   clave: ClaveGrupo;
@@ -25,6 +31,12 @@ const GRUPOS: {
   color: string;
   seleccionar: (a: ArtistCard) => boolean;
 }[] = [
+  {
+    clave: "todos",
+    etiqueta: "Todos",
+    color: "var(--text)",
+    seleccionar: () => true,
+  },
   {
     clave: "escena",
     etiqueta: "Escena",
@@ -85,17 +97,28 @@ export default function RankingFiltrable({
   const [sel, setSel] = useState<string | null>(null);
 
   const grupoActivo = GRUPOS.find((g) => g.clave === grupo)!;
-  const conIndice = artistas
-    .filter(grupoActivo.seleccionar)
+  const miembros = artistas.filter(grupoActivo.seleccionar);
+  const conIndice = miembros
     .filter((a) => a.ranking.indice !== null && a.ranking.indice > 0)
     .sort(
       (a, b) =>
         (b.ranking.indice as number) - (a.ranking.indice as number),
     );
-  const visibles = limite === null ? conIndice : conIndice.slice(0, limite);
-  const max = Math.max(...visibles.map((a) => a.ranking.indice as number), 1);
+  const sinIndice =
+    grupo === "todos"
+      ? miembros.filter((a) => !a.ranking.indice || a.ranking.indice <= 0)
+      : [];
+  const visibles =
+    grupo === "todos"
+      ? limite === null
+        ? [...conIndice, ...sinIndice]
+        : conIndice.slice(0, limite)
+      : limite === null
+        ? conIndice
+        : conIndice.slice(0, limite);
+  const max = Math.max(...visibles.map((a) => a.ranking.indice ?? 0), 1);
   const foco = conIndice.find((a) => a.slug === sel) ?? null;
-  const esLiga = grupo !== "escena";
+  const esLiga = grupo !== "escena" && grupo !== "todos";
 
   return (
     <div>
@@ -163,7 +186,7 @@ export default function RankingFiltrable({
         </span>
       </div>
 
-      {conIndice.length === 0 ? (
+      {conIndice.length + sinIndice.length === 0 ? (
         <p className="text-sm text-muted">
           Aún no hay proyectos con índice calculado en este grupo.
         </p>
@@ -172,6 +195,8 @@ export default function RankingFiltrable({
           {visibles.map((a, i) => {
             const partes = desglose(a);
             const activo = sel === a.slug;
+            const indice = a.ranking.indice ?? 0;
+            const tienenIndice = indice > 0;
             return (
               <div
                 key={a.slug}
@@ -181,8 +206,12 @@ export default function RankingFiltrable({
                 className="cursor-pointer rounded-lg border border-transparent px-1 py-1 transition-colors hover:border-line"
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-8 shrink-0 text-sm font-bold text-accent">
-                    #{i + 1}
+                  <span
+                    className={`w-8 shrink-0 text-sm font-bold ${
+                      tienenIndice ? "text-accent" : "text-muted"
+                    }`}
+                  >
+                    {tienenIndice ? `#${i + 1}` : "—"}
                   </span>
                   <Link
                     href={`/artistas/${a.slug}`}
@@ -192,16 +221,17 @@ export default function RankingFiltrable({
                   >
                     {a.nombre}
                   </Link>
-                  {esLiga && <InsigniaNivel nivel={a.nivel} size="sm" />}
+                  {(esLiga || grupo === "todos") && a.catalogado && (
+                    <InsigniaNivel nivel={a.nivel} size="sm" />
+                  )}
                   <div className="flex h-5 flex-1 items-stretch overflow-hidden rounded bg-surface-2">
-                    {partes.length > 0 ? (
+                    {tienenIndice && partes.length > 0 ? (
                       partes.map((p) => (
                         <div
                           key={p.clave}
                           style={{
                             width: `${
-                              (p.share * ((a.ranking.indice as number) / max)) *
-                              100
+                              (p.share * (indice / max)) * 100
                             }%`,
                             minWidth: p.share > 0.9 ? undefined : 2,
                             backgroundColor:
@@ -216,13 +246,14 @@ export default function RankingFiltrable({
                       <div
                         className="h-full rounded bg-accent"
                         style={{
-                          width: `${((a.ranking.indice as number) / max) * 100}%`,
+                          width: `${indice === 0 ? 0 : (indice / max) * 100}%`,
+                          opacity: tienenIndice ? 1 : 0,
                         }}
                       />
                     )}
                   </div>
                   <span className="w-9 shrink-0 text-right text-sm font-medium tabular-nums text-muted">
-                    {a.ranking.indice}
+                    {tienenIndice ? indice : "—"}
                   </span>
                 </div>
               </div>
@@ -243,7 +274,10 @@ export default function RankingFiltrable({
         ) : (
           <span className="text-xs">
             Pasa el cursor o toca una fila para ver la proporción de audiencia
-            y consumo · posición dentro del grupo mostrado.
+            y consumo ·{" "}
+            {grupo === "todos"
+              ? "posiciones por índice de cada grupo: la insignia marca a los catalogados en las Ligas."
+              : "posición dentro del grupo mostrado."}
           </span>
         )}
       </p>

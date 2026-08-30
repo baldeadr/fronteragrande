@@ -70,9 +70,10 @@ export default async function StatsPage() {
         <h2 className="mb-1 font-bold">Ranking de alcance</h2>
         <p className="mb-4 text-sm text-muted">
           {conRanking} proyectos de la escena con índice calculado ·{" "}
-          {catalogados} en las Ligas. Elige un grupo para ver su propio
-          ranking: la barra fina muestra de qué redes viene el alcance de cada
-          uno.
+          {catalogados} en las Ligas. Elige un grupo (o{" "}
+          <b>Todos</b>, con la insignia de Liga en cada catalogado) para ver su
+          propio ranking: la barra fina muestra de qué redes viene el alcance
+          de cada uno.
         </p>
         <RankingFiltrable artistas={artistas} />
       </section>
