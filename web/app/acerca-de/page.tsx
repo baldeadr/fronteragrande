@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FormulaInline, FormulaLatex } from "@/components/Formula";
 import IconoRed from "@/components/IconoRed";
 import { infoPlataforma } from "@/components/Plataformas";
+import { IconoLiga } from "@/components/IconoLiga";
 
 export const metadata: Metadata = {
   title: "Acerca de",
@@ -339,26 +340,27 @@ export default function AcercaDePage() {
             (solo admin).
           </p>
           <p className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: "#f5b301" }}
-            />
+            <span style={{ color: "#f5b301" }}>
+              <IconoLiga nivel="Ligas Mayores" className="h-3.5 w-3.5 shrink-0" />
+            </span>
             <b>Ligas Mayores</b> — índice universal <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: "#2fb8a6" }}
-            />
+            <span style={{ color: "#2fb8a6" }}>
+              <IconoLiga nivel="En Ascenso" className="h-3.5 w-3.5 shrink-0" />
+            </span>
             <b>En Ascenso</b> — índice universal <b>≥ 50</b> (y menor a 60).
           </p>
           <p className="flex items-center gap-2">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: "#8a63d2" }}
-            />
+            <span style={{ color: "#8a63d2" }}>
+              <IconoLiga
+                nivel="Leyenda de la Frontera"
+                className="h-3.5 w-3.5 shrink-0"
+              />
+            </span>
             <b>Leyenda de la Frontera</b> — retirado/a o fallecido/a con
-            legado regional; se asigna por curaduría (flag <code>es_leyenda</code>
+            legado regional; se asigna por curaduría (
+            <code>es_leyenda</code>
             en BD, editable en panel admin), no por métricas.
           </p>
         </div>
@@ -379,15 +381,15 @@ export default function AcercaDePage() {
 
           <div className="flex flex-wrap gap-3 mb-2">
             <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#f5b301]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <IconoLiga nivel="Ligas Mayores" className="h-5 w-5" />
               <span className="font-medium text-xs">Ligas Mayores</span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#2fb8a6]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
+              <IconoLiga nivel="En Ascenso" className="h-5 w-5" />
               <span className="font-medium text-xs">En Ascenso</span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-xl border p-2 bg-surface-2 text-[#8a63d2]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 10.54L12 21.35z"/></svg>
+              <IconoLiga nivel="Leyenda de la Frontera" className="h-5 w-5" />
               <span className="font-medium text-xs">Leyenda</span>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { api } from "@/lib/api";
 import EstadoBadge from "@/components/EstadoBadge";
 import InsigniaNivel from "@/components/InsigniaNivel";
+import { IconoLiga, INFO_LIGAS } from "@/components/IconoLiga";
 import Avatar from "@/components/Avatar";
 import ContenidoPerfil from "@/components/ContenidoPerfil";
 import { infoPlataforma } from "@/components/Plataformas";
@@ -274,18 +275,7 @@ export default async function PerfilPage({
 
               // Si tiene Liga, SOLO muestra la Liga; si no, muestra insignias normales filtradas
               if (tieneLiga) {
-                const color =
-                  artist.nivel === "Ligas Mayores"
-                    ? "#f5b301"
-                    : artist.nivel === "En Ascenso"
-                    ? "#2fb8a6"
-                    : "#8a63d2";
-const icono =
-                  artist.nivel === "Ligas Mayores"
-                    ? <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    : artist.nivel === "En Ascenso"
-                    ? <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
-                    : <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 10.54L12 21.35z"/></svg>;
+                const colorLiga = INFO_LIGAS[artist.nivel] ?? "#888";
 
                 return (
                   <div className="border-t border-line/50 pt-3">
@@ -307,11 +297,17 @@ const icono =
                       <li
                         key={`liga-${artist.nivel}`}
                         title={artist.nivel}
-                        className={`flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight border-${color.replace("#", "")}/50 bg-${color.replace("#", "")}/10 text-[${color}]`}
+                        className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight"
+                        style={{
+                          borderColor: `${colorLiga}80`,
+                          backgroundColor: `${colorLiga}1a`,
+                          color: colorLiga,
+                        }}
                       >
-                        <div className="h-5 w-5 shrink-0" style={{ color }}>
-                          {icono}
-                        </div>
+                        <IconoLiga
+                          nivel={artist.nivel}
+                          className="h-5 w-5 shrink-0"
+                        />
                         <span className="line-clamp-3 font-medium">{artist.nivel}</span>
                       </li>
                     </ul>
