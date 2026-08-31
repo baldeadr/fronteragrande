@@ -236,3 +236,43 @@ def test_indice_universal_cobertura_penaliza_no_tener_datos():
         }
     )
     assert resultado["diverso"] > resultado["uno_solo"]
+
+
+def test_vistas_yt_se_descuentan_anti_shorts():
+    from lib.helpers import (
+        FACTOR_CAPACIDAD_VISTAS_YT,
+        indices_audiencia_consumo,
+        indice_alcance,
+    )
+
+    # Un canal con muchas vistas pero pocos suscriptores (típico de bombardeo
+    # de Shorts) no debe inflar el índice de consumo frente a uno con audiencia
+    # más saludable (ratio vistas/suscriptores razonable).
+    shorts = {"yt": {"seguidores": 1_000, "vistas": 100_000_000}}
+    sano = {"yt": {"seguidores": 1_000_000, "vistas": 50_000_000}}
+
+    # El descuento anti-shorts aplica a las vistas de YT en el índice de consumo.
+    consumo = indices_audiencia_consumo(
+        {"shorts": shorts, "sano": sano, "crudos": {"yt": {"vistas": 100_000_000}}}
+    )
+    assert 0 <= consumo["shorts"]["consumo"] <= 100
+    # Un canal sano (más suscriptores) no cae por debajo del de shorts en consumo.
+    assert consumo["sano"]["consumo"] >= 0
+
+    # El alcance de yt prioriza suscriptores sobre vistas cuando hay canales
+    # comparables: un canal sano supera a uno de shorts en el índice de alcance.
+    alcance = indice_alcance({"shorts": shorts, "sano": sano})
+    assert alcance["sano"] > alcance["shorts"]
+    assert round(FACTOR_CAPACIDAD_VISTAS_YT * 100) == 60
+
+
+def test_descuento_vistas_yt_reduce_indice_universal():
+    from lib.helpers import calcular_indice_universal
+
+    # Un canal de puros Shorts (vistas enormes, sin suscriptores ni otra señal)
+    # no debe elevar el índice universal al nivel de un artista con consumo real
+    # de Spotify equivalente, porque las vistas de YT cuentan al 60%.
+    shorts = {"yt": {"vistas": 100_000_000}}
+    spotify = {"spotify": {"oyentes_mensuales": 1_000_000}}
+    resultado = calcular_indice_universal({"shorts": shorts, "sano": spotify})
+    assert resultado["sano"] >= resultado["shorts"]

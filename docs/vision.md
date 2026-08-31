@@ -130,6 +130,11 @@ y lo clasifica en dos grupos separados para una competición justa.
   (IG/FB/TT) no puede superar **consumo real × 3** — una audiencia comprada o
   el perfil de un influencer no infla el índice. Sin consumo no se aplica (falta
   de datos, no evidencia).
+- **Anti-shorts (2026-08)**: el `viewCount` del canal de YouTube incluye Shorts
+  y puede inflarse fácilmente; por eso las vistas de YouTube cuentan al **60%**
+  (`FACTOR_CAPACIDAD_VISTAS_YT`) en la clasificación y en los rankings de alcance
+  (consumo/índice), y el alcance de YT prioriza suscriptores sobre vistas. La
+  cifra cruda que se muestra en el perfil no cambia.
 - **Uso exclusivo**: señal de clasificación automática (umbrales fijos → Ligas).
 - **No se expone públicamente** (solo `X-Admin-Token`).
 

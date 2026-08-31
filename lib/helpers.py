@@ -261,10 +261,12 @@ PESO_GRUPO_AUDIENCIA = 0.40
 PESO_GRUPO_CONSUMO = 0.60
 
 # Métrica de alcance por plataforma, en orden de prioridad.
+# YouTube prioriza suscriptores antes que vistas: las vistas (viewCount del canal)
+# incluyen Shorts y se descuentan con `FACTOR_CAPACIDAD_VISTAS_YT` en los índices.
 METRICA_ALCANCE_POR_PLATAFORMA = {
     "ig": ("seguidores",),
     "fb": ("seguidores",),
-    "yt": ("vistas", "seguidores"),
+    "yt": ("seguidores", "vistas"),
     "tt": ("vistas", "seguidores"),
     "spotify": ("reproducciones", "seguidores"),
     "bandcamp": ("reproducciones",),
@@ -293,6 +295,31 @@ def _alcance_bruto(metricas: dict, plataforma: str) -> float:
     return 0.0
 
 
+def _vistas_yt_capacidad(metricas: dict) -> float:
+    """Vistas de YouTube con el descuento anti-shorts (60% de capacidad).
+
+    El viewCount del canal incluye Shorts; para la clasificación y el ranking de
+    alcance se aplica `FACTOR_CAPACIDAD_VISTAS_YT` para no premiar el inflado.
+    """
+    return _valor_seguro(metricas, "yt", "vistas") * FACTOR_CAPACIDAD_VISTAS_YT
+
+
+def _alcance_para_indice(metricas: dict, plataforma: str) -> float:
+    """Métrica de alcance de una plataforma para los índices de ranking.
+
+    Igual que `_alcance_bruto` pero descuenta las vistas de YouTube con
+    `FACTOR_CAPACIDAD_VISTAS_YT` (el viewCount del canal incluye Shorts), de modo
+    que usa suscriptores cuando hay y, si solo hay vistas, las aplica al 60%.
+    """
+    bruto = _alcance_bruto(metricas, plataforma)
+    if plataforma == "yt":
+        seguidores = _valor_seguro(metricas, "yt", "seguidores")
+        if seguidores > 0:
+            return seguidores
+        return _vistas_yt_capacidad(metricas)
+    return bruto
+
+
 def _log_reach(valor: float) -> float:
     if not _es_metrico(valor):
         return 0.0
@@ -312,7 +339,7 @@ def indice_alcance(metricas_por_artista: dict[str, dict]) -> dict[str, float]:
     for metricas in metricas_por_artista.values():
         for plataforma in PESOS_ALCANCE:
             logs_por_plataforma.setdefault(plataforma, []).append(
-                _log_reach(_alcance_bruto(metricas, plataforma))
+                _log_reach(_alcance_para_indice(metricas, plataforma))
             )
 
     indice: dict[str, float] = {}
@@ -322,7 +349,7 @@ def indice_alcance(metricas_por_artista: dict[str, dict]) -> dict[str, float]:
             maximo = max(logs_por_plataforma[plataforma])
             if maximo <= 0:
                 continue
-            valor_log = _log_reach(_alcance_bruto(metricas, plataforma))
+            valor_log = _log_reach(_alcance_para_indice(metricas, plataforma))
             total += peso * (valor_log / maximo) * 100.0
         indice[slug] = round(total, 1)
     return indice
@@ -334,9 +361,10 @@ def indices_audiencia_consumo(
     """Calcula índices separados de audiencia, consumo y total.
 
     Cada señal se normaliza por separado después de aplicar log10. YouTube
-    aporta 30% de su peso a suscriptores y 70% a vistas; Spotify reparte su
-    peso entre seguidores y señales de escucha. Los índices de grupo quedan en
-    0-100 y el índice global combina audiencia (55%) y consumo (45%).
+    aporta parte de su peso a suscriptores y a vistas (las vistas se descuentan
+    con `FACTOR_CAPACIDAD_VISTAS_YT` por el inflado de Shorts); Spotify reparte
+    su peso entre seguidores y señales de escucha. Los índices de grupo quedan
+    en 0-100 y el índice global combina audiencia (55%) y consumo (45%).
     """
 
     grupos = {
@@ -349,6 +377,8 @@ def indices_audiencia_consumo(
         datos = metricas.get(plataforma) or {}
         if plataforma == "spotify" and tipo == "consumo":
             return datos.get("oyentes_mensuales") or datos.get("reproducciones")
+        if plataforma == "yt" and tipo == "vistas":
+            return _vistas_yt_capacidad(metricas)
         return datos.get(tipo, 0)
 
     logs: dict[tuple[str, str], list[float]] = {}
@@ -742,6 +772,13 @@ SEÑALES_CONSUMO = {
 # real × este factor (audiencia comprada o perfil de influencer no infla el índice).
 FACTOR_COHERENCIA_AUDIENCIA = 3.0
 
+# Descuento 2026-08 (shorts): el `viewCount` del canal de YouTube (viewCount de la
+# Data API) incluye Shorts y puede inflarse fácilmente. Por eso, para los índices
+# de clasificación y ranking de alcance las vistas de YouTube cuentan al 60%
+# (reduce su "capacidad" relativa frente al resto de señales, sin tocar la cifra
+# cruda que se muestra en el perfil).
+FACTOR_CAPACIDAD_VISTAS_YT = 0.6
+
 # Índice híbrido: 70% la señal dominante (mejor ratio) + 30% cobertura (media).
 PESO_SEÑAL_DOMINANTE = 0.7
 PESO_COBERTURA = 0.3
@@ -778,7 +815,10 @@ def calcular_indice_universal(
         consumo_max = 0.0
         for señal, techo in TECHOS_REFERENCIA.items():
             plataforma, tipo = señal
-            valor = _valor_seguro(metricas, plataforma, tipo)
+            if plataforma == "yt" and tipo == "vistas":
+                valor = _vistas_yt_capacidad(metricas)
+            else:
+                valor = _valor_seguro(metricas, plataforma, tipo)
             ratio = _ratio_frente_techo(valor, techo)
             ratios.append((señal, ratio))
             if señal in SEÑALES_CONSUMO and ratio > 0:
