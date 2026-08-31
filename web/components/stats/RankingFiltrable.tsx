@@ -7,7 +7,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { ArtistCard } from "@/lib/types";
-import InsigniaNivel from "@/components/InsigniaNivel";
+import { IconoLiga, INFO_LIGAS } from "@/components/IconoLiga";
 
 const GRUPO_COLOR = { audiencia: "var(--accent)", consumo: "#f5a623" };
 
@@ -229,7 +229,13 @@ export default function RankingFiltrable({
                     {a.nombre}
                   </Link>
                   {(esLiga || grupo === "todos") && a.catalogado && (
-                    <InsigniaNivel nivel={a.nivel} size="sm" />
+                    <span
+                      className="inline-flex shrink-0 items-center"
+                      style={{ color: INFO_LIGAS[a.nivel] ?? "#888" }}
+                      title={`Liga: ${a.nivel}`}
+                    >
+                      <IconoLiga nivel={a.nivel} className="h-3.5 w-3.5" />
+                    </span>
                   )}
                   <div className="flex h-5 flex-1 items-stretch overflow-hidden rounded bg-surface-2">
                     {tienenIndice && partes.length > 0 ? (
