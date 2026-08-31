@@ -29,6 +29,7 @@ export interface Ranking {
   consumo: number | null;
   rank: number | null;
   total: number;
+  indice_universal?: number | null;
 }
 
 export interface AnalisisPerfil {

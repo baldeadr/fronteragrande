@@ -98,15 +98,22 @@ export default function RankingFiltrable({
 
   const grupoActivo = GRUPOS.find((g) => g.clave === grupo)!;
   const miembros = artistas.filter(grupoActivo.seleccionar);
+  // En "Todos" se ordena por el índice universal (comparable entre Escena y
+  // Ligas); en los demás grupos, por el índice normalizado del propio grupo.
+  const valorOrden = (a: ArtistCard) =>
+    grupo === "todos" ? a.ranking.indice_universal ?? 0 : a.ranking.indice ?? 0;
   const conIndice = miembros
-    .filter((a) => a.ranking.indice !== null && a.ranking.indice > 0)
-    .sort(
-      (a, b) =>
-        (b.ranking.indice as number) - (a.ranking.indice as number),
-    );
+    .filter((a) => {
+      const v = valorOrden(a);
+      return v !== null && v > 0;
+    })
+    .sort((a, b) => valorOrden(b) - valorOrden(a));
   const sinIndice =
     grupo === "todos"
-      ? miembros.filter((a) => !a.ranking.indice || a.ranking.indice <= 0)
+      ? miembros.filter((a) => {
+          const v = valorOrden(a);
+          return !v || v <= 0;
+        })
       : [];
   const visibles =
     grupo === "todos"
@@ -116,7 +123,7 @@ export default function RankingFiltrable({
       : limite === null
         ? conIndice
         : conIndice.slice(0, limite);
-  const max = Math.max(...visibles.map((a) => a.ranking.indice ?? 0), 1);
+  const max = Math.max(...visibles.map((a) => valorOrden(a)), 1);
   const foco = conIndice.find((a) => a.slug === sel) ?? null;
   const esLiga = grupo !== "escena" && grupo !== "todos";
 
@@ -195,7 +202,7 @@ export default function RankingFiltrable({
           {visibles.map((a, i) => {
             const partes = desglose(a);
             const activo = sel === a.slug;
-            const indice = a.ranking.indice ?? 0;
+            const indice = valorOrden(a);
             const tienenIndice = indice > 0;
             return (
               <div
@@ -265,8 +272,11 @@ export default function RankingFiltrable({
       <p className="mt-2 min-h-5 text-sm text-muted">
         {foco ? (
           <span>
-            <b>{foco.nombre}</b> · índice {foco.ranking.indice} de{" "}
-            {foco.ranking.total}:{" "}
+            <b>{foco.nombre}</b> · índice{" "}
+            {grupo === "todos"
+              ? foco.ranking.indice_universal ?? 0
+              : foco.ranking.indice}{" "}
+            de {foco.ranking.total}:{" "}
             {desglose(foco)
               .map((p) => `${p.clave.toUpperCase()} ${Math.round(p.share * 100)}%`)
               .join(", ")}
@@ -276,7 +286,7 @@ export default function RankingFiltrable({
             Pasa el cursor o toca una fila para ver la proporción de audiencia
             y consumo ·{" "}
             {grupo === "todos"
-              ? "posiciones por índice de cada grupo: la insignia marca a los catalogados en las Ligas."
+              ? "posiciones por índice universal (comparable entre la Escena y las Ligas): la insignia marca a los catalogados."
               : "posición dentro del grupo mostrado."}
           </span>
         )}

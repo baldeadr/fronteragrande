@@ -366,16 +366,21 @@ def list_artists(
             },
             "imagen_perfil": fila.get("imagen_perfil") or None,
             "imagen_origen": fila.get("imagen_origen") or None,
-            "ranking": ranking_artista.get(
-                fila["slug"],
-                {
-                    "indice": None,
-                    "audiencia": None,
-                    "consumo": None,
-                    "rank": None,
-                    "total": len(ranking_artista),
-                },
-            ),
+            "ranking": {
+                **ranking_artista.get(
+                    fila["slug"],
+                    {
+                        "indice": None,
+                        "audiencia": None,
+                        "consumo": None,
+                        "rank": None,
+                        "total": len(ranking_artista),
+                    },
+                ),
+                # Índice universal (0-100 contra techos fijos): comparable entre
+                # Escena y Ligas. El front lo usa para ordenar el grupo "Todos".
+                "indice_universal": round(fila.get("indice_universal", 0.0), 1),
+            },
             "menciones": (
                 menciones_ligas_data if catalogado else menciones
             ).get(fila["slug"], []),
@@ -574,16 +579,23 @@ def artist_detail(
         "fecha_captura": _json_safe(artist.fecha_captura),
         "nivel": nivel_calculado,
         "catalogado": catalogado_artista,
-        "ranking": ranking_artista.get(
-            artist.slug,
-            {
-                "indice": None,
-                "audiencia": None,
-                "consumo": None,
-                "rank": None,
-                "total": len(ranking_artista),
-            },
-        ),
+        "ranking": {
+            **ranking_artista.get(
+                artist.slug,
+                {
+                    "indice": None,
+                    "audiencia": None,
+                    "consumo": None,
+                    "rank": None,
+                    "total": len(ranking_artista),
+                },
+            ),
+            "indice_universal": (
+                round(fila.get("indice_universal", 0.0), 1)
+                if fila is not None
+                else 0.0
+            ),
+        },
         "menciones": menciones_artista.get(artist.slug, []),
         "analisis": analisis,
         "consumo": consumo,
