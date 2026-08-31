@@ -40,3 +40,9 @@ jobs:
 
       - name: Sincronizar publicaciones
         run: python scripts/sync_feed_igfb.py
+
+      - name: Invalidar caché de la API
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: bash scripts/invalidar_cache_api.sh

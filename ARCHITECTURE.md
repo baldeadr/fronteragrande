@@ -167,7 +167,7 @@ flowchart TD
 ### 2. Backend (FastAPI, arquitectura por capas)
 | Capa | Archivo | Responsabilidad |
 |------|---------|-----------------|
-| Routers | `backend/main.py` | Endpoints REST, validación, cache (`MemoryCache` TTL 5 min), auth admin (`X-Admin-Token`), CORS |
+| Routers | `backend/main.py` | Endpoints REST, validación, cache (`MemoryCache` TTL 5 min), auth admin (`X-Admin-Token`), invalidación de caché (`POST /api/admin/cache-invalidate`), CORS |
 | Servicios | `lib/servicios.py` | Read-models (`artistas_df`, `feed_df`), rankings (`ranking_global`, `ranking_ligas`), métricas, edición, onboarding |
 | Plataformas | `lib/plataformas.py` | Registro `PREVIEWS` (OCP) -> previews YouTube/TikTok/IG/FB/Spotify/SC/Mixcloud; detección plataforma; helper URLs |
 | Repositorio | `lib/repository.py` | **Todo** el SQL: `ArtistRepository`, `EventRepository`, `FeedRepository`, `LinkRepository`, `ChecksRepository` |
@@ -220,7 +220,7 @@ flowchart TD
 2. **Verificación Meta** -> OAuth callback -> guarda `fb_page_token`/`ig_user_id` -> `verificado = true` -> dispara `sync_feed_igfb` + promo IG.
 3. **Verificación TikTok** -> PKCE callback -> guarda `tt_user_id`/`tt_refresh_token` -> `verificado = true` -> dispara `sync_feed_tiktok`.
 3. **Feed automático** -> GH Action cada 6h -> adapters -> `FeedRepository.crear_si_nuevo` (anti-dup por URL) -> `recalcular_actividad` actualiza `estado_activo`.
-4. **Ranking** -> `lib/servicios.ranking_global` (escena base, sin `nivel`) + `ranking_ligas` (catalogados) -> `indice_alcance` (dentro de cada grupo, normalizado 0-100).
+4. **Ranking** -> `lib/servicios.ranking_global` (escena base, sin `nivel`) + `ranking_ligas` (catalogados) -> `indice_alcance` (dentro de cada grupo, normalizado 0-100). El ranking y `nivel`/`catalogado` se calculan del **mismo** `df` en cada request (la API cachea la respuesta completa 5 min, no el ranking por separado); los syncs llaman `POST /api/admin/cache-invalidate` (vía `scripts/invalidar_cache_api.sh`) para renovar la caché.
 5. **Ligas** -> `calcular_indice_universal` (techos fijos: IG/FB/TT/YT 50M, Spotify oyentes 50M, etc.) + `clasificar_por_indice` (umbrales fijos: **≥60 Ligas Mayores**, **≥50 En Ascenso**) + **Leyenda** (manual con fuente en `notas`).
 6. **Push** -> PWA registra suscripción -> `lib/notificaciones` envía VAPID -> admin broadcast / nuevo verificado / nuevo post Meta.
 

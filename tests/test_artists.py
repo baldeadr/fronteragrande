@@ -79,6 +79,60 @@ def test_artists_filtros(client):
     assert sin_resultados == []
 
 
+def test_ranking_coherente_con_nivel(client):
+    """Todo catalogado muestra su posición de ranking (lista y perfil).
+
+    Regresión del bug de caché: `nivel`/`catalogado` y el ranking deben
+    salir del mismo cálculo. Antes, un artista recién ascendido (índice ≥ 50)
+    podía quedar con insignia de Liga pero sin `ranking.rank` (y el chart no
+    lo listaba en su chip).
+    """
+    datos = client.get("/api/artists").json()
+    catalogados = [a for a in datos if a["catalogado"]]
+    for a in catalogados:
+        assert a["ranking"]["indice"] is not None, a["slug"]
+        assert a["ranking"]["rank"] is not None, a["slug"]
+        assert a["ranking"]["total"] == len(catalogados), a["slug"]
+        detalle = client.get(f"/api/artists/{a['slug']}").json()
+        assert detalle["catalogado"] is True
+        assert detalle["nivel"] == a["nivel"]
+        assert detalle["ranking"]["rank"] == a["ranking"]["rank"]
+        assert detalle["ranking"]["indice"] == a["ranking"]["indice"]
+
+
+def test_ranking_consistente_lista_detalle(client):
+    """La posición en la lista y en el perfil coinciden para TODOS."""
+    datos = client.get("/api/artists").json()
+    for a in datos:
+        detalle = client.get(f"/api/artists/{a['slug']}").json()
+        assert detalle["catalogado"] == a["catalogado"]
+        assert detalle["nivel"] == a["nivel"]
+        assert detalle["ranking"]["rank"] == a["ranking"]["rank"]
+        assert detalle["ranking"]["total"] == a["ranking"]["total"]
+
+
+def test_admin_invalidar_cache(client):
+    """La invalidación de caché exige admin y limpia las claves públicas."""
+    from lib.cache import get_cache
+
+    cache = get_cache()
+    cache.set("artists:prueba", {"x": 1}, ttl=300)
+    cache.set("feed:prueba", {"x": 1}, ttl=300)
+    cache.set("stats:prueba", {"x": 1}, ttl=300)
+    cache.set("ranking:prueba", {"x": 1}, ttl=300)
+
+    sin_token = client.post("/api/admin/cache-invalidate")
+    assert sin_token.status_code == 403
+
+    token = {"X-Admin-Token": "clave_admin_test"}
+    respuesta = client.post("/api/admin/cache-invalidate", headers=token)
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"ok": True}
+
+    for clave in ("artists:prueba", "feed:prueba", "stats:prueba", "ranking:prueba"):
+        assert cache.get(clave) is None, clave
+
+
 def test_artists_links_no_busqueda(client):
     datos = client.get("/api/artists").json()
     for a in datos:

@@ -107,3 +107,9 @@ jobs:
 
       - name: Recalcular actividad
         run: python scripts/recalcular_actividad.py
+
+      - name: Invalidar caché de la API
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: bash scripts/invalidar_cache_api.sh

@@ -288,7 +288,6 @@ def list_artists(
 ):
     """Listado de artistas (tarjetas para el directorio)."""
     cache_key = _cache_key_artists(segmento, ciudad, genero, estado, q)
-    cache_key_ranking = "ranking:global"
     # No usar cache si hay token de admin (para exponer indice_universal)
     is_admin = bool(x_admin_token and ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD)
     if not is_admin:
@@ -300,17 +299,11 @@ def list_artists(
     if df.empty:
         return []
 
-    ranking = cache.get(cache_key_ranking)
-    if ranking is None:
-        ranking, menciones = ranking_global(df)
-        ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
-        cache.set(
-            cache_key_ranking,
-            (ranking, menciones, ranking_ligas_data, menciones_ligas_data),
-            ttl=300,
-        )
-    else:
-        ranking, menciones, ranking_ligas_data, menciones_ligas_data = ranking
+    # El ranking y el nivel se calculan del MISMO df recién leído, para que
+    # `nivel`/`catalogado` y la posición de ranking nunca se desincronicen
+    # (un artista recién ascendido siempre aparece con su lugar en las Ligas).
+    ranking, menciones = ranking_global(df)
+    ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
 
     if q:
         q = q.lower()
@@ -471,18 +464,8 @@ def artist_detail(
     df = artistas_df(db)
     fila = df[df["slug"] == slug].iloc[0] if not df.empty else None
 
-    cache_key_ranking = "ranking:global"
-    ranking_cacheado = cache.get(cache_key_ranking)
-    if ranking_cacheado is None:
-        ranking, menciones = ranking_global(df)
-        ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
-        cache.set(
-            cache_key_ranking,
-            (ranking, menciones, ranking_ligas_data, menciones_ligas_data),
-            ttl=300,
-        )
-    else:
-        ranking, menciones, ranking_ligas_data, menciones_ligas_data = ranking_cacheado
+    ranking, menciones = ranking_global(df)
+    ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
     nivel_calculado = (fila.get("nivel_calculado") or "") if fila is not None else ""
     catalogado_artista = bool(nivel_calculado)
     ranking_artista = ranking_ligas_data if catalogado_artista else ranking
@@ -711,6 +694,23 @@ def _requiere_admin(x_admin_token: str) -> None:
         raise HTTPException(
             status_code=403, detail="Acción restringida al administrador"
         )
+
+
+@app.post("/api/admin/cache-invalidate")
+def admin_invalidar_cache(
+    x_admin_token: str = Header(default=""),
+    cache: MemoryCache = Depends(get_cache_dependency),
+):
+    """Invalida la caché pública de la API (artistas, feed, stats, ranking).
+
+    Lo llaman los workflows de sincronización tras escribir en la BD (los
+    syncs corren fuera del proceso de la API), para que las respuestas
+    cacheadas no sigan siendo servidas hasta 5 min después. Requiere el
+    `X-Admin-Token`.
+    """
+    _requiere_admin(x_admin_token)
+    invalidate_public_cache(cache)
+    return {"ok": True}
 
 
 @app.post("/api/admin/events")

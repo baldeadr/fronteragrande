@@ -23,3 +23,9 @@ jobs:
 
       - name: Capturar oyentes
         run: python scripts/actualizar_oyentes_spotify.py
+
+      - name: Invalidar caché de la API
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: bash scripts/invalidar_cache_api.sh
