@@ -41,9 +41,12 @@ def main(artistas=None, solo_nuevos=False) -> int:
 
         # Filtrar solo_nuevos
         if solo_nuevos:
-            artistas_con_bc = session.query(FeedItem.artist_id).filter_by(
-                fuente="bandcamp"
-            ).subquery()
+            artistas_con_bc = {
+                row[0]
+                for row in session.query(FeedItem.artist_id).filter_by(
+                    fuente="bandcamp"
+                ).all()
+            }
             artistas = [a for a in artistas if a.id not in artistas_con_bc]
 
         for artista in artistas:

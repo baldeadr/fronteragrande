@@ -52,9 +52,12 @@ def get_batch_artistas(batch: int, total_batches: int, solo_nuevos: bool = False
 
         if solo_nuevos:
             # Solo artistas sin items de Spotify
-            artistas_con_sp = session.query(FeedItem.artist_id).filter_by(
-                fuente="spotify"
-            ).subquery()
+            artistas_con_sp = {
+                row[0]
+                for row in session.query(FeedItem.artist_id).filter_by(
+                    fuente="spotify"
+                ).all()
+            }
             todos = [a for a in todos if a.id not in artistas_con_sp]
     
 
