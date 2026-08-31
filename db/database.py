@@ -28,7 +28,7 @@ engine_kwargs = {}
 if DATABASE_URL.startswith("sqlite"):
     engine_kwargs = {"connect_args": {"check_same_thread": False}}
 
-engine = create_engine(DATABASE_URL, future=True, **engine_kwargs)
+engine = create_engine(DATABASE_URL, future=True, pool_pre_ping=True, **engine_kwargs)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 # Asegura que existan todas las tablas al arrancar (seed opcional).
