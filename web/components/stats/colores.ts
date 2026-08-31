@@ -18,3 +18,17 @@ export const CATEGORIA_COLOR: Record<string, string> = {
   Covers: "#e4572e",
   Tributo: "#b57edc",
 };
+
+/** Paleta por índice para la dona de ciudades (el inventario de ciudades cambia). */
+export const CIUDAD_PALETA: string[] = [
+  "var(--accent)",
+  "#1db954",
+  "#f5a623",
+  "#4fa3e8",
+  "#e4572e",
+  "#b57edc",
+  "#36d6d9",
+  "#ff6384",
+];
+
+export const OTRAS_COLOR = "var(--muted)";

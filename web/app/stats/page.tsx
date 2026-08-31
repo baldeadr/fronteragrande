@@ -5,6 +5,7 @@ import { fechaCorta } from "@/lib/formato";
 import ActividadTemporal from "@/components/stats/ActividadTemporal";
 import CiudadesApiladas from "@/components/stats/CiudadesApiladas";
 import DonaCategorias from "@/components/stats/DonaCategorias";
+import DonaCiudades from "@/components/stats/DonaCiudades";
 import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
@@ -71,9 +72,9 @@ export default async function StatsPage() {
         <p className="mb-4 text-sm text-muted">
           {conRanking} proyectos de la escena con índice calculado ·{" "}
           {catalogados} en las Ligas. Elige un grupo (o{" "}
-          <b>Todos</b>, con la insignia de Liga en cada catalogado) para ver su
-          propio ranking: la barra fina muestra de qué redes viene el alcance
-          de cada uno.
+          <b>Todos</b>, ordenado por índice universal y con la insignia de Liga
+          en cada catalogado) para ver su ranking: la barra fina muestra de qué
+          redes viene el alcance de cada uno.
         </p>
         <RankingFiltrable artistas={artistas} />
       </section>
@@ -197,7 +198,16 @@ export default async function StatsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="mb-3 font-bold">Por ciudad</h2>
+          <h2 className="mb-1 font-bold">Por ciudad</h2>
+          <p className="mb-4 text-sm text-muted">
+            Cuota porcentual de cada ciudad en la escena y desglose por
+            actividad.
+          </p>
+          <DonaCiudades ciudades={stats.ciudades} limite={8} />
+          <hr className="my-5 border-line" />
+          <h3 className="mb-3 text-sm font-semibold text-muted">
+            Actividad por ciudad
+          </h3>
           <CiudadesApiladas ciudades={stats.por_ciudad} />
         </section>
 
