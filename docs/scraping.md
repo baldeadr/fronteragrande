@@ -82,7 +82,7 @@ y de la detección de actividad. No hay jerarquía entre ellos.
 | Adaptador | Función | Requisitos |
 |-----------|---------|------------|
 | `scraper/adapters/http.py` | salud de URLs (200/4xx) para chequear actividad | ninguno |
-| `scraper/adapters/youtube.py` | últimos videos del canal vía **YouTube Data API v3** → `feed_items` | `YOUTUBE_API_KEY` |
+| `scraper/adapters/youtube.py` | últimos videos del canal vía **feed RSS público** → `feed_items` | ninguno (sin API key, sin cuota) |
 | `scraper/adapters/youtube.py` | estadísticas públicas del canal → `followers_yt`/`vistas_yt` | `YOUTUBE_API_KEY` |
 | `scraper/adapters/tiktok.py` | metadatos de un video/post vía **oEmbed** público (título, autor, miniatura) | ninguno (sin API key) |
 | `scraper/adapters/instagram.py` | oEmbed de un post/reel de IG público (html del embed) | ninguno (sin API key) |

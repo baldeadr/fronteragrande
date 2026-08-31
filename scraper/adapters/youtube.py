@@ -1,11 +1,14 @@
-"""Adaptador YouTube: últimos videos de un canal vía YouTube Data API v3.
+"""Adaptador YouTube: últimos videos de un canal.
 
-Requiere `YOUTUBE_API_KEY`: se resuelve el `channel_id` desde la URL del canal
-(handle/@user o /channel/) y se consulta `search.list` con `order=date`.
+Los últimos videos se obtienen del **feed RSS público** del canal
+(`https://www.youtube.com/feeds/videos.xml?channel_id=...`), que no requiere
+API key y no consume cuota de la YouTube Data API. Las estadísticas
+(suscriptores/vistas) sí usan la Data API v3 con `YOUTUBE_API_KEY`.
 """
 
 import json
 import re
+import xml.etree.ElementTree as ET
 from datetime import datetime
 
 import requests
@@ -25,7 +28,7 @@ HEADERS = {
     ),
 }
 CHANNELS_API = "https://www.googleapis.com/youtube/v3/channels"
-SEARCH_API = "https://www.googleapis.com/youtube/v3/search"
+RSS_FEEDS_URL = "https://www.youtube.com/feeds/videos.xml"
 RE_CHANNEL_ID = re.compile(r'["\']channelId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
 RE_BROWSE_ID = re.compile(r'["\']browseId["\']\s*:\s*["\'](UC[0-9A-Za-z_-]{22})["\']')
 RE_YT_INITIAL = re.compile(r"var ytInitialData\s*=\s*(\{.*?\});</script>", re.DOTALL)
@@ -143,87 +146,34 @@ def youtube_about(url: str) -> str:
     return _parse_about(pagina)
 
 
-def _parse_search_response(data: dict, max_videos: int) -> list[dict]:
-    """Convierte la respuesta de search.list al formato normalizado."""
-    items = []
-    for item in data.get("items", [])[:max_videos]:
-        if item.get("id", {}).get("kind") != "youtube#video":
-            continue
-        video_id = item["id"]["videoId"]
-        snippet = item.get("snippet", {})
-        titulo = snippet.get("title", "")
-        publicado = snippet.get("publishedAt", "")
-        fecha = None
-        if publicado:
-            try:
-                fecha = datetime.fromisoformat(
-                    publicado.replace("Z", "+00:00")
-                ).replace(tzinfo=None)
-            except ValueError:
-                fecha = None
-        thumbnails = snippet.get("thumbnails", {})
-        imagen = (
-            thumbnails.get("high", {}).get("url")
-            or thumbnails.get("medium", {}).get("url")
-            or thumbnails.get("default", {}).get("url")
-            or ""
-        )
-        descripcion = (snippet.get("description", "") or "")[:300]
-        items.append(
-            {
-                "titulo": titulo,
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-                "fecha": fecha,
-                "descripcion": descripcion,
-                "imagen": imagen,
-            }
-        )
-    return items
-
-
 def latest_videos(channel_url: str, max_videos: int = 5, api_key: str | None = None) -> list[dict]:
     """Devuelve los últimos videos publicados de un canal.
 
-    Requiere `api_key` (YouTube Data API v3). Si no se proporciona, intenta
-    leer la variable de entorno `YOUTUBE_API_KEY`.
+    Usa el **feed RSS público** del canal (`RSS_FEEDS_URL?channel_id=...`), que
+    no necesita API key ni consume cuota de la Data API. `api_key` se conserva
+    por compatibilidad de firma pero ya no se requiere para los videos.
     """
-    import os
-
-    if api_key is None:
-        api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
-    if not api_key:
-        raise YouTubeError("YOUTUBE_API_KEY no configurada (necesaria para YouTube Data API v3)")
-
     channel_id = channel_id_from_url(channel_url)
     if not channel_id:
         raise YouTubeError("No se pudo resolver el channel_id de: " + channel_url)
 
     try:
         respuesta = requests.get(
-            SEARCH_API,
-            params={
-                "part": "snippet",
-                "channelId": channel_id,
-                "order": "date",
-                "type": "video",
-                "maxResults": max_videos,
-                "key": api_key,
-            },
+            RSS_FEEDS_URL,
+            params={"channel_id": channel_id},
             timeout=DEFAULT_TIMEOUT,
             headers=HEADERS,
         )
     except requests.RequestException as exc:
-        raise YouTubeError(f"Fallo de red al consultar YouTube Data API: {exc}")
+        raise YouTubeError(f"Fallo de red al consultar el feed RSS de YouTube: {exc}")
     if not respuesta.ok:
         raise YouTubeError(
-            f"YouTube Data API respondió HTTP {respuesta.status_code}: {respuesta.text}"
+            f"El feed RSS respondió HTTP {respuesta.status_code}: {respuesta.url}"
         )
     try:
-        data = respuesta.json()
-    except ValueError as exc:
-        raise YouTubeError("Respuesta inválida de YouTube Data API") from exc
-
-    return _parse_search_response(data, max_videos)
+        return _parse_rss(respuesta.text, max_videos)
+    except ET.ParseError as exc:
+        raise YouTubeError("Feed RSS inválido de YouTube") from exc
 
 
 def channel_statistics(channel_id: str, api_key: str) -> dict:

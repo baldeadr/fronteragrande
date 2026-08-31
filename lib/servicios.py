@@ -985,7 +985,7 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
     except Exception:
         pass
 
-    # Últimos videos de YouTube (RSS, sin API key) → feed.
+    # Últimos videos de YouTube (feed RSS público, sin API key ni cuota) → feed.
     canales = [
         l for l in artista.links if l.plataforma == "yt" and not l.es_busqueda
     ]

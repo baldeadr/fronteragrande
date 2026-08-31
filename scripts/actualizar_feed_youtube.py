@@ -1,8 +1,8 @@
 """Actualiza el feed con los últimos videos de YouTube de cada artista.
 
-Usa el adaptador RSS público (`scraper/adapters/youtube.py`, sin API key):
-para cada artista con canal vinculado, guarda sus últimos videos en
-`feed_items` (sin duplicar por URL).
+Usa el feed RSS público del canal (`scraper/adapters/youtube.py`, sin API key,
+sin consumo de cuota): para cada artista con canal vinculado, guarda sus
+últimos videos en `feed_items` (sin duplicar por URL).
 
 Uso:
     .venv/bin/python scripts/actualizar_feed_youtube.py
@@ -23,12 +23,6 @@ MAX_VIDEOS = 5
 
 def main():
     session = SessionLocal()
-    import os
-
-    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
-    if not api_key:
-        print("YOUTUBE_API_KEY no está configurada; no se sincronizó nada.")
-        return
     nuevos = 0
     ya_existentes = 0
     errores = []
@@ -40,7 +34,7 @@ def main():
             if not canales:
                 continue
             try:
-                videos = latest_videos(canales[0].url, max_videos=MAX_VIDEOS, api_key=api_key)
+                videos = latest_videos(canales[0].url, max_videos=MAX_VIDEOS)
             except ScraperError as exc:
                 errores.append(f"{artista.nombre}: {exc}")
                 continue
