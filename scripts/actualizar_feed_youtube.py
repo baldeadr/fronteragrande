@@ -65,6 +65,15 @@ def main():
     for e in errores:
         print("  ✗", e)
 
+    # Recalcula estado_activo con la señal más reciente del feed (igual que los
+    # demás syncs), así un artista con videos recientes pasa a "activo".
+    from scripts.recalcular_actividad import recalcular
+
+    cambios = recalcular()
+    print(f"Cambios de actividad: {len(cambios)}")
+    for nombre, antes, despues in cambios:
+        print(f"  {nombre}: {antes} → {despues}")
+
 
 if __name__ == "__main__":
     main()
