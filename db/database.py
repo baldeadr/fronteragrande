@@ -133,6 +133,14 @@ def _asegurar_columnas_extra():
                         "ultimo_sync_lanzamientos TIMESTAMP"
                     )
                 )
+        if "promo_posts" in inspector.get_table_names():
+            # La playlist semanal registra posts sin artista ligado: permitir NULL.
+            with engine.begin() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE promo_posts ALTER COLUMN artist_id DROP NOT NULL"
+                    )
+                )
         return
     from sqlalchemy import text
 

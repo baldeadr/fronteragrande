@@ -269,7 +269,8 @@ class PromoPost(Base):
     __tablename__ = "promo_posts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"), index=True)
+    # Nullable: los posts de playlist semanal no están ligados a un solo artista.
+    artist_id: Mapped[int | None] = mapped_column(ForeignKey("artists.id"), index=True)
     plataforma: Mapped[str] = mapped_column(String(20), default="fb")  # fb, ig
     post_id: Mapped[str] = mapped_column(String(120))  # ID del post en la API de Meta
     fecha: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
