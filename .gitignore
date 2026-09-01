@@ -9,6 +9,9 @@ __pycache__/
 .spotify_playlist_cache.json
 .cache
 
+# Token permanente de la pagina FG (se obtiene con scripts/obtener_token_pagina.py)
+data/fg_page_token.txt
+
 # Base de datos local
 instance/
 *.db

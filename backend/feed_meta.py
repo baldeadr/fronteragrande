@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import time
 from datetime import date, datetime
+from pathlib import Path
 from urllib.parse import urlencode
 
 import requests
@@ -53,6 +54,10 @@ AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
 router = APIRouter(prefix="/api/feed/igfb", tags=["meta"])
 logger = logging.getLogger(__name__)
+
+# Ruta de archivo NO versionado donde se guarda el token permanente de la
+# página FG cuando se obtiene vía `fg-login` (para cargarlo como secret).
+FG_PAGE_TOKEN_FILE = os.getenv("FG_PAGE_TOKEN_FILE", "data/fg_page_token.txt")
 
 
 def _owner_secret() -> bytes:
@@ -219,6 +224,24 @@ def _grafo(ruta: str, params: dict) -> dict:
     return datos
 
 
+def _pagina_por_id(user_token: str, page_id: str) -> dict | None:
+    """Devuelve la página administrada por la cuenta cuyo id coincide con el
+    dado (para emitir el token de la página FG, no de un artista)."""
+    r = requests.get(
+        f"{GRAF_API}/me/accounts",
+        params={
+            "access_token": user_token,
+            "fields": "id,name,access_token",
+        },
+        timeout=20,
+    )
+    r.raise_for_status()
+    for p in r.json().get("data", []):
+        if str(p.get("id")) == str(page_id):
+            return p
+    return None
+
+
 def pagina_about(page_id: str, page_token: str) -> str:
     """Descripción de la página de Facebook.
 
@@ -326,6 +349,33 @@ def login(slug: str, intencion: str = "conectar", con_eventos: bool = False):
             "client_id": APP_ID,
             "redirect_uri": REDIRECT_URI,
             "state": f"{slug}:{intencion}",
+            "scope": scope,
+        }
+    )
+    return RedirectResponse(f"{AUTH_URL}?{params}")
+
+
+@router.get("/fg-login")
+def fg_login():
+    """Inicia el OAuth para obtener el token permanente de la página FG.
+
+    A diferencia del login de artistas (que guarda el token en la BD del
+    artista), este flujo sirve para la **página de la marca** Frontera Grande:
+    al autorizar, el callback guarda el token de página (permanente, no
+    expira mientras no se revoque la app) en `data/fg_page_token.txt` para
+    cargarlo como secret `FG_PAGE_TOKEN` en GitHub Actions.
+    """
+    if not meta_configurado():
+        raise HTTPException(
+            status_code=503,
+            detail="Meta no configurado. Revisa META_APP_ID/META_APP_SECRET en .env",
+        )
+    scope = "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic"
+    params = urlencode(
+        {
+            "client_id": APP_ID,
+            "redirect_uri": REDIRECT_URI,
+            "state": "fg",
             "scope": scope,
         }
     )
@@ -519,6 +569,37 @@ def desconectar(
         session.close()
 
 
+def _callback_pagina_fg(code: str):
+    """Callback del OAuth de la página FG: guarda el token permanente.
+
+    Canjea el código, obtiene el token de la página (permanente, no expira
+    mientras la cuenta no revoque la app) y lo escribe en `FG_PAGE_TOKEN_FILE`
+    (por defecto `data/fg_page_token.txt`, NO versionado) para que se cargue
+    como secret `FG_PAGE_TOKEN` en GitHub Actions.
+    """
+    page_id = os.getenv("FG_PAGE_ID", "")
+    if not code or not page_id:
+        return RedirectResponse(f"{WEB_URL}?fg_token=error")
+    try:
+        corto = _intercambiar_code(code)
+        largo = _token_larga_duracion(corto)
+        pagina = _pagina_por_id(largo, page_id)
+        if not pagina:
+            logger.error(
+                "La cuenta autorizada no administra la página FG %s (¿es admin?)", page_id
+            )
+            return RedirectResponse(f"{WEB_URL}?fg_token=no_admin")
+        token = pagina["access_token"]
+        ruta = Path(FG_PAGE_TOKEN_FILE)
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_text(token, encoding="utf-8")
+        logger.info("Token de la página FG guardado en %s", ruta)
+        return RedirectResponse(f"{WEB_URL}?fg_token=ok")
+    except Exception as exc:
+        logger.exception("Error al obtener token de la página FG: %s", exc)
+        return RedirectResponse(f"{WEB_URL}?fg_token=error")
+
+
 @router.get("/callback")
 def callback(code: str, state: str):
     """Recibe el `code`, guarda el token de la página y redirige a selección de foto.
@@ -532,6 +613,10 @@ def callback(code: str, state: str):
     intencion = partes[1] if len(partes) == 2 else "conectar"
     if intencion not in ("conectar", "desconectar"):
         return RedirectResponse(f"{WEB_URL}/artistas/{slug}?igfb=error")
+
+    if slug == "fg":
+        return _callback_pagina_fg(code)
+
     session = SessionLocal()
     ok = False
     owner_cookie = None

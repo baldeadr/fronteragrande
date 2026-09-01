@@ -150,7 +150,38 @@ Reinicia la API después de cambiar el `.env`:
 - **Seguridad:** los tokens se guardan solo en la BD y **nunca** se exponen
   por la API (`/api/artists/{slug}` solo reporta el estado de conexión).
 
-## 10. Validación de la app y error "Feature Unavailable"
+## 10. Token de la página FG (para publicar automáticamente)
+
+La publicación automática de la tarjeta semanal (y de los posts de bienvenida)
+en la página FG necesita un **token de página con `pages_manage_posts`**.
+El token de página **no expira** mientras la cuenta no revoque la app, así que
+se genera una vez y se guarda como secret `FG_PAGE_TOKEN` en GitHub Actions.
+
+La forma recomendada (flujo OAuth del proyecto, token permanente):
+
+```bash
+# API corriendo (./scripts/dev.sh) con META_APP_ID/META_APP_SECRET y FG_PAGE_ID en .env
+.venv/bin/python scripts/obtener_token_pagina.py
+```
+
+1. El script abre el navegador en `/api/feed/igfb/fg-login`.
+2. Autoriza con la cuenta que **administra la página FG**.
+3. La API guarda el token en `data/fg_page_token.txt` (NO versionado) y el
+   script configura el secret `FG_PAGE_TOKEN` en GitHub Actions (o
+   `--no-set-secret` para solo ver el comando).
+
+Si prefieres el flujo manual de Meta (token de **60 días**, requiere renovar):
+
+```text
+Graph API Explorer → user token con pages_manage_posts →
+GET /{FG_PAGE_ID}?fields=access_token → exchange a long-lived (60 días)
+```
+
+En ambos casos, `FG_PAGE_ID` es el id de la página FG (p. ej.
+`1567063665051085`). El valor `FG_PAGE_TOKEN_FILE` (opcional) cambia dónde se
+guarda el token obtenido; por defecto `data/fg_page_token.txt`.
+
+## 11. Validación de la app y error "Feature Unavailable"
 
 Cuando la app de Meta entra en **validación/registro** (Business
 Verification / App Review en curso), Meta **desactiva temporalmente el
