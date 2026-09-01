@@ -14,15 +14,11 @@ Uso:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
-import random
 import sys
 from datetime import date
 from pathlib import Path
-
-import qrcode
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -35,13 +31,16 @@ from lib.repository import ArtistRepository
 SELECCION_FILE = BASE_DIR / "data" / "playlist_seleccion_semanal.json"
 PROMOS_DIR = BASE_DIR / "instance" / "promos"
 
-# Colores identidad FG
-BG = "#0b0b10"
-ACENTO = (157, 78, 221)         # #9d4edd
-ACENTO_CLARO = (224, 170, 255)  # #e0aaff
-VIOLETA = (123, 44, 191)        # #7b2cbf
+# Colores identidad FG (marca del sitio: violeta)
+ACENTO = (157, 78, 221)         # #9d4edd violeta
+ACENTO_CLARO = (224, 170, 255)  # #e0aaff lavanda
 TEXTO = "#ffffff"
 LIENZO = (1080, 1080)
+
+# Paleta del fondo "radar de frontera" (violeta, coherente con la marca)
+RADAR = (186, 85, 211)          # #ba55d3 orquídea/violeta medio
+RADAR_OSCURO = (54, 30, 74)     # #361e4a violeta nocturno
+RADAR_FONDO = (16, 10, 25)      # #100a19 base violeta profundo
 
 
 def load_env():
@@ -58,19 +57,40 @@ def load_env():
             os.environ.setdefault(key.strip(), value.strip())
 
 
+def _cargar_fuente(tamano: int, candidatos: list) -> "ImageFont":
+    from PIL import ImageFont
+    for ruta in candidatos:
+        try:
+            return ImageFont.truetype(str(ruta), tamano)
+        except Exception:
+            continue
+    return ImageFont.load_default()
+
+
 def _fuente(tamano: int):
-    """Carga Archivo Black (fallback a la fuente por defecto)."""
-    try:
-        from PIL import ImageFont
-        FUENTE_PATH = BASE_DIR / "web/public/fonts/ArchivoBlack-Regular.ttf"
-        return ImageFont.truetype(str(FUENTE_PATH), tamano)
-    except Exception:
-        from PIL import ImageFont
-        return ImageFont.load_default()
+    """Carga Archivo Black (display: titular y nombres; fallback y luego default)."""
+    candidatos = [
+        BASE_DIR / "web/public/fonts/ArchivoBlack-Regular.ttf",
+        Path(os.path.expanduser("~/.local/share/fonts/carrusel/ArchivoBlack-Regular.ttf")),
+    ]
+    return _cargar_fuente(tamano, candidatos)
 
 
-def _texto_glow(lienzo, pos: tuple, texto: str, fuente, color, glow_radius: int = 6, glow_alpha: int = 160):
-    """Renderiza texto con glow (blur de halo) sobre lienzo RGBA."""
+def _fuente_texto(tamano: int):
+    """Carga Inter (texto: canciones, franja, botón, semana; fallback y luego default)."""
+    candidatos = [
+        BASE_DIR / "web/public/fonts/Inter.ttf",
+        Path(os.path.expanduser("~/.local/share/fonts/carrusel/Inter.ttf")),
+    ]
+    return _cargar_fuente(tamano, candidatos)
+
+
+def _texto_glow(lienzo, pos: tuple, texto: str, fuente, color, glow_radius: int = 6, glow_alpha: int = 160, sombra: bool = True):
+    """Renderiza texto con sombra direccional + glow (halo) sobre lienzo RGBA.
+
+    La sombra (negro, offset y blur) da separación del fondo; el glow amable
+    resalta sobre el radar. Determinista.
+    """
     from PIL import Image, ImageDraw, ImageFilter
     if isinstance(color, str):
         r = int(color[1:3], 16)
@@ -79,6 +99,11 @@ def _texto_glow(lienzo, pos: tuple, texto: str, fuente, color, glow_radius: int 
         rgb = (r, g, b)
     else:
         rgb = tuple(color[:3])
+    if sombra:
+        capa_s = Image.new("RGBA", lienzo.size, (0, 0, 0, 0))
+        ImageDraw.Draw(capa_s).text((pos[0] + 3, pos[1] + 3), texto, font=fuente, fill=(0, 0, 0, 190))
+        capa_s = capa_s.filter(ImageFilter.GaussianBlur(1.6))
+        lienzo.alpha_composite(capa_s)
     capa = Image.new("RGBA", lienzo.size, (0, 0, 0, 0))
     ImageDraw.Draw(capa).text(pos, texto, font=fuente, fill=(*rgb, glow_alpha))
     capa = capa.filter(ImageFilter.GaussianBlur(glow_radius))
@@ -96,6 +121,8 @@ def _centrar_texto(draw, texto: str, fuente, y: int, lienzo_ancho: int, color, l
         lienzo = draw.image
     if glow and lienzo is not None:
         _texto_glow(lienzo, (x, y), texto, fuente, color)
+    elif lienzo is not None:
+        _texto_glow(lienzo, (x, y), texto, fuente, color, glow_radius=2, glow_alpha=120)
     else:
         draw.text((x + 3, y + 3), texto, font=fuente, fill="#00000090")
         draw.text((x, y), texto, font=fuente, fill=color)
@@ -112,42 +139,12 @@ def _centrar_texto_en_caja(draw, texto: str, fuente, y: int, x_inicio: int, anch
         lienzo = draw.image
     if glow and lienzo is not None:
         _texto_glow(lienzo, (x, y), texto, fuente, color)
+    elif lienzo is not None:
+        _texto_glow(lienzo, (x, y), texto, fuente, color, glow_radius=2, glow_alpha=120)
     else:
         draw.text((x + 3, y + 3), texto, font=fuente, fill="#00000090")
         draw.text((x, y), texto, font=fuente, fill=color)
     return alto
-
-
-def _fondo_gradiente(size):
-    """Degradado diagonal violeta→negro (identidad FG)."""
-    from PIL import Image
-    tope = Image.new("RGB", size, VIOLETA)
-    base = Image.new("RGB", size, BG)
-    grad = Image.linear_gradient("L").rotate(135, expand=True).resize(size)
-    return Image.composite(tope, base, grad).convert("RGBA")
-
-
-def _brillo_radial(size, centro, radio, color, alpha, desenfoque):
-    """Halo suave (neón)."""
-    from PIL import Image, ImageDraw, ImageFilter
-    capa = Image.new("RGBA", size, (0, 0, 0, 0))
-    ImageDraw.Draw(capa).ellipse(
-        (centro[0] - radio, centro[1] - radio, centro[0] + radio, centro[1] + radio),
-        fill=(*color, alpha),
-    )
-    return capa.filter(ImageFilter.GaussianBlur(desenfoque))
-
-
-def _esquinas_redondeadas(img, radio: int = 40):
-    """Aplica máscara de esquinas redondeadas."""
-    from PIL import Image, ImageDraw
-    mascara = Image.new("L", img.size, 0)
-    ImageDraw.Draw(mascara).rounded_rectangle(
-        (0, 0, img.size[0] - 1, img.size[1] - 1), radius=radio, fill=255
-    )
-    salida = img.copy()
-    salida.putalpha(mascara)
-    return salida
 
 
 def _descargar_imagen(url: str):
@@ -173,23 +170,6 @@ def _recortar_cuadrado(img, size):
     return img.resize(size, Image.Resampling.LANCZOS)
 
 
-def _generar_qr_playlist(playlist_url: str, size: int = 200) -> "Image.Image":
-    """Genera QR code que apunta a la playlist de Spotify."""
-    from PIL import Image
-    qr = qrcode.QRCode(
-        version=3,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=8,
-        border=2,
-    )
-    qr.add_data(playlist_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
-    # Redimensionar al tamaño deseado
-    img = img.resize((size, size), Image.Resampling.LANCZOS)
-    return img
-
-
 def _pegar_monograma(lienzo, alto: int, x: int, y_eje: int, tinto=None):
     """Pega el monograma FG centrado en 'y_eje'."""
     from PIL import Image
@@ -206,284 +186,232 @@ def _pegar_monograma(lienzo, alto: int, x: int, y_eje: int, tinto=None):
     lienzo.alpha_composite(recorte, (int(x), int(y_eje - alto / 2)))
 
 
-def _fondo_playlist() -> "Image.Image":
-    """Fondo personalizado para la playlist semanal: degradado + grid sutil + acento."""
+
+def _fondo_radar_frontera() -> "Image.Image":
+    """Fondo 'radar de la frontera': retícula GPS, anillos de sonar y coordenadas.
+
+    Estilo totalmente distinto al neón degradado de los artistas verificados:
+    plano oscuro azulado con cuadrícula de mapa, anillos de radar cian que
+    barren alrededor del monograma y coordenadas de las ciudades de la frontera.
+    Determinista (sin ruido aleatorio) para verificar la salida de forma estable.
+    """
     from PIL import Image, ImageDraw
-    
-    # Base: degradado diagonal violeta→negro
-    lienzo = _fondo_gradiente(LIENZO)
-    
-    # Capa de "grid" sutil (patrón de líneas finas estilo equalizador)
-    grid = Image.new("RGBA", LIENZO, (0, 0, 0, 0))
-    draw_grid = ImageDraw.Draw(grid)
-    for y in range(0, 1080, 60):
-        alpha = 12 if (y // 60) % 2 == 0 else 8
-        draw_grid.line([(0, y), (1080, y)], fill=(*ACENTO_CLARO, alpha), width=1)
-    for x in range(0, 1080, 60):
-        alpha = 12 if (x // 60) % 2 == 0 else 8
-        draw_grid.line([(x, 0), (x, 1080)], fill=(*ACENTO_CLARO, alpha), width=1)
-    lienzo.alpha_composite(grid)
-    
-    # Halo central suave
-    lienzo.alpha_composite(_brillo_radial(LIENZO, (540, 500), 400, ACENTO, 80, 150))
-    lienzo.alpha_composite(_brillo_radial(LIENZO, (540, 500), 250, ACENTO_CLARO, 50, 100))
-    
-    # Línea divisoria decorativa bajo el título
+
+    # Supersampling 2x: se dibuja a 2160 y se reduce a 1080 para suavizar (antialiasing) líneas y anillos, y se oscurece para que resalte el contenido.
+    escala = 2
+    ancho = LIENZO[0] * escala
+    alto = LIENZO[1] * escala
+    lienzo = Image.new("RGBA", (ancho, alto), RADAR_FONDO)
     draw = ImageDraw.Draw(lienzo)
-    draw.line(
-        [(240, 155), (840, 155)],
-        fill=(*ACENTO_CLARO, 100),
-        width=2
-    )
-    # Puntitos en la línea
-    for x in range(240, 841, 40):
+
+    # Retícula GPS (cuadrícula sutil de mapa)
+    paso = 90 * escala
+    for x in range(0, ancho, paso):
+        draw.line([(x, 0), (x, alto)], fill=(*RADAR_OSCURO, 150), width=2)
+    for y in range(0, alto, paso):
+        draw.line([(0, y), (ancho, y)], fill=(*RADAR_OSCURO, 150), width=2)
+
+    # Anillos de radar (sonar) alrededor del monograma
+    cx, cy = 540 * escala, 445 * escala
+    for i, radio in enumerate([170, 300, 430, 560, 690]):
+        radio *= escala
+        alfa = max(16, 85 - i * 14)
         draw.ellipse(
-            [(x - 3, 152), (x + 3, 158)],
-            fill=(*ACENTO, 180)
+            (cx - radio, cy - radio, cx + radio, cy + radio),
+            outline=(*RADAR, alfa), width=6 if i == 0 else 4,
         )
-    
-    return lienzo
 
+    # Línea de barrido del radar
+    import math
+    for ang in range(0, 360, 12):
+        r = 690 * escala
+        x1 = cx
+        y1 = cy
+        x2 = cx + int(r * math.cos(math.radians(ang)))
+        y2 = cy + int(r * math.sin(math.radians(ang)))
+        alfa = 80 if ang % 36 == 0 else 26
+        draw.line([(x1, y1), (x2, y2)], fill=(*RADAR, alfa), width=4)
 
-def _fondo_playlist_editorial() -> "Image.Image":
-    """Fondo estilo editorial/revista: bloques de color, tipografía grande, textura."""
-    from PIL import Image, ImageDraw, ImageFilter
-    import random
-    
-    # Base oscura con textura de grano
-    lienzo = Image.new("RGBA", LIENZO, "#08080c")
-    draw = ImageDraw.Draw(lienzo)
-    
-    # Grano/fine noise sutil
-    noise = Image.new("RGBA", LIENZO, (0, 0, 0, 0))
-    import random
-    for _ in range(8000):
-        x = random.randint(0, 1079)
-        y = random.randint(0, 1079)
-        alpha = random.randint(3, 12)
-        noise.putpixel((x, y), (255, 255, 255, alpha))
-    noise = noise.filter(ImageFilter.GaussianBlur(0.5))
-    lienzo.alpha_composite(noise)
-    
-    # Bloque superior izquierdo - acento violeta grande
-    draw.rounded_rectangle(
-        [(-200, -100), (500, 400)],
-        radius=300,
-        fill=(*VIOLETA, 60)
-    )
-    draw.rounded_rectangle(
-        [(-100, 50), (450, 300)],
-        radius=200,
-        fill=(*ACENTO, 40)
-    )
-    
-    # Bloque inferior derecho - acento claro
-    draw.rounded_rectangle(
-        [(700, 700), (1300, 1200)],
-        radius=350,
-        fill=(*ACENTO_CLARO, 25)
-    )
-    
-    # Línea diagonal decorativa cruzando
-    for i in range(15):
-        x1 = 100 + i * 60
-        y1 = 980 - i * 60
-        x2 = x1 + 40
-        y2 = y1 - 40
-        alpha = 30 + i * 10
-        draw.line(
-            [(x1, y1), (x2, y2)],
-            fill=(*ACENTO_CLARO, alpha),
-            width=3
-        )
-    
-    # Círculos decorativos dispersos (burbujas)
-    for (cx, cy, r, a) in [
-        (180, 850, 80, 15),
-        (950, 180, 120, 12),
-        (800, 850, 60, 18),
-        (200, 200, 40, 20),
-        (900, 600, 100, 10),
+    # Cruz del radar (plomada central)
+    draw.line([(cx - 14 * escala, cy), (cx + 14 * escala, cy)], fill=(*RADAR, 190), width=4)
+    draw.line([(cx, cy - 14 * escala), (cx, cy + 14 * escala)], fill=(*RADAR, 190), width=4)
+
+    # Coordenadas de las ciudades de la frontera como etiquetas de mapa
+    _fuente_peq = _fuente_texto(20 * escala)
+    for (ex, ey, etiqueta) in [
+        (130, 300, "REYNOSA"), (940, 300, "McALLEN"),
+        (120, 780, "MATAMOROS"), (930, 800, "BROWNSVILLE"),
+        (540, 800, "NUEVO LAREDO"),
     ]:
-        draw.ellipse(
-            [(cx - r, cy - r), (cx + r, cy + r)],
-            outline=(*ACENTO_CLARO, a),
-            width=2
-        )
-    
-    # Barra lateral izquierda con patrón
-    draw.rectangle(
-        [(0, 0), (8, 1080)],
-        fill=(*ACENTO, 180)
-    )
-    for y in range(40, 1080, 80):
-        draw.rectangle(
-            [(0, y), (8, y + 30)],
-            fill=(*ACENTO_CLARO, 200)
-        )
-    
+        ex *= escala
+        ey *= escala
+        l, t, r, b = draw.textbbox((0, 0), etiqueta, font=_fuente_peq)
+        w = r - l
+        h = b - t
+        draw.text((ex - w / 2, ey - h / 2), etiqueta, font=_fuente_peq, fill=(*RADAR, 130))
+
+    # Reducir a 1080 (antialiasing real de las líneas del radar)
+    lienzo = lienzo.resize(LIENZO, Image.LANCZOS)
+
+    # Veladura muy ligera: mantiene el radar visible pero sin competir con el contenido
+    velo = Image.new("RGBA", LIENZO, (*RADAR_FONDO, 12))
+    lienzo.alpha_composite(velo)
+
     return lienzo
 
 
 def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> list[str]:
-    """Obtiene lista de artistas adicionales (sin repetir los 3 principales)."""
+    """Artistas de la franja: los de la selección más otros de la escena (con Spotify).
+
+    Mantiene fijos los headliners y rellena la franja (máx. 14, en 2 líneas)
+    con el resto de la escena que tienen Spotify, ya que rotan en la playlist
+    semanal. Ordenado alfabéticamente para mantener la imagen determinista.
+    """
     principales = {s["artista"] for s in seleccionados_3}
     adicionales = []
     for t in datos.get("tracks", []):
         if t["artista"] not in principales and t["artista"] not in adicionales:
             adicionales.append(t["artista"])
-    return adicionales[:8]  # máximo 8
-    
-    if draw is None:
-        draw = ImageDraw.Draw(lienzo)
-
-    # Seleccionar track de la semana (el primero, estable por semana)
-    track_semana = seleccionados_3[0]
-
-    # Título principal
-    _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(58), 48, LIENZO[0], TEXTO)
-    _centrar_texto(draw, "Nueva selección del lunes", _fuente(26), 112, LIENZO[0], (*ACENTO_CLARO, 235))
-
-    # Track de la semana - badge destacado
-    badge_y = 155
-    badge_text = f"🎯  TRACK DE LA SEMANA:  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
-    _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
-    
-    # Línea bajo el badge
-    draw.line(
-        [(240, badge_y + 35), (840, badge_y + 35)],
-        fill=(*ACENTO, 120),
-        width=2
-    )
-
-    # 3 cards de artistas
-    card_w = 300
-    card_h = 440
-    gap = 40
-    start_x = (LIENZO[0] - (3 * card_w + 2 * gap)) // 2
-    card_y = 195
-
-    for i, sel in enumerate(seleccionados_3):
-        x = start_x + i * (card_w + gap)
-        
-        # Card con glassmorphism sutil
-        card_bg = Image.new("RGBA", (card_w, card_h), (8, 5, 18, 180))
-        draw_card = ImageDraw.Draw(card_bg)
-        draw_card.rounded_rectangle(
-            (0, 0, card_w - 1, card_h - 1), radius=28, outline=(*ACENTO_CLARO, 60), width=2
-        )
-        draw_card.line(
-            [(20, 2), (card_w - 20, 2)],
-            fill=(*ACENTO_CLARO, 40),
-            width=3
-        )
-        lienzo.alpha_composite(card_bg, (x, card_y))
-
-        # Foto del artista
+    if len(adicionales) < 14:
+        from db.database import SessionLocal
+        from lib.repository import ArtistRepository
         session = SessionLocal()
         try:
-            artista = ArtistRepository(session).por_nombre(sel["artista"])
-            foto_url = artista.imagen_perfil if artista else None
+            for artista in sorted(ArtistRepository(session).con_spotify(), key=lambda a: a.nombre.lower()):
+                if len(adicionales) >= 14:
+                    break
+                if artista.nombre not in principales and artista.nombre not in adicionales:
+                    adicionales.append(artista.nombre)
         finally:
             session.close()
+    return adicionales[:14]  # máximo 14 para la franja de 2 líneas
 
-        foto_size = 180  # más pequeño
-        foto_x = x + (card_w - foto_size) // 2
-        foto_y = card_y + 25
-        
-        if foto_url:
-            foto = _descargar_imagen(foto_url)
-            if foto:
-                foto = _recortar_cuadrado(foto, (foto_size, foto_size))
-                from PIL import Image, ImageDraw
-                mascara = Image.new("L", (foto_size, foto_size), 0)
-                ImageDraw.Draw(mascara).ellipse((0, 0, foto_size - 1, foto_size - 1), fill=255)
-                foto.putalpha(mascara)
-                
-                draw.ellipse(
-                    (foto_x - 6, foto_y - 6, foto_x + foto_size + 6, foto_y + foto_size + 6),
-                    outline=(*ACENTO_CLARO, 220), width=5
-                )
-                draw.ellipse(
-                    (foto_x - 12, foto_y - 12, foto_x + foto_size + 12, foto_y + foto_size + 12),
-                    outline=(*ACENTO, 120), width=2
-                )
-                lienzo.alpha_composite(foto, (foto_x, foto_y))
-            else:
-                draw.ellipse(
-                    (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                    fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
-                )
-        else:
-            draw.ellipse(
-                (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
+
+def _foto_circular_artista(lienzo, draw, artista_nombre, foto_x, foto_y, foto_size, estilo: str = "cards"):
+    """Foto circular del artista con anillos (o placeholder si no hay foto).
+
+    Comparte la lógica de recorte circular y anillos de acento entre los
+    layouts de cards y editorial (estilo = "cards" | "editorial").
+    """
+    from PIL import Image, ImageDraw
+
+    foto_url = None
+    session = SessionLocal()
+    try:
+        artista = ArtistRepository(session).por_nombre(artista_nombre)
+        foto_url = artista.imagen_perfil if artista else None
+    finally:
+        session.close()
+
+    if estilo == "editorial":
+        anillo, detalle = 8, 16
+        grosor_a, grosor_d = 6, 3
+        color_a, color_d = (*ACENTO_CLARO, 200), (*ACENTO, 100)
+        placeholder = ((*ACENTO, 50), (*ACENTO_CLARO, 120), 4)
+        con_detalles = True
+    else:
+        anillo, detalle = 6, 12
+        grosor_a, grosor_d = 5, 2
+        color_a, color_d = (*ACENTO_CLARO, 220), (*ACENTO, 120)
+        placeholder = ((*ACENTO, 60), (*ACENTO_CLARO, 100), 3)
+        con_detalles = False
+
+    def _placeholder():
+        fill, outline, w = placeholder
+        draw.ellipse(
+            (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
+            fill=fill, outline=outline, width=w
+        )
+
+    if not foto_url:
+        _placeholder()
+        return
+
+    foto = _descargar_imagen(foto_url)
+    if not foto:
+        _placeholder()
+        return
+
+    foto = _recortar_cuadrado(foto, (foto_size, foto_size))
+
+    # Supersampling (3x) para bordes suaves del círculo, anillos y detalles.
+    esc = 3
+    m = detalle
+    bb = foto_size + 2 * m
+    gran = bb * esc
+    capa = Image.new("RGBA", (gran, gran), (0, 0, 0, 0))
+    dc = ImageDraw.Draw(capa)
+    mG = m * esc
+    fG = foto_size * esc
+
+    # Foto circular con máscara suavizada
+    mascara = Image.new("L", (fG, fG), 0)
+    ImageDraw.Draw(mascara).ellipse((0, 0, fG - 1, fG - 1), fill=255)
+    foto_big = foto.resize((fG, fG), Image.LANCZOS).copy()
+    foto_big.putalpha(mascara)
+    capa.alpha_composite(foto_big, (mG, mG))
+
+    # Anillos
+    dc.ellipse(
+        (mG - anillo * esc, mG - anillo * esc, mG + fG + anillo * esc, mG + fG + anillo * esc),
+        outline=(*color_a[:3], 255), width=grosor_a * esc
+    )
+    dc.ellipse(
+        (mG - detalle * esc, mG - detalle * esc, mG + fG + detalle * esc, mG + fG + detalle * esc),
+        outline=(*color_d[:3], 255), width=grosor_d * esc
+    )
+    if con_detalles:
+        import math
+        cG = foto_size * esc // 2
+        for ang in [0, 90, 180, 270]:
+            rad = math.radians(ang)
+            dx = int((foto_size // 2 + 20) * esc * math.cos(rad))
+            dy = int((foto_size // 2 + 20) * esc * math.sin(rad))
+            r6 = 6 * esc
+            dc.ellipse(
+                (mG + cG + dx - r6, mG + cG + dy - r6, mG + cG + dx + r6, mG + cG + dy + r6),
+                fill=(*ACENTO_CLARO[:3], 220)
             )
 
-        # Track (GRANDE - protagonista) - subido más arriba
-        track = sel["titulo"]
-        maximo = card_w - 40
-        tam = 26
-        while tam > 18:
-            caja = draw.textbbox((0, 0), track, font=_fuente(tam))
-            if caja[2] - caja[0] <= maximo:
-                break
-            tam -= 2
-        _centrar_texto_en_caja(draw, track, _fuente(tam), card_y + 225, x + 20, card_w - 40, TEXTO)
+    capa = capa.resize((bb, bb), Image.LANCZOS)
+    lienzo.alpha_composite(capa, (foto_x - m, foto_y - m))
 
-        # Artista (pequeño, debajo)
-        nombre = sel["artista"]
-        maximo = card_w - 40
-        tam = 18
-        while tam > 14:
-            caja = draw.textbbox((0, 0), nombre, font=_fuente(tam))
-            if caja[2] - caja[0] <= maximo:
-                break
-            tam -= 2
-        _centrar_texto_en_caja(draw, nombre, _fuente(tam), card_y + 270, x + 20, card_w - 40, (*ACENTO_CLARO, 200))
 
-    # Footer MÁS VISIBLE - movido arriba, más grande, color destacado
-    footer_y = 630
-    # Fondo semi-transparente para el footer (más alto para caber artistas extra)
-    footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 130), (8, 5, 18, 200))
-    draw_footer = ImageDraw.Draw(footer_bg)
-    draw_footer.rounded_rectangle(
-        (0, 0, LIENZO[0] - 120, 130), radius=16, outline=(*ACENTO_CLARO, 80), width=2
-    )
-    lienzo.alpha_composite(footer_bg, (60, footer_y - 5))
-    
-    # Artistas adicionales en la imagen
-    if datos:
-        adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
-        if adicionales:
-            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
-            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 70, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 100, LIENZO[0], TEXTO)
-        else:
-            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
-    else:
-        _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-        _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 40, LIENZO[0], TEXTO)
-
-    # Botón visual "Escuchar en Spotify"
-    btn_y = 750
+def _boton_spotify(lienzo, draw, btn_y):
+    """Botón visual 'Escuchar en Spotify'."""
     btn_w = 380
     btn_h = 56
     btn_x = (LIENZO[0] - btn_w) // 2
-    # Fondo botón
     draw.rounded_rectangle(
         (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h),
         radius=28, fill=(*ACENTO, 255)
     )
-    # Texto botón
-    _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
+    _centrar_texto_en_caja(draw, "ESCUCHAR EN SPOTIFY", _fuente_texto(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
 
-    _pegar_monograma(lienzo, 58, 56, 1016)
-    _texto_glow(lienzo, (56 + 58 + 24, 1006), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
-    _texto_glow(lienzo, (LIENZO[0] - 200, 1014), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
 
+def _marca_fg(lienzo, y_texto: int, y_dominio: int):
+    """Marca Frontera Grande: monograma + dominio, centrados (sin repetir nombre)."""
+    from PIL import Image, ImageDraw
+
+    alto_mono = 58
+    ruta_mono = BASE_DIR / "web" / "public" / "assets" / "monograma_fg.png"
+    if ruta_mono.exists():
+        m = Image.open(ruta_mono)
+        w_mono = int(m.size[0] * alto_mono / m.size[1])
+    else:
+        w_mono = alto_mono
+    mono_x = (LIENZO[0] - w_mono) // 2
+    _pegar_monograma(lienzo, alto_mono, mono_x, y_texto - 2)
+
+    dominio = "fronteragrande.mx"
+    fuente = _fuente_texto(24)
+    caja = ImageDraw.Draw(lienzo).textbbox((0, 0), dominio, font=fuente)
+    xd = (LIENZO[0] - (caja[2] - caja[0])) // 2
+    _texto_glow(lienzo, (xd, y_dominio), dominio, fuente, (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
+
+
+def _guardar_tarjeta(lienzo, fecha: str) -> Path:
+    """Guarda el lienzo final como JPG y devuelve la ruta."""
     PROMOS_DIR.mkdir(parents=True, exist_ok=True)
     slug = f"playlist_semanal_{fecha.replace('-', '')}"
     ruta = PROMOS_DIR / f"{slug}.jpg"
@@ -491,357 +419,188 @@ def _obtener_artistas_adicionales(datos: dict, seleccionados_3: list[dict]) -> l
     return ruta
 
 
-def _generar_layout_editorial(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str, datos: dict | None = None, draw=None) -> Path | None:
-    """Layout editorial: apilado vertical, estilo revista, foto a la izquierda, info a la derecha."""
+
+
+def _formatear_semana(fecha: str) -> str:
+    """Convierte '2026-08-31' en la semana abreviada '31 AGO, 26'."""
+    from datetime import date
+    try:
+        anio, mes, dia = (int(p) for p in fecha.split("-")[:3])
+    except (ValueError, AttributeError):
+        return fecha
+    meses = [
+        "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+        "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
+    ]
+    if not (1 <= mes <= 12):
+        return f"{dia} {fecha[-2:]}"
+    return f"{dia} {meses[mes - 1]}, {anio % 100:02d}"
+
+
+def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None) -> Path:
+    """Layout 'cartel de festival': 3 headliners con foto y canción, franja de artistas y CTA.
+
+    Diseño único de la tarjeta semanal: tres artistas protagonistas con foto
+    circular y su canción, una franja que nombra a más proyectos de la playlist
+    y un botón que lleva a abrirla en Spotify.
+    """
     from PIL import Image, ImageDraw
-    
-    if draw is None:
-        draw = ImageDraw.Draw(lienzo)
 
-    # Seleccionar track de la semana (el primero, estable por semana)
-    track_semana = seleccionados_3[0]
+    draw = ImageDraw.Draw(lienzo)
 
-    # Título grande estilo revista (alineado a la izquierda, con barra lateral)
-    _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(64), 50, LIENZO[0], TEXTO)
-    # Subtítulo con línea decorativa
-    _centrar_texto(draw, "nueva selección del lunes", _fuente(28), 125, LIENZO[0], (*ACENTO_CLARO, 200))
-    
-    # Track de la semana - badge estilo editorial
-    badge_y = 155
-    badge_text = f"🎯  TRACK DE LA SEMANA  ·  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
-    _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
-    
-    # Línea separadora gruesa
-    draw.line(
-        [(80, 180), (1000, 180)],
-        fill=(*ACENTO, 180),
-        width=4
-    )
-    draw.line(
-        [(80, 182), (1000, 182)],
-        fill=(*ACENTO_CLARO, 100),
-        width=1
-    )
+    # Titular
+    _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(64), 24, LIENZO[0], TEXTO)
+    _centrar_texto(draw, "nueva rotación de la escena", _fuente_texto(28), 122, LIENZO[0], (*ACENTO_CLARO, 235))
+    # Semana: subtítulo sutil, no es el foco
+    _centrar_texto(draw, f"Semana del {_formatear_semana(fecha)}", _fuente_texto(20), 158, LIENZO[0], (*ACENTO_CLARO, 210))
 
-    # 3 bloques verticales apilados
-    bloque_y = 210
-    bloque_h = 230
-    gap_v = 25
-    foto_size = 180  # más pequeño
-    margin_left = 80
-    info_x = margin_left + foto_size + 40
-    info_w = LIENZO[0] - info_x - 80
+    # 3 artistas headliner: foto grande + nombre + canción
+    card_w = 340
+    gap = 30
+    start_x = 0
+    foto_y = 212
 
     for i, sel in enumerate(seleccionados_3):
-        y = bloque_y + i * (bloque_h + gap_v)
-        
-        # Foto circular grande a la izquierda
-        foto_x = margin_left
-        foto_y = y + (bloque_h - foto_size) // 2
-        
-        session = SessionLocal()
-        try:
-            artista = ArtistRepository(session).por_nombre(sel["artista"])
-            foto_url = artista.imagen_perfil if artista else None
-        finally:
-            session.close()
-        
-        if foto_url:
-            foto = _descargar_imagen(foto_url)
-            if foto:
-                foto = _recortar_cuadrado(foto, (foto_size, foto_size))
-                from PIL import Image, ImageDraw
-                mascara = Image.new("L", (foto_size, foto_size), 0)
-                ImageDraw.Draw(mascara).ellipse((0, 0, foto_size - 1, foto_size - 1), fill=255)
-                foto.putalpha(mascara)
-                
-                # Doble anillo estilo editorial
-                draw.ellipse(
-                    (foto_x - 8, foto_y - 8, foto_x + foto_size + 8, foto_y + foto_size + 8),
-                    outline=(*ACENTO_CLARO, 200), width=6
-                )
-                draw.ellipse(
-                    (foto_x - 16, foto_y - 16, foto_x + foto_size + 16, foto_y + foto_size + 16),
-                    outline=(*ACENTO, 100), width=3
-                )
-                # Pequeños detalles en el anillo exterior
-                for ang in [0, 90, 180, 270]:
-                    import math
-                    rad = math.radians(ang)
-                    cx = foto_x + foto_size // 2 + int((foto_size // 2 + 20) * math.cos(rad))
-                    cy = foto_y + foto_size // 2 + int((foto_size // 2 + 20) * math.sin(rad))
-                    draw.ellipse(
-                        [(cx - 6, cy - 6), (cx + 6, cy + 6)],
-                        fill=(*ACENTO_CLARO, 220)
-                    )
-                
-                lienzo.alpha_composite(foto, (foto_x, foto_y))
-            else:
-                draw.ellipse(
-                    (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                    fill=(*ACENTO, 50), outline=(*ACENTO_CLARO, 120), width=4
-                )
-        else:
-            draw.ellipse(
-                (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                fill=(*ACENTO, 50), outline=(*ACENTO_CLARO, 120), width=4
-            )
-        
-        # Número grande de posición (estilo revista)
-        # Track (GRANDE - protagonista)
-        track = sel["titulo"]
-        tam = 38
-        while tam > 24:
-            caja = draw.textbbox((0, 0), track, font=_fuente(tam))
-            if caja[2] - caja[0] <= info_w:
-                break
-            tam -= 2
-        _texto_glow(lienzo, (info_x, y + 20), track, _fuente(tam), TEXTO, glow_radius=8, glow_alpha=140)
-        
-        # Artista (pequeño, debajo)
-        nombre = sel["artista"]
-        tam = 22
-        while tam > 16:
-            caja = draw.textbbox((0, 0), nombre, font=_fuente(tam))
-            if caja[2] - caja[0] <= info_w:
-                break
-            tam -= 2
-        _texto_glow(lienzo, (info_x, y + 80), nombre, _fuente(tam), (*ACENTO_CLARO, 200), glow_radius=6, glow_alpha=120)
-        
-        # Línea decorativa bajo artista
-        draw.line(
-            [(info_x, y + 120), (info_x + 200, y + 120)],
-            fill=(*ACENTO, 180),
-            width=3
-        )
-        
-        # Barra de progreso visual (decorativa)
-        draw.rounded_rectangle(
-            [(info_x, y + 185), (info_x + 300, y + 195)],
-            radius=5, fill=(*ACENTO, 60)
-        )
-        # Progreso aleatorio
-        import hashlib
-        prog_seed = int(hashlib.sha256(f"{sel['artista']}{fecha}".encode()).hexdigest(), 16) % 100
-        prog_w = int(300 * prog_seed / 100)
-        draw.rounded_rectangle(
-            [(info_x, y + 185), (info_x + prog_w, y + 195)],
-            radius=5, fill=(*ACENTO_CLARO, 255)
-        )
+        x = start_x + i * (card_w + gap)
+        centro_x = x + card_w // 2
+        headliner_central = i == 1
+        foto_size = 290 if headliner_central else 260
+        nombre_tam = 42 if headliner_central else 38
+        cancion_tam = 26 if headliner_central else 24
+        foto_x = centro_x - foto_size // 2
 
-# Footer estilo editorial
-    footer_y = 955
-    footer_bg_h = 100
-    footer_bg = Image.new("RGBA", (LIENZO[0] - 160, footer_bg_h), (8, 5, 18, 200))
-    draw_footer = ImageDraw.Draw(footer_bg)
-    draw_footer.rounded_rectangle(
-        (0, 0, LIENZO[0] - 160, footer_bg_h), radius=16, outline=(*ACENTO_CLARO, 80), width=2
+        # Foto circular con anillos neón
+        _foto_circular_artista(lienzo, draw, sel["artista"], foto_x, foto_y, foto_size, estilo="editorial")
+
+        # Nombre del artista (headliner)
+        nombre = sel["artista"]
+        maximo = card_w - 24
+        tam = nombre_tam
+        while tam > 22:
+            caja = draw.textbbox((0, 0), nombre, font=_fuente(tam))
+            if caja[2] - caja[0] <= maximo:
+                break
+            tam -= 2
+        _centrar_texto_en_caja(draw, nombre, _fuente(tam), foto_y + foto_size + 20, x + 12, card_w - 24, TEXTO)
+
+        # Canción (debajo, acento claro)
+        cancion = sel["titulo"]
+        maximo = card_w - 24
+        tamc = cancion_tam
+        while tamc > 18:
+            caja = draw.textbbox((0, 0), cancion, font=_fuente_texto(tamc))
+            if caja[2] - caja[0] <= maximo:
+                break
+            tamc -= 2
+        _centrar_texto_en_caja(draw, cancion, _fuente_texto(tamc), foto_y + foto_size + 68, x + 12, card_w - 24, (*ACENTO_CLARO, 235))
+
+    # Franja "también suenan" (cuadro alto con 2 líneas de artistas)
+    franja_y = 632
+    franja_h = 196
+    franja_margen = 50
+    franja = Image.new("RGBA", (LIENZO[0] - 2 * franja_margen, franja_h), (5, 10, 20, 220))
+    draw_f = ImageDraw.Draw(franja)
+    draw_f.rounded_rectangle(
+        (0, 0, LIENZO[0] - 2 * franja_margen, franja_h), radius=22, outline=(*ACENTO_CLARO, 150), width=2
     )
-    lienzo.alpha_composite(footer_bg, (80, footer_y - 10))
-    
-    # Artistas adicionales en la imagen
-    if datos:
-        adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
-        if adicionales:
-            _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 30, LIENZO[0], TEXTO)
-            _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
-                           _fuente(24), footer_y + 60, LIENZO[0], (*ACENTO_CLARO, 255))
+    lienzo.alpha_composite(franja, (franja_margen, franja_y - 10))
+
+    adicionales = _obtener_artistas_adicionales(datos, seleccionados_3) if datos else []
+    _centrar_texto(draw, "TAMBIÉN SUENAN", _fuente_texto(24), franja_y + 4, LIENZO[0], (*ACENTO_CLARO, 255))
+    ancho_mx = LIENZO[0] - 2 * franja_margen - 70
+
+    if adicionales:
+        def _medir(lista_nombres):
+            caja = draw.textbbox((0, 0), "  ·  ".join(lista_nombres), font=_fuente_texto(22))
+            return caja[2] - caja[0]
+
+        linea1 = []
+        for nombre in adicionales:
+            if _medir(linea1 + [nombre]) <= ancho_mx and len(linea1) < 7:
+                linea1.append(nombre)
+        resto = adicionales[len(linea1):]
+        linea2 = []
+        for nombre in resto:
+            if _medir(linea2 + [nombre]) <= ancho_mx and len(linea2) < 7:
+                linea2.append(nombre)
+
+        if linea1:
+            _centrar_texto(draw, "  ·  ".join(linea1), _fuente_texto(22), franja_y + 52, LIENZO[0], TEXTO)
+        if linea2:
+            _centrar_texto(draw, "  ·  ".join(linea2), _fuente_texto(22), franja_y + 88, LIENZO[0], TEXTO)
+        vistos = len(linea1) + len(linea2)
+        # Cierre: mientras haya más tracks que artistas ya mostrados, invita a descubrir
+        if total_tracks > 3 + vistos:
+            _centrar_texto(draw, "…y más artistas", _fuente_texto(28), franja_y + 134, LIENZO[0], (*ACENTO_CLARO, 255))
         else:
-            _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
-                           _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(24), franja_y + 134, LIENZO[0], (*ACENTO_CLARO, 255))
     else:
-        _centrar_texto(draw, f"{total_tracks} tracks  ·  actualizada cada lunes  ·  semana del {fecha}", 
-                       _fuente(26), footer_y + 10, LIENZO[0], (*ACENTO_CLARO, 255))
+        _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(26), franja_y + 40, LIENZO[0], (*ACENTO_CLARO, 255))
+
+    # Botón Spotify
+    _boton_spotify(lienzo, draw, 848)
 
     # Marca FG
-    _pegar_monograma(lienzo, 58, 56, 1042)
-    _texto_glow(lienzo, (56 + 58 + 24, 1044), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
-    _texto_glow(lienzo, (LIENZO[0] - 200, 1052), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
+    _marca_fg(lienzo, 990, 1020)
 
-    PROMOS_DIR.mkdir(parents=True, exist_ok=True)
-    slug = f"playlist_semanal_{fecha.replace('-', '')}"
-    ruta = PROMOS_DIR / f"{slug}.jpg"
-    lienzo.convert("RGB").save(ruta, "JPEG", quality=90, optimize=True)
-    return ruta
+    return _guardar_tarjeta(lienzo, fecha)
 
 
 def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None) -> Path | None:
-    """Genera la tarjeta 1080x1080 con 3 artistas — diseño EDITORIAL (vertical apilado)."""
-    from PIL import Image, ImageDraw
-    
-    # Elegir diseño aleatorio pero estable por semana
-    import hashlib
-    semilla = int(hashlib.sha256(fecha.encode()).hexdigest(), 16)
-    usar_editorial = (semilla % 2) == 0  # 50% cada uno
-    
-    if usar_editorial:
-        lienzo = _fondo_playlist_editorial()
-        return _generar_layout_editorial(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, datos, draw=None)
-    else:
-        # Layout CARDS (inline)
-        lienzo = _fondo_playlist()
-        draw = ImageDraw.Draw(lienzo)
+    """Genera la tarjeta 1080x1080 con 3 artistas (diseño único 'cartel de festival')."""
+    lienzo = _fondo_radar_frontera()
+    return _generar_layout_cartel(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, datos)
 
-        # Seleccionar track de la semana (el primero, estable por semana)
-        track_semana = seleccionados_3[0]
 
-        # Título principal
-        _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(58), 48, LIENZO[0], TEXTO)
-        _centrar_texto(draw, "Nueva selección del lunes", _fuente(26), 112, LIENZO[0], (*ACENTO_CLARO, 235))
+def _hook_semana(fecha: str, plataforma: str) -> list[str]:
+    """Elige el hook (texto de entrada) de la semana, de forma determinista.
 
-        # Track de la semana - badge destacado
-        badge_y = 155
-        badge_text = f"🎯  TRACK DE LA SEMANA:  \"{track_semana['titulo']}\"  —  {track_semana['artista']}"
-        _centrar_texto(draw, badge_text, _fuente(22), badge_y, LIENZO[0], (*ACENTO_CLARO, 255))
-        
-        # Línea bajo el badge
-        draw.line(
-            [(240, badge_y + 35), (840, badge_y + 35)],
-            fill=(*ACENTO, 120),
-            width=2
-        )
+    Rota por semana ISO del año (no es aleatorio: misma fecha ⇒ mismo hook,
+    para que la tarjeta/copy sea estable y reproducible). Hay un banco propio
+    por plataforma (FB sin emojis; IG con emojis y referencias de cruce).
+    """
+    from datetime import date
 
-        # 3 cards de artistas
-        card_w = 300
-        card_h = 420
-        gap = 40
-        start_x = (LIENZO[0] - (3 * card_w + 2 * gap)) // 2
-        card_y = 185
-
-        for i, sel in enumerate(seleccionados_3):
-            x = start_x + i * (card_w + gap)
-            
-            # Card con glassmorphism sutil
-            card_bg = Image.new("RGBA", (card_w, card_h), (8, 5, 18, 180))
-            draw_card = ImageDraw.Draw(card_bg)
-            draw_card.rounded_rectangle(
-                (0, 0, card_w - 1, card_h - 1), radius=28, outline=(*ACENTO_CLARO, 60), width=2
-            )
-            draw_card.line(
-                [(20, 2), (card_w - 20, 2)],
-                fill=(*ACENTO_CLARO, 40),
-                width=3
-            )
-            lienzo.alpha_composite(card_bg, (x, card_y))
-
-            # Foto del artista
-            session = SessionLocal()
-            try:
-                artista = ArtistRepository(session).por_nombre(sel["artista"])
-                foto_url = artista.imagen_perfil if artista else None
-            finally:
-                session.close()
-
-            foto_size = 180  # más pequeño
-            foto_x = x + (card_w - foto_size) // 2
-            foto_y = card_y + 25
-            
-            if foto_url:
-                foto = _descargar_imagen(foto_url)
-                if foto:
-                    foto = _recortar_cuadrado(foto, (foto_size, foto_size))
-                    from PIL import Image, ImageDraw
-                    mascara = Image.new("L", (foto_size, foto_size), 0)
-                    ImageDraw.Draw(mascara).ellipse((0, 0, foto_size - 1, foto_size - 1), fill=255)
-                    foto.putalpha(mascara)
-                    
-                    draw.ellipse(
-                        (foto_x - 6, foto_y - 6, foto_x + foto_size + 6, foto_y + foto_size + 6),
-                        outline=(*ACENTO_CLARO, 220), width=5
-                    )
-                    draw.ellipse(
-                        (foto_x - 12, foto_y - 12, foto_x + foto_size + 12, foto_y + foto_size + 12),
-                        outline=(*ACENTO, 120), width=2
-                    )
-                    lienzo.alpha_composite(foto, (foto_x, foto_y))
-                else:
-                    draw.ellipse(
-                        (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                        fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
-                    )
-            else:
-                draw.ellipse(
-                    (foto_x, foto_y, foto_x + foto_size, foto_y + foto_size),
-                    fill=(*ACENTO, 60), outline=(*ACENTO_CLARO, 100), width=3
-                )
-
-            # Track (GRANDE - protagonista) - subido más arriba
-            track = sel["titulo"]
-            maximo = card_w - 40
-            tam = 26
-            while tam > 18:
-                caja = draw.textbbox((0, 0), track, font=_fuente(tam))
-                if caja[2] - caja[0] <= maximo:
-                    break
-                tam -= 2
-            _centrar_texto_en_caja(draw, track, _fuente(tam), card_y + 225, x + 20, card_w - 40, TEXTO)
-
-            # Artista (pequeño, debajo)
-            nombre = sel["artista"]
-            maximo = card_w - 40
-            tam = 18
-            while tam > 14:
-                caja = draw.textbbox((0, 0), nombre, font=_fuente(tam))
-                if caja[2] - caja[0] <= maximo:
-                    break
-                tam -= 2
-            _centrar_texto_en_caja(draw, nombre, _fuente(tam), card_y + 270, x + 20, card_w - 40, (*ACENTO_CLARO, 200))
-
-        # Footer MÁS VISIBLE - movido arriba, más grande, color destacado
-        footer_y = 630
-        # Fondo semi-transparente para el footer
-        footer_bg = Image.new("RGBA", (LIENZO[0] - 120, 120), (8, 5, 18, 200))
-        draw_footer = ImageDraw.Draw(footer_bg)
-        draw_footer.rounded_rectangle(
-            (0, 0, LIENZO[0] - 120, 120), radius=16, outline=(*ACENTO_CLARO, 80), width=2
-        )
-        lienzo.alpha_composite(footer_bg, (60, footer_y - 5))
-        
-        # Artistas adicionales en la imagen
-        if datos:
-            adicionales = _obtener_artistas_adicionales(datos, seleccionados_3)
-            if adicionales:
-                _centrar_texto(draw, "y más artistas esta semana:", _fuente(20), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, ", ".join(adicionales), _fuente(22), footer_y + 30, LIENZO[0], TEXTO)
-                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(24), footer_y + 60, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, f"Semana del {fecha}", _fuente(20), footer_y + 88, LIENZO[0], TEXTO)
-            else:
-                _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-                _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
-        else:
-            _centrar_texto(draw, f"{total_tracks} tracks  ·  Actualizada cada lunes", _fuente(26), footer_y + 5, LIENZO[0], (*ACENTO_CLARO, 255))
-            _centrar_texto(draw, f"Semana del {fecha}", _fuente(22), footer_y + 35, LIENZO[0], TEXTO)
-
-        # Botón visual "Escuchar en Spotify"
-        btn_y = 755
-        btn_w = 380
-        btn_h = 56
-        btn_x = (LIENZO[0] - btn_w) // 2
-        # Fondo botón
-        draw.rounded_rectangle(
-            (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h),
-            radius=28, fill=(*ACENTO, 255)
-        )
-        # Texto botón
-        _centrar_texto_en_caja(draw, "🎧 ESCUCHAR EN SPOTIFY", _fuente(22), btn_y + 12, btn_x, btn_w, (255, 255, 255, 255))
-
-        _pegar_monograma(lienzo, 58, 56, 838)
-        _texto_glow(lienzo, (56 + 58 + 24, 840), "FRONTERA GRANDE", _fuente(34), (255, 255, 255, 255), glow_radius=6, glow_alpha=100)
-        _texto_glow(lienzo, (LIENZO[0] - 200, 848), "fronteragrande.mx", _fuente(24), (*ACENTO_CLARO, 230), glow_radius=5, glow_alpha=120)
-
-        PROMOS_DIR.mkdir(parents=True, exist_ok=True)
-        slug = f"playlist_semanal_{fecha.replace('-', '')}"
-        ruta = PROMOS_DIR / f"{slug}.jpg"
-        lienzo.convert("RGB").save(ruta, "JPEG", quality=90, optimize=True)
-        return ruta
+    HOOKS_FB = [
+        ["🎧 Esa canción que no paras de tararear desde el lunes.",
+         "La que suena distinto cuando cruzas el puente de noche."],
+        ["🎵 El soundtrack de la frontera no descansa ni los lunes.",
+         "Esta semana llega la rotación con nuevos sonidos de la región."],
+        ["🌉 Del puente para acá hay pura buena música.",
+         "La nueva rotación de la frontera ya está sonando."],
+        ["🎶 Hay canciones que saben a cruzar el puente de noche.",
+         "Estas semanales son de la frontera, con todo lo que eso implica."],
+        ["🎸 No importa de qué lado del río estés: esto suena a hogar.",
+         "La rotación de la semana ya está lista para que la escuches."],
+        ["🔥 La frontera se escucha en todos los géneros.",
+         "Una selección nueva, para que descubras qué hay de dónde vienes."],
+    ]
+    HOOKS_IG = [
+        ["Esa canción que suena a cruzar el puente de noche con las ventanas abajo. 🌉",
+         "La que te acompaña en el trayecto Reynosa ↔ McAllen, Matamoros ↔ Brownsville."],
+        ["Hay canciones que huelen a taquería de la esquina y a carretera. 🌮",
+         "La frontera suena distinto, y esta semana lo vuelve a demostrar."],
+        ["De este lado del río hay de todo, y rota cada lunes. 🔄",
+         "Nueva selección de la frontera para tus audífonos."],
+        ["El puente une más que dos países: une playlists. 🌉",
+         "La rotación de la semana es puro ritmo fronterizo."],
+        ["¿Ya armaste el plan del fin de semana? Empieza con esto. 🎧",
+         "La frontera tiene su propia banda sonora, y cambia cada lunes."],
+        ["Si no conoces la escena de la frontera, esta semana es tu puerta. 🚪",
+         "Una rotación nueva con los sonidos que nos hacen únicos."],
+    ]
+    try:
+        _, semana, _ = date.fromisoformat(fecha).isocalendar()
+    except (ValueError, TypeError):
+        semana = 0
+    banco = HOOKS_FB if plataforma == "fb" else HOOKS_IG
+    return banco[semana % len(banco)]
 
 
 def construir_copy_fb(datos: dict) -> str:
     """Construye el mensaje para Facebook."""
     sel = datos["seleccionados_3"]
-    track_semana = sel[0]
-    
+
     # Obtener más artistas de la lista completa (sin repetir los 3 principales)
     todos_artistas = []
     for t in datos.get("tracks", []):
@@ -849,21 +608,17 @@ def construir_copy_fb(datos: dict) -> str:
             if t["artista"] not in todos_artistas:
                 todos_artistas.append(t["artista"])
     mas_artistas = todos_artistas[:8]  # hasta 8 más
-    
+
     lines = [
-        "🎯  TRACK DE LA SEMANA",
-        f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
+        *(_hook_semana(datos["fecha"], "fb")),
         "",
-        "Esa canción que no paras de tararear desde el lunes.",
-        "La que suena distinto cuando cruzas el puente de noche.",
-        "",
-        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks:',
+        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks de la frontera:',
     ]
     for s in sel:
         lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
     
     if mas_artistas:
-        lines.append(f'... y más artistas esta semana: {", ".join(mas_artistas)}.')
+        lines.append(f'{", ".join(mas_artistas)}... y más artistas esta semana.')
     else:
         lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
     
@@ -873,7 +628,11 @@ def construir_copy_fb(datos: dict) -> str:
     lines.append("")
     lines.append("👉  Guárdala y no te pierdas la rotación del próximo lunes.")
     lines.append("")
-    lines.append("¿Tu proyecto ya está en la escena? Regístralo en fronteragrande.mx")
+    lines.append("🌐  Descubre y escucha a todos los proyectos de la frontera en fronteragrande.mx")
+    lines.append("")
+    lines.append("¿Tocas o produces? Suma tu proyecto a la escena: fronteragrande.mx")
+    lines.append("")
+    lines.append(f"Semana del {_formatear_semana(datos['fecha'])}")
     lines.append("")
     lines.append("#FronteraGrande #EscenaLocal #DescubrimientoSemanal #MusicaFronteriza")
     return "\n".join(lines)
@@ -882,7 +641,6 @@ def construir_copy_fb(datos: dict) -> str:
 def construir_copy_ig(datos: dict) -> str:
     """Construye el caption para Instagram con menciones @handle."""
     sel = datos["seleccionados_3"]
-    track_semana = sel[0]
     menciones = [f"@{s['handle_ig']}" for s in sel if s.get("handle_ig")]
     
     # Obtener más artistas de la lista completa (sin repetir los 3 principales)
@@ -894,19 +652,15 @@ def construir_copy_ig(datos: dict) -> str:
     mas_artistas = todos_artistas[:8]  # hasta 8 más
     
     lines = [
-        "🎯  TRACK DE LA SEMANA",
-        f"\"{track_semana['titulo']}\" — {track_semana['artista']}",
+        *(_hook_semana(datos["fecha"], "ig")),
         "",
-        "Esa canción que suena a cruzar el puente de noche con las ventanas abajo. 🌉",
-        "La que te acompaña en el trayecto Reynosa ↔ McAllen, Matamoros ↔ Brownsville.",
-        "",
-        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks de la escena:',
+        f'Esta semana en "Frontera Grande: Descubrimiento Semanal" rotan {datos["total_tracks"]} tracks de la frontera:',
     ]
     for s in sel:
         lines.append(f'🎵  {s["titulo"]} — {s["artista"]}')
     
     if mas_artistas:
-        lines.append(f'... y más artistas esta semana: {", ".join(mas_artistas)}.')
+        lines.append(f'{", ".join(mas_artistas)}... y más artistas esta semana.')
     else:
         lines.append(f'... y {datos["total_tracks"] - 3} más por descubrir.')
     
@@ -914,8 +668,12 @@ def construir_copy_ig(datos: dict) -> str:
     lines.append("🎧  Escucha completa: " + datos["playlist_url"])
     lines.append("👉  Guárdala → no te pierdas la rotación del próximo lunes.")
     lines.append("")
+    lines.append("🌐 Descubre a todos los proyectos de la frontera en fronteragrande.mx")
+    lines.append("")
     if menciones:
         lines.append(" ".join(menciones))
+    lines.append("")
+    lines.append(f"Semana del {_formatear_semana(datos['fecha'])}")
     lines.append("")
     hashtags = [
         "#FronteraGrande", "#DescubrimientoSemanal", "#EscenaLocal",
