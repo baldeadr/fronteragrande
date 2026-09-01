@@ -89,6 +89,7 @@ Cuando la playlist se anuncia en redes (fila **R** del calendario de publicacion
 - **Salida:** `instance/promos/playlist_semanal_<AAAAMMDD>.jpg`.
 - **Determinista:** mismo `hash` en cada corrida (mismo input ⇒ misma imagen), así es verificable de forma estable.
 - **Run:** `python scripts/publicar_playlist_semanal.py` (`--dry-run` genera la tarjeta sin publicar).
+- **Publicación:** el workflow genera la tarjeta en el runner de CI, **no** en el servidor de la API. Como Meta necesita una URL pública, el script **sube** la tarjeta a la API vía `POST /api/admin/promos/upload` (`X-Admin-Token` = `ADMIN_PASSWORD`) antes de construir la URL (`API_PUBLIC_URL/api/promos/<slug>.jpg`). Sin esa subida, la URL devuelve 404 y Meta falla con 400 (`POST /{page}/photos`). Requiere el secret `ADMIN_PASSWORD` en GitHub Actions.
 
 ### 7.2 Composición (de arriba abajo)
 

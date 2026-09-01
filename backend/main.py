@@ -6,12 +6,13 @@ orquesta: el conocimiento de plataformas vive en `lib/plataformas`.
 """
 
 import os
+import re
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
@@ -711,6 +712,38 @@ def admin_invalidar_cache(
     _requiere_admin(x_admin_token)
     invalidate_public_cache(cache)
     return {"ok": True}
+
+
+@app.post("/api/admin/promos/upload")
+def admin_subir_promo(
+    nombre: str = Form(...),
+    file: UploadFile = File(...),
+    x_admin_token: str = Header(default=""),
+):
+    """Sube una tarjeta promocional (JPEG) ya generada a `instance/promos/`.
+
+    Lo usa el workflow de la playlist semanal: la tarjeta se genera en el
+    runner de CI pero Meta necesita una URL pública en la API; aquí se guarda
+    el archivo para que `/api/promos/{nombre}.jpg` la sirva. Requiere el
+    `X-Admin-Token`.
+    """
+    _requiere_admin(x_admin_token)
+
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", nombre):
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+    nombre = Path(nombre).stem
+
+    datos = file.file.read()
+    if not datos or len(datos) < 3 or datos[:3] != b"\xff\xd8\xff":
+        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPEG")
+
+    lib_promo_fg.PROMOS_DIR.mkdir(parents=True, exist_ok=True)
+    ruta = Path(lib_promo_fg.PROMOS_DIR) / f"{nombre}.jpg"
+    ruta.write_bytes(datos)
+
+    api_public_url = os.getenv("API_PUBLIC_URL", "").rstrip("/")
+    url = f"{api_public_url}/api/promos/{nombre}.jpg" if api_public_url else ""
+    return {"ok": True, "url": url}
 
 
 @app.post("/api/admin/events")

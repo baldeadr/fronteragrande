@@ -20,6 +20,7 @@ jobs:
       PROMO_AUTO_PUBLISH: ${{ secrets.PROMO_AUTO_PUBLISH }}
       PROMO_IG: ${{ secrets.PROMO_IG }}
       API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       WEB_URL: ${{ secrets.WEB_URL }}
     steps:
       - name: Descargar el repositorio

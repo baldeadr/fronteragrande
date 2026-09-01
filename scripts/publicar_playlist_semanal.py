@@ -703,6 +703,40 @@ def guardar_promo_post(artist_id: int | None, plataforma: str, post_id: str, men
         session.close()
 
 
+def subir_tarjeta_a_api(ruta: Path, api_public_url: str) -> str | None:
+    """Sube la tarjeta ya generada a la API para que Meta pueda descargarla.
+
+    El workflow corre fuera de la API (GitHub Actions): la tarjeta existe en
+    el runner pero no en el servidor, y Meta necesita una URL pública. Usa el
+    endpoint `POST /api/admin/promos/upload` con `X-Admin-Token`.
+
+    Returns:
+        URL pública de la tarjeta, o None si la subida falla.
+    """
+    import requests
+
+    token = os.getenv("ADMIN_PASSWORD", "").strip()
+    if not token:
+        print("[warn] ADMIN_PASSWORD no configurado; no se sube la tarjeta")
+        return None
+    try:
+        with open(ruta, "rb") as f:
+            r = requests.post(
+                f"{api_public_url.rstrip('/')}/api/admin/promos/upload",
+                data={"nombre": ruta.stem},
+                files={"file": (ruta.name, f, "image/jpeg")},
+                headers={"X-Admin-Token": token},
+                timeout=120,
+            )
+        r.raise_for_status()
+        url = r.json().get("url")
+        print(f"  Tarjeta subida a la API: {url}")
+        return url or None
+    except Exception as exc:
+        print(f"[warn] No se pudo subir la tarjeta a la API: {exc}")
+        return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="genera tarjeta y copy sin publicar")
@@ -748,8 +782,15 @@ def main() -> int:
         imagen_url_jpg = None
     else:
         slug = ruta_tarjeta.stem
-        imagen_url = f"{api_public_url}/api/promos/{slug}.jpg"
-        imagen_url_jpg = imagen_url  # mismo archivo JPEG
+        # El workflow corre fuera de la API: subir la tarjeta para que la URL
+        # pública exista (si no, Meta devuelve 400 al no poder descargarla).
+        subida = subir_tarjeta_a_api(ruta_tarjeta, api_public_url)
+        if subida:
+            imagen_url = subida
+            imagen_url_jpg = subida  # mismo archivo JPEG
+        else:
+            imagen_url = f"{api_public_url}/api/promos/{slug}.jpg"
+            imagen_url_jpg = imagen_url
 
     copy_fb = construir_copy_fb(datos)
     copy_ig = construir_copy_ig(datos)
