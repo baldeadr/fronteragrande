@@ -248,8 +248,16 @@ def _pagina_por_id(
         },
         timeout=20,
     )
+    if not r.ok:
+        logger.error("Error /me/accounts: %s %s", r.status_code, r.text[:400])
     r.raise_for_status()
     paginas = r.json().get("data", [])
+    if preferir_nombre or page_id:
+        logger.info(
+            "Páginas administradas (%s): %s",
+            len(paginas),
+            [(p.get("id"), p.get("name")) for p in paginas],
+        )
     if page_id:
         for p in paginas:
             if str(p.get("id")) == str(page_id):

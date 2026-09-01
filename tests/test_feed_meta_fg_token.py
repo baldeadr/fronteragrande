@@ -17,7 +17,7 @@ def test_pagina_por_id_encontrada(monkeypatch):
 
     def fake_get(ruta, params, **kwargs):
         llamadas["ruta"], llamadas["params"] = ruta, params
-        resp = type("R", (), {})()
+        resp = type("R", (), {"ok": True})()
         resp.json = lambda: {
             "data": [{"id": "999", "name": "Otra", "access_token": "tok_otra"},
                      {"id": "1567063665051085", "name": "FG", "access_token": "tok_fg"}]
@@ -38,7 +38,7 @@ def test_pagina_por_id_no_admin_fallback(monkeypatch):
     """Si la página FG específica no está administrada, devuelve la primera
     página de la cuenta (fallback: no depende de un FG_PAGE_ID bien puesto)."""
     def fake_get(ruta, params, **kwargs):
-        resp = type("R", (), {})()
+        resp = type("R", (), {"ok": True})()
         resp.json = lambda: {"data": [{"id": "999", "name": "Otra",
                                        "access_token": "tok"}]}
         resp.raise_for_status = lambda: None
@@ -53,7 +53,7 @@ def test_pagina_por_id_no_admin_fallback(monkeypatch):
 def test_pagina_por_id_sin_paginas(monkeypatch):
     """Si la cuenta no administra ninguna página, devuelve None."""
     def fake_get(ruta, params, **kwargs):
-        resp = type("R", (), {})()
+        resp = type("R", (), {"ok": True})()
         resp.json = lambda: {"data": []}
         resp.raise_for_status = lambda: None
         return resp
@@ -66,7 +66,7 @@ def test_pagina_por_id_por_nombre(monkeypatch):
     """Si FG_PAGE_ID no coincide (por ser App ID), se elige la página cuyo
     nombre contiene 'Frontera Grande', aunque no sea la primera."""
     def fake_get(ruta, params, **kwargs):
-        resp = type("R", (), {})()
+        resp = type("R", (), {"ok": True})()
         resp.json = lambda: {"data": [
             {"id": "999", "name": "Apex Ultra", "access_token": "tok_apex"},
             {"id": "777", "name": "Frontera Grande Oficial", "access_token": "tok_fg"},
@@ -84,7 +84,7 @@ def test_pagina_por_id_por_nombre(monkeypatch):
 def test_pagina_por_id_nombre_segunda_prioridad(monkeypatch):
     """El id coincide primero; el nombre solo como respaldo."""
     def fake_get(ruta, params, **kwargs):
-        resp = type("R", (), {})()
+        resp = type("R", (), {"ok": True})()
         resp.json = lambda: {"data": [
             {"id": "555", "name": "Frontera Grande X", "access_token": "tok_x"},
             {"id": "777", "name": "Apex Ultra", "access_token": "tok_apex"},
