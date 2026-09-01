@@ -15,7 +15,9 @@ from lib.promo_fg import (
     publicar_en_ig,
     PROMO_IG,
     _IG_FG_CACHE,
+    GRAF_API,
 )
+import lib.promo_fg as promo_mod
 
 
 class TestConstruirMensajeIg:
@@ -121,6 +123,7 @@ class TestIgDeFg:
 
     def setup_method(self):
         _IG_FG_CACHE.clear()
+        promo_mod._ID_PAGINA_CACHE = None
 
     def test_cache_hit(self):
         """Una vez consultado, se cachea y no vuelve a llamar."""
@@ -155,6 +158,31 @@ class TestIgDeFg:
         result = _ig_de_fg()
 
         assert result == "17841436889901689"
+
+    @patch("lib.promo_fg.requests.get")
+    def test_usa_id_real_de_pagina(self, mock_get):
+        """Usa el ID real de la página (resuelto por /me), no el env FG_PAGE_ID.
+
+        FG_PAGE_ID puede ser el App ID; el verdadero page id lo da el token vía
+        `/me`. La consulta del IG debe hacerse contra ese id real.
+        """
+        _IG_FG_CACHE.clear()
+        _IG_FG_CACHE.pop("id", None)
+        page_id_real = "999888777"
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status = MagicMock()
+        mock_resp.json.side_effect = [
+            {"id": page_id_real, "name": "Frontera Grande"},  # /me → id real
+            {"instagram_business_account": {"id": "17841436889901689"}},
+        ]
+        mock_get.return_value = mock_resp
+
+        result = _ig_de_fg()
+
+        assert result == "17841436889901689"
+        urls = [c.args[0] for c in mock_get.call_args_list]
+        assert urls == [f"{GRAF_API}/me", f"{GRAF_API}/{page_id_real}"]
+        assert f"/{page_id_real}" in urls[1]
 
 
 class TestPublicarEnIg:

@@ -649,8 +649,9 @@ def _ig_de_fg() -> str | None:
         return _IG_FG_CACHE["id"]
     ig_id = None
     try:
+        page_id = _id_pagina_fg()
         r = requests.get(
-            f"{GRAF_API}/{FG_PAGE_ID}",
+            f"{GRAF_API}/{page_id or FG_PAGE_ID}",
             params={
                 "access_token": FG_PAGE_TOKEN,
                 "fields": "instagram_business_account",
