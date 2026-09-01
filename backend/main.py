@@ -730,6 +730,47 @@ def admin_obtener_fg_token(
     return {"ok": bool(token), "token": token}
 
 
+@app.post("/api/admin/fg-token")
+def admin_guardar_fg_token(
+    payload: dict,
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Sobrescribe el token permanente de la página FG guardado en la BD.
+
+    Permite cargar de forma manual (vía admin) el token correcto de la página
+    Frontera Grande cuando el flujo OAuth no selecciona la página adecuada.
+    Valida que el token resuelva `/me` a una página (para no guardar basura).
+    Requiere el `X-Admin-Token`.
+    """
+    _requiere_admin(x_admin_token)
+    token = (payload.get("token") or "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Falta el campo 'token'")
+    import requests as _req
+
+    try:
+        r = _req.get(
+            f"https://graph.facebook.com/v22.0/me",
+            params={"access_token": token, "fields": "id,name"},
+            timeout=20,
+        )
+        if not r.ok:
+            raise HTTPException(status_code=400, detail=f"Token inválido: {r.text[:200]}")
+        info = r.json()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"No se pudo validar el token: {exc}")
+    SettingsRepository(db).guardar("fg_page_token", token)
+    db.commit()
+    return {
+        "ok": True,
+        "page_id": info.get("id"),
+        "name": info.get("name"),
+    }
+
+
 @app.post("/api/admin/promos/upload")
 def admin_subir_promo(
     nombre: str = Form(...),
