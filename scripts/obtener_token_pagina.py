@@ -54,6 +54,32 @@ def login_url(api_base: str) -> str:
     return f"{api_base.rstrip('/')}/api/feed/igfb/fg-login"
 
 
+def obtener_token_por_api(api_base: str) -> str | None:
+    """Recupera el token de la página persistido en la BD vía la API.
+
+    El callback del OAuth corre en el servidor (Render) y guarda el token en
+    PostgreSQL (clave `fg_page_token`), no en el disco local. Este helper le
+    pide el token a `GET /api/admin/fg-token` usando el `ADMIN_PASSWORD`.
+    """
+    import requests
+
+    token = os.getenv("ADMIN_PASSWORD", "").strip()
+    if not token:
+        return None
+    try:
+        r = requests.get(
+            f"{api_base.rstrip('/')}/api/admin/fg-token",
+            headers={"X-Admin-Token": token},
+            timeout=30,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return (data.get("token") or "").strip() or None
+    except Exception as exc:
+        print(f"[warn] No se pudo leer el token desde la API: {exc}", file=sys.stderr)
+        return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Obtiene el token permanente de la pagina FG")
     parser.add_argument(
@@ -95,15 +121,21 @@ def main():
         TOKEN_FILE.unlink()
     print("Esperando autorizacion... (presiona Ctrl+C para cancelar)")
     deadline = time.time() + 300
-    while not TOKEN_FILE.exists() and time.time() < deadline:
+    while time.time() < deadline:
+        # 1) Archivo local (si el callback corrió en esta máquina)
+        if TOKEN_FILE.exists():
+            token = TOKEN_FILE.read_text(encoding="utf-8").strip()
+            break
+        # 2) Token persistido en BD (callback corrió en el servidor)
+        token = obtener_token_por_api(args.api)
+        if token:
+            break
         time.sleep(2)
-    if not TOKEN_FILE.exists():
+    else:
         print("\nTiempo de espera agotado (5 min). Vuelve a intentarlo.", file=sys.stderr)
         sys.exit(1)
 
-    token = TOKEN_FILE.read_text(encoding="utf-8").strip()
-    print("\nToken obtenido correctamente.")
-    print(f"  (primeros 12 chars): {token[:12]}...")
+    print(f"\nToken obtenido correctamente. (primeros 12 chars): {token[:12]}...")
     cmd = ['gh', 'secret', 'set', 'FG_PAGE_TOKEN', '--body', token]
     print(f"Comando a ejecutar:\n  {' '.join(c[:-1])} <token-oculto>")
     if args.no_set_secret:

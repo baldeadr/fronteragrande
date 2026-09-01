@@ -714,6 +714,22 @@ def admin_invalidar_cache(
     return {"ok": True}
 
 
+@app.get("/api/admin/fg-token")
+def admin_obtener_fg_token(
+    x_admin_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+):
+    """Devuelve el token permanente de la página FG guardado en la BD.
+
+    Lo usa `scripts/obtener_token_pagina.py` para recuperar el token que el
+    callback (que corre en Render) persistió, y configurarlo como secret de
+    GitHub Actions. Requiere el `X-Admin-Token`.
+    """
+    _requiere_admin(x_admin_token)
+    token = SettingsRepository(db).obtener("fg_page_token", "")
+    return {"ok": bool(token), "token": token}
+
+
 @app.post("/api/admin/promos/upload")
 def admin_subir_promo(
     nombre: str = Form(...),

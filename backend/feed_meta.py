@@ -601,6 +601,20 @@ def _callback_pagina_fg(code: str):
         ruta = Path(FG_PAGE_TOKEN_FILE)
         ruta.parent.mkdir(parents=True, exist_ok=True)
         ruta.write_text(token, encoding="utf-8")
+        # Persistir también en la BD (PostgreSQL es persistente; el disco de
+        # Render es efímero y se pierde en cada deploy). Clave fg_page_token.
+        try:
+            from db.database import SessionLocal
+            from lib.repository import SettingsRepository
+
+            session = SessionLocal()
+            try:
+                SettingsRepository(session).guardar("fg_page_token", token)
+                session.commit()
+            finally:
+                session.close()
+        except Exception as exc:
+            logger.warning("No se pudo persistir fg_page_token en BD: %s", exc)
         logger.info("Token de la página FG %s guardado en %s", pagina.get("id"), ruta)
         return RedirectResponse(f"{WEB_URL}?fg_token=ok")
     except Exception as exc:

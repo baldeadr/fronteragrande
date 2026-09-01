@@ -65,3 +65,40 @@ def test_subir_promo_rechaza_nombre_peligroso(client, promos_dir):
         headers=TOKEN,
     )
     assert r.status_code == 400
+
+
+def test_fg_token_requiere_admin(client, promos_dir):
+    r = client.get("/api/admin/fg-token")
+    assert r.status_code == 403
+
+
+def test_fg_token_vacio(client, promos_dir, session):
+    from lib.repository import SettingsRepository
+
+    repo = SettingsRepository(session)
+    previo = repo.obtener("fg_page_token", "")
+    repo.guardar("fg_page_token", "")
+    session.commit()
+    try:
+        r = client.get("/api/admin/fg-token", headers=TOKEN)
+        assert r.status_code == 200
+        assert r.json() == {"ok": False, "token": ""}
+    finally:
+        repo.guardar("fg_page_token", previo)
+        session.commit()
+
+
+def test_fg_token_guardado_en_bd(client, promos_dir, session):
+    from lib.repository import SettingsRepository
+
+    repo = SettingsRepository(session)
+    previo = repo.obtener("fg_page_token", "")
+    repo.guardar("fg_page_token", "tok_pagina")
+    session.commit()
+    try:
+        r = client.get("/api/admin/fg-token", headers=TOKEN)
+        assert r.status_code == 200
+        assert r.json() == {"ok": True, "token": "tok_pagina"}
+    finally:
+        repo.guardar("fg_page_token", previo)
+        session.commit()
