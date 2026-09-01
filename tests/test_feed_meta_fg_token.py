@@ -62,6 +62,41 @@ def test_pagina_por_id_sin_paginas(monkeypatch):
     assert fm._pagina_por_id("user_tok", None) is None
 
 
+def test_pagina_por_id_por_nombre(monkeypatch):
+    """Si FG_PAGE_ID no coincide (por ser App ID), se elige la página cuyo
+    nombre contiene 'Frontera Grande', aunque no sea la primera."""
+    def fake_get(ruta, params, **kwargs):
+        resp = type("R", (), {})()
+        resp.json = lambda: {"data": [
+            {"id": "999", "name": "Apex Ultra", "access_token": "tok_apex"},
+            {"id": "777", "name": "Frontera Grande Oficial", "access_token": "tok_fg"},
+        ]}
+        resp.raise_for_status = lambda: None
+        return resp
+
+    monkeypatch.setattr(fm.requests, "get", fake_get)
+    # FG_PAGE_ID (1567063665051085) no coincide con ninguna página:
+    pagina = fm._pagina_por_id("user_tok", "1567063665051085",
+                               preferir_nombre="Frontera Grande")
+    assert pagina["access_token"] == "tok_fg"
+
+
+def test_pagina_por_id_nombre_segunda_prioridad(monkeypatch):
+    """El id coincide primero; el nombre solo como respaldo."""
+    def fake_get(ruta, params, **kwargs):
+        resp = type("R", (), {})()
+        resp.json = lambda: {"data": [
+            {"id": "555", "name": "Frontera Grande X", "access_token": "tok_x"},
+            {"id": "777", "name": "Apex Ultra", "access_token": "tok_apex"},
+        ]}
+        resp.raise_for_status = lambda: None
+        return resp
+
+    monkeypatch.setattr(fm.requests, "get", fake_get)
+    pagina = fm._pagina_por_id("user_tok", "777", preferir_nombre="Frontera Grande")
+    assert pagina["access_token"] == "tok_apex"
+
+
 def test_callback_pagina_fg_ok(monkeypatch, tmp_path):
     """Flujo feliz: guarda el token en el archivo y redirige con fg_token=ok."""
     archivo = tmp_path / "fg_token.txt"
@@ -69,15 +104,19 @@ def test_callback_pagina_fg_ok(monkeypatch, tmp_path):
     monkeypatch.setenv("FG_PAGE_ID", "1567063665051085")
     monkeypatch.setattr(fm, "_intercambiar_code", lambda code: "corto")
     monkeypatch.setattr(fm, "_token_larga_duracion", lambda short: "largo")
-    monkeypatch.setattr(
-        fm, "_pagina_por_id", lambda largo, pid: {"id": pid, "access_token": "PERMANENTE_FG"}
-    )
+
+    def fake_pagina(largo, pid, **kw):
+        llamada[0] = kw.get("preferir_nombre")
+        return {"id": pid, "access_token": "PERMANENTE_FG"}
+    llamada = [None]
+    monkeypatch.setattr(fm, "_pagina_por_id", fake_pagina)
 
     resp = fm._callback_pagina_fg("code123")
 
     assert isinstance(resp, RedirectResponse)
     assert "fg_token=ok" in resp.headers["location"]
     assert archivo.read_text(encoding="utf-8") == "PERMANENTE_FG"
+    assert llamada[0] == "Frontera Grande"
 
 
 def test_callback_pagina_fg_no_admin(monkeypatch, tmp_path):
@@ -87,7 +126,7 @@ def test_callback_pagina_fg_no_admin(monkeypatch, tmp_path):
     monkeypatch.setenv("FG_PAGE_ID", "1567063665051085")
     monkeypatch.setattr(fm, "_intercambiar_code", lambda code: "corto")
     monkeypatch.setattr(fm, "_token_larga_duracion", lambda short: "largo")
-    monkeypatch.setattr(fm, "_pagina_por_id", lambda largo, pid: None)
+    monkeypatch.setattr(fm, "_pagina_por_id", lambda largo, pid, **kw: None)
 
     resp = fm._callback_pagina_fg("code123")
 

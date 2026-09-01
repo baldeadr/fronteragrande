@@ -224,13 +224,21 @@ def _grafo(ruta: str, params: dict) -> dict:
     return datos
 
 
-def _pagina_por_id(user_token: str, page_id: str | None) -> dict | None:
+def _pagina_por_id(
+    user_token: str,
+    page_id: str | None,
+    preferir_nombre: str | None = None,
+) -> dict | None:
     """Devuelve la página administrada por la cuenta.
 
-    Si `page_id` viene dado, devuelve la página cuyo id coincide (flujo de la
-    página FG). Si no viene (o no coincide), devuelve la primera página que
-    administra la cuenta autorizada: así el flujo no depende de que
-    `FG_PAGE_ID` esté bien configurado.
+    Prioridad:
+    1. Si `page_id` viene dado, devuelve la página cuyo id coincide (flujo de
+       la página FG).
+    2. Si `preferir_nombre` viene dado (p. ej. "Frontera Grande"), devuelve la
+       página cuyo nombre la contiene (no distingue mayúsculas). Así el flujo
+       FG no depende de que `FG_PAGE_ID` sea el Page ID real (a veces es el App
+       ID, que no coincide con ninguna página).
+    3. En último caso devuelve la primera página que administra la cuenta.
     """
     r = requests.get(
         f"{GRAF_API}/me/accounts",
@@ -245,6 +253,11 @@ def _pagina_por_id(user_token: str, page_id: str | None) -> dict | None:
     if page_id:
         for p in paginas:
             if str(p.get("id")) == str(page_id):
+                return p
+    if preferir_nombre:
+        objetivo = preferir_nombre.casefold()
+        for p in paginas:
+            if objetivo in (p.get("name") or "").casefold():
                 return p
     return paginas[0] if paginas else None
 
@@ -590,7 +603,7 @@ def _callback_pagina_fg(code: str):
     try:
         corto = _intercambiar_code(code)
         largo = _token_larga_duracion(corto)
-        pagina = _pagina_por_id(largo, page_id)
+        pagina = _pagina_por_id(largo, page_id, preferir_nombre="Frontera Grande")
         if not pagina:
             logger.error(
                 "La cuenta autorizada no administra ninguna página (¿FG_PAGE_ID=%s es admin?)",
