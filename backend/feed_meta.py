@@ -405,6 +405,7 @@ def fg_login():
             "redirect_uri": REDIRECT_URI,
             "state": "fg",
             "scope": scope,
+            "auth_type": "rerequest",
         }
     )
     return RedirectResponse(f"{AUTH_URL}?{params}")
