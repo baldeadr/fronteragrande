@@ -224,9 +224,14 @@ def _grafo(ruta: str, params: dict) -> dict:
     return datos
 
 
-def _pagina_por_id(user_token: str, page_id: str) -> dict | None:
-    """Devuelve la página administrada por la cuenta cuyo id coincide con el
-    dado (para emitir el token de la página FG, no de un artista)."""
+def _pagina_por_id(user_token: str, page_id: str | None) -> dict | None:
+    """Devuelve la página administrada por la cuenta.
+
+    Si `page_id` viene dado, devuelve la página cuyo id coincide (flujo de la
+    página FG). Si no viene (o no coincide), devuelve la primera página que
+    administra la cuenta autorizada: así el flujo no depende de que
+    `FG_PAGE_ID` esté bien configurado.
+    """
     r = requests.get(
         f"{GRAF_API}/me/accounts",
         params={
@@ -236,10 +241,12 @@ def _pagina_por_id(user_token: str, page_id: str) -> dict | None:
         timeout=20,
     )
     r.raise_for_status()
-    for p in r.json().get("data", []):
-        if str(p.get("id")) == str(page_id):
-            return p
-    return None
+    paginas = r.json().get("data", [])
+    if page_id:
+        for p in paginas:
+            if str(p.get("id")) == str(page_id):
+                return p
+    return paginas[0] if paginas else None
 
 
 def pagina_about(page_id: str, page_token: str) -> str:
@@ -577,8 +584,8 @@ def _callback_pagina_fg(code: str):
     (por defecto `data/fg_page_token.txt`, NO versionado) para que se cargue
     como secret `FG_PAGE_TOKEN` en GitHub Actions.
     """
-    page_id = os.getenv("FG_PAGE_ID", "")
-    if not code or not page_id:
+    page_id = os.getenv("FG_PAGE_ID", "") or None
+    if not code:
         return RedirectResponse(f"{WEB_URL}?fg_token=error")
     try:
         corto = _intercambiar_code(code)
@@ -586,14 +593,15 @@ def _callback_pagina_fg(code: str):
         pagina = _pagina_por_id(largo, page_id)
         if not pagina:
             logger.error(
-                "La cuenta autorizada no administra la página FG %s (¿es admin?)", page_id
+                "La cuenta autorizada no administra ninguna página (¿FG_PAGE_ID=%s es admin?)",
+                page_id,
             )
             return RedirectResponse(f"{WEB_URL}?fg_token=no_admin")
         token = pagina["access_token"]
         ruta = Path(FG_PAGE_TOKEN_FILE)
         ruta.parent.mkdir(parents=True, exist_ok=True)
         ruta.write_text(token, encoding="utf-8")
-        logger.info("Token de la página FG guardado en %s", ruta)
+        logger.info("Token de la página FG %s guardado en %s", pagina.get("id"), ruta)
         return RedirectResponse(f"{WEB_URL}?fg_token=ok")
     except Exception as exc:
         logger.exception("Error al obtener token de la página FG: %s", exc)

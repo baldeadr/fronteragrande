@@ -52,6 +52,35 @@ def promo_configurado() -> bool:
     return bool(FG_PAGE_ID and FG_PAGE_TOKEN)
 
 
+_IG_FG_CACHE: dict[str, str | None] = {}
+
+_ID_PAGINA_CACHE: str | None = None
+
+
+def _id_pagina_fg() -> str | None:
+    """ID real de la página FG a partir del token (un page token resuelve
+    `/me` a la propia página). Se cachea una vez por proceso."""
+    global _ID_PAGINA_CACHE
+    if _ID_PAGINA_CACHE is not None:
+        return _ID_PAGINA_CACHE
+    if not FG_PAGE_TOKEN:
+        return FG_PAGE_ID or None
+    _ID_PAGINA_CACHE = FG_PAGE_ID
+    try:
+        r = requests.get(
+            f"{GRAF_API}/me",
+            params={"access_token": FG_PAGE_TOKEN, "fields": "id,name"},
+            timeout=15,
+        )
+        if r.ok:
+            rid = r.json().get("id")
+            if rid:
+                _ID_PAGINA_CACHE = str(rid)
+    except requests.RequestException:
+        pass
+    return _ID_PAGINA_CACHE
+
+
 def _obtener_enlaces_artista(artista: Artist) -> dict[str, str]:
     """Extrae URLs de FB e IG del artista para mencionar en el post."""
     enlaces = {"fb": "", "ig": ""}
@@ -570,9 +599,12 @@ def publicar_en_fb(mensaje: str, imagen_url: str | None = None) -> dict:
     if not promo_configurado():
         return {"ok": False, "error": "FG_PAGE_ID o FG_PAGE_TOKEN no configurados"}
     try:
+        page_id = _id_pagina_fg()
+        if not page_id:
+            return {"ok": False, "error": "No se pudo resolver el ID de la página FG"}
         if imagen_url:
             r = requests.post(
-                f"{GRAF_API}/{FG_PAGE_ID}/photos",
+                f"{GRAF_API}/{page_id}/photos",
                 data={
                     "access_token": FG_PAGE_TOKEN,
                     "url": imagen_url,
@@ -583,7 +615,7 @@ def publicar_en_fb(mensaje: str, imagen_url: str | None = None) -> dict:
             )
         else:
             r = requests.post(
-                f"{GRAF_API}/{FG_PAGE_ID}/feed",
+                f"{GRAF_API}/{page_id}/feed",
                 data={
                     "access_token": FG_PAGE_TOKEN,
                     "message": mensaje,

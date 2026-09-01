@@ -34,8 +34,9 @@ def test_pagina_por_id_encontrada(monkeypatch):
     assert llamadas["params"]["access_token"] == "user_tok"
 
 
-def test_pagina_por_id_no_admin(monkeypatch):
-    """Si la cuenta no administra la página FG, devuelve None."""
+def test_pagina_por_id_no_admin_fallback(monkeypatch):
+    """Si la página FG específica no está administrada, devuelve la primera
+    página de la cuenta (fallback: no depende de un FG_PAGE_ID bien puesto)."""
     def fake_get(ruta, params, **kwargs):
         resp = type("R", (), {})()
         resp.json = lambda: {"data": [{"id": "999", "name": "Otra",
@@ -44,7 +45,21 @@ def test_pagina_por_id_no_admin(monkeypatch):
         return resp
 
     monkeypatch.setattr(fm.requests, "get", fake_get)
-    assert fm._pagina_por_id("user_tok", "1567063665051085") is None
+    pagina = fm._pagina_por_id("user_tok", "1567063665051085")
+    assert pagina is not None
+    assert pagina["access_token"] == "tok"
+
+
+def test_pagina_por_id_sin_paginas(monkeypatch):
+    """Si la cuenta no administra ninguna página, devuelve None."""
+    def fake_get(ruta, params, **kwargs):
+        resp = type("R", (), {})()
+        resp.json = lambda: {"data": []}
+        resp.raise_for_status = lambda: None
+        return resp
+
+    monkeypatch.setattr(fm.requests, "get", fake_get)
+    assert fm._pagina_por_id("user_tok", None) is None
 
 
 def test_callback_pagina_fg_ok(monkeypatch, tmp_path):
