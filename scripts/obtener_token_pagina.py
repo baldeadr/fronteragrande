@@ -137,7 +137,7 @@ def main():
 
     print(f"\nToken obtenido correctamente. (primeros 12 chars): {token[:12]}...")
     cmd = ['gh', 'secret', 'set', 'FG_PAGE_TOKEN', '--body', token]
-    print(f"Comando a ejecutar:\n  {' '.join(c[:-1])} <token-oculto>")
+    print("Comando a ejecutar:\n  gh secret set FG_PAGE_TOKEN --body <token-oculto>")
     if args.no_set_secret:
         print("\n[--no-set-secret] No se ejecuto. Copia el comando anterior.")
     else:
