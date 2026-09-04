@@ -19,6 +19,7 @@ from lib.helpers import (
     TEXTO_BALANCE_AUDIENCIA_CONSUMO,
     balance_audiencia_consumo,
     calcular_indice_universal,
+    clasificar_genero_dominante,
     clasificar_por_indice,
     conteo_generos,
     dominancia_audiencia,
@@ -56,6 +57,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "segmento": a.segmento,
             "ciudad": a.ciudad,
             "generos": a.generos,
+            "genero_dominante": a.genero_dominante,
             "estado_registro": a.estado_registro,
             "es_propio": a.es_propio,
             "nivel": a.nivel,
@@ -480,12 +482,9 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
     por_ciudad: dict[str, list[str]] = {}
     por_segmento: dict[str, list[str]] = {}
     for _, fila in df.iterrows():
-        for genero in [
-            g.strip()
-            for g in str(fila["generos"]).split(",")
-            if g.strip() and "PENDIENTE" not in g.upper()
-        ]:
-            por_genero.setdefault(genero, []).append(fila["slug"])
+        genero_dominante = fila.get("genero_dominante") or ""
+        if genero_dominante and "PENDIENTE" not in genero_dominante.upper():
+            por_genero.setdefault(genero_dominante, []).append(fila["slug"])
         if fila["ciudad"] and "PENDIENTE" not in str(fila["ciudad"]).upper():
             por_ciudad.setdefault(fila["ciudad"], []).append(fila["slug"])
         if fila["segmento"] and "PENDIENTE" not in str(fila["segmento"]).upper():
@@ -879,6 +878,9 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
         artista.ciudad = (datos.get("ciudad") or "").strip() or "[PENDIENTE]"
     if "generos" in datos:
         artista.generos = (datos.get("generos") or "").strip() or "[PENDIENTE]"
+        artista.genero_dominante = clasificar_genero_dominante(
+            artista.slug, artista.generos
+        )
     if "bio" in datos:
         artista.bio = datos.get("bio") or ""
     if "notas" in datos:
@@ -1045,6 +1047,7 @@ def crear_artista(session: Session, datos: dict) -> Artist:
         metodo_actividad="sin datos",
     )
     artista.bio = bio
+    artista.genero_dominante = clasificar_genero_dominante(artista.slug, artista.generos)
 
     for red in redes_limpias:
         url = red["url"]

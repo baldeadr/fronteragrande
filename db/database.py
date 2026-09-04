@@ -133,6 +133,12 @@ def _asegurar_columnas_extra():
                         "ultimo_sync_lanzamientos TIMESTAMP"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "genero_dominante VARCHAR(40)"
+                    )
+                )
         if "promo_posts" in inspector.get_table_names():
             # La playlist semanal registra posts sin artista ligado: permitir NULL.
             with engine.begin() as conn:
@@ -210,6 +216,11 @@ def _asegurar_columnas_extra():
             with engine.begin() as conn:
                 conn.execute(
                     text("ALTER TABLE artists ADD COLUMN ultimo_sync_lanzamientos DATETIME")
+                )
+        if "genero_dominante" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE artists ADD COLUMN genero_dominante VARCHAR(40)")
                 )
 
 

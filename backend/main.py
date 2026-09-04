@@ -268,17 +268,18 @@ def _cache_key_artists(
     segmento: str | None,
     ciudad: str | None,
     genero: str | None,
+    genero_dominante: str | None,
     estado: str | None,
     q: str | None,
 ) -> str:
-    return f"artists:list:{segmento}:{ciudad}:{genero}:{estado}:{q}"
-
+    return f"artists:list:{segmento}:{ciudad}:{genero}:{genero_dominante}:{estado}:{q}"
 
 @app.get("/api/artists")
 def list_artists(
     segmento: str | None = None,
     ciudad: str | None = None,
     genero: str | None = None,
+    genero_dominante: str | None = None,
     estado: str | None = None,
     q: str | None = None,
     x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
@@ -287,7 +288,7 @@ def list_artists(
     cache: MemoryCache = Depends(get_cache_dependency),
 ):
     """Listado de artistas (tarjetas para el directorio)."""
-    cache_key = _cache_key_artists(segmento, ciudad, genero, estado, q)
+    cache_key = _cache_key_artists(segmento, ciudad, genero, genero_dominante, estado, q)
     # No usar cache si hay token de admin (para exponer indice_universal)
     is_admin = bool(x_admin_token and ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD)
     if not is_admin:
@@ -318,6 +319,8 @@ def list_artists(
         df = df[df["estado_activo"] == estado]
     if genero:
         df = df[df["generos"].str.lower().str.contains(genero.lower(), na=False)]
+    if genero_dominante:
+        df = df[df["genero_dominante"] == genero_dominante]
 
     artistas_cargados = {a.id: a for a in artistas.todos(con_links=True)}
     tarjetas = []
@@ -334,6 +337,7 @@ def list_artists(
             "catalogado": catalogado,
             "ciudad": fila["ciudad"],
             "generos": generos_hashtags(fila["generos"]),
+            "genero_dominante": fila.get("genero_dominante") or "",
             "estado_activo": fila["estado_activo"],
             "color_estado": ESTADO_COLORES.get(fila["estado_activo"], "#888"),
             "metodo_actividad": fila["metodo_actividad"],
@@ -506,6 +510,7 @@ def artist_detail(
         "segmento": artist.segmento,
         "ciudad": artist.ciudad,
         "generos": generos_hashtags(artist.generos),
+        "genero_dominante": artist.genero_dominante or "",
         "es_propio": artist.es_propio,
         "estado_activo": artist.estado_activo,
         "color_estado": ESTADO_COLORES.get(artist.estado_activo, "#888"),

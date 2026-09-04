@@ -702,6 +702,211 @@ TEXTO_PATRON_CONSUMO = {
 }
 
 
+# ── Géneros dominantes (clasificación interna) ──────────────────────────
+
+GENEROS_DOMINANTES = [
+    "Regional Mexicano",
+    "Rock",
+    "Metal",
+    "Urbano",
+    "EDM",
+    "Dark",
+    "Pop",
+    "Cumbia y Tropical",
+    "Raíces",
+]
+
+# Mapeo de subgéneros conocidos → género dominante.
+# Se busca el token más largo primero (ej. "hip hop" antes de "hop") para
+# que nombres compuestos matcheen correctamente.
+_CLASIFICACION_SUBGENERO: dict[str, str] = {
+    # Regional Mexicano
+    "norteño": "Regional Mexicano",
+    "banda": "Regional Mexicano",
+    "sierreño": "Regional Mexicano",
+    "corridos tumbados": "Regional Mexicano",
+    "corridos tropicales": "Regional Mexicano",
+    "corridos": "Regional Mexicano",
+    "tejano": "Regional Mexicano",
+    "tex-mex": "Regional Mexicano",
+    "grupero": "Regional Mexicano",
+    "regional mexicano": "Regional Mexicano",
+    "regional": "Regional Mexicano",
+    # Híbridos cumbia-regional: se tocan en formato norteño/regional y
+    # pertenecen a la familia Regional Mexicano (no a Cumbia y Tropical pura).
+    "cumbia norteña": "Regional Mexicano",
+    "cumbias bélicas": "Regional Mexicano",
+    "cumbia bélica": "Regional Mexicano",
+    # Rock
+    "rock alternativo": "Rock",
+    "rock en español": "Rock",
+    "rock n roll": "Rock",
+    "rock and roll": "Rock",
+    "rock n' roll": "Rock",
+    "rock progresivo": "Rock",
+    "rock pop": "Rock",
+    "hard rock": "Rock",
+    "classic rock": "Rock",
+    "garage rock": "Rock",
+    "blues rock": "Rock",
+    "southern rock": "Rock",
+    "pop punk melancólico": "Rock",
+    "pop punk": "Rock",
+    "punk rock": "Rock",
+    "post-rock": "Rock",
+    "noise rock": "Rock",
+    "dreampop": "Rock",
+    "shoegaze": "Rock",
+    "grunge": "Rock",
+    "punk": "Rock",
+    "indie": "Rock",
+    "alternative": "Rock",
+    "alternativa": "Rock",
+    "emo": "Rock",
+    "rock": "Rock",
+    # Metal
+    "industrial metal": "Metal",
+    "metal progresivo": "Metal",
+    "metal alternativo": "Metal",
+    "death metal": "Metal",
+    "nu metal": "Metal",
+    "glam metal": "Metal",
+    "metalcore": "Metal",
+    "electronicore": "Metal",
+    "melodic hardcore": "Metal",
+    "hardcore": "Metal",
+    "doom": "Metal",
+    "stoner": "Metal",
+    "sludge": "Metal",
+    "metal": "Metal",
+    # Urbano
+    "música urbana": "Urbano",
+    "latin hip hop": "Urbano",
+    "narco rap": "Urbano",
+    "hip hop": "Urbano",
+    "hip-hop": "Urbano",
+    "reggaetón": "Urbano",
+    "reggaeton": "Urbano",
+    "emo trap": "Urbano",
+    "freestyle": "Urbano",
+    "trap": "Urbano",
+    "rap": "Urbano",
+    "r&b": "Urbano",
+    # EDM
+    "electronic drone": "EDM",
+    "progressive house": "EDM",
+    "drum and bass": "EDM",
+    "deep house": "EDM",
+    "bass house": "EDM",
+    "tech house": "EDM",
+    "hyperpop industrial": "EDM",
+    "hyperpop": "EDM",
+    "electrónica": "EDM",
+    "electronica": "EDM",
+    "electrónico": "EDM",
+    "electronic": "EDM",
+    "dubstep": "EDM",
+    "trance": "EDM",
+    "techno": "EDM",
+    "hardstyle": "EDM",
+    "riddim": "EDM",
+    "house": "EDM",
+    "acid": "EDM",
+    # Dark
+    "post-punk": "Dark",
+    "post punk": "Dark",
+    "darkwave": "Dark",
+    "dark wave": "Dark",
+    "coldwave": "Dark",
+    "cold wave": "Dark",
+    "industrial": "Dark",
+    "dark electro": "Dark",
+    "cybercore": "Dark",
+    "goth rock": "Dark",
+    "synthpop": "Dark",
+    "synth pop": "Dark",
+    "new wave": "Dark",
+    "drone": "Dark",
+    # Pop
+    "latin pop": "Pop",
+    "pop romantico": "Pop",
+    "pop rock": "Pop",
+    "pop": "Pop",
+    # Cumbia y Tropical
+    "cumbia tropical": "Cumbia y Tropical",
+    "cumbia villera": "Cumbia y Tropical",
+    "world music": "Cumbia y Tropical",
+    "afrobeat": "Cumbia y Tropical",
+    "tropical": "Cumbia y Tropical",
+    "cumbia": "Cumbia y Tropical",
+    "reggae": "Cumbia y Tropical",
+    "salsa": "Cumbia y Tropical",
+    "ska": "Cumbia y Tropical",
+    # Raíces
+    "jazz": "Raíces",
+    "blues": "Raíces",
+    "soul": "Raíces",
+    "funk": "Raíces",
+    "folk": "Raíces",
+    "trova": "Raíces",
+    "country": "Raíces",
+}
+
+# Orden de búsqueda: tokens más largos primero para que "hip hop" matchee
+# antes que un substring suelto.
+_ORDEN_CLASIFICACION = sorted(
+    _CLASIFICACION_SUBGENERO.keys(), key=len, reverse=True
+)
+
+# Excepciones editoriales por slug: el conteo automático no captura la base
+# real de ciertos artistas (ej. Apex Ultra pone "Rock" primero pero su base
+# es industrial/Dark). Se resuelven manualmente y se documentan aquí.
+EXCEPCIONES_GENERO_DOMINANTE: dict[str, str] = {
+    "apex_ultra": "Dark",
+    "angelic_oz": "Urbano",
+    "de_regreso_a_nocheosfera": "Dark",
+}
+
+
+def clasificar_genero_dominante(slug: str, generos: str) -> str:
+    """Clasifica el género dominante de un artista a partir de sus subgéneros.
+
+    Divide por `/`, `,` o `()` y busca cada token en el diccionario de
+    clasificación. Al haber empate gana el género que aparece primero (el
+    artista declara su base primero). `slug` permite aplicar sobre-escrituras
+    editoriales (`EXCEPCIONES_GENERO_DOMINANTE`). Devuelve el nombre del género
+    dominante o `""` si no hay coincidencia.
+    """
+    if slug in EXCEPCIONES_GENERO_DOMINANTE:
+        return EXCEPCIONES_GENERO_DOMINANTE[slug]
+
+    generos = str(generos or "").strip()
+    if not generos or generos == "[PENDIENTE]":
+        return ""
+
+    tokens = re.split(r"[/,()]", generos)
+    conteo: dict[str, int] = {}
+    orden: dict[str, int] = {}
+    for pos, token in enumerate(tokens):
+        token = token.strip().lower()
+        if not token or token == "[pendiente]":
+            continue
+        for subgenero in _ORDEN_CLASIFICACION:
+            if subgenero in token:
+                dominante = _CLASIFICACION_SUBGENERO[subgenero]
+                conteo[dominante] = conteo.get(dominante, 0) + 1
+                orden.setdefault(dominante, pos)
+                break
+
+    if not conteo:
+        return ""
+    maximo = max(conteo.values())
+    candidatos = [g for g, n in conteo.items() if n == maximo]
+    if len(candidatos) == 1:
+        return candidatos[0]
+    return min(candidatos, key=lambda g: orden[g])
+
+
 def slugificar(nombre: str) -> str:
     """Slug simple para identificadores (`"DJ Vikingo"` → `"dj_vikingo"`)."""
     import re

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from db.database import SessionLocal, engine
 from db.models import Artist, ArtistLink, Base, Event
+from lib.helpers import clasificar_genero_dominante
 
 _RAIZ = Path(__file__).resolve().parent.parent
 
@@ -148,6 +149,9 @@ def cargar_artistas(
         artista.segmento = _normalizar(fila.get("segmento")) or "Sin confirmar"
         artista.ciudad = _normalizar(fila.get("ciudad")) or "[PENDIENTE]"
         artista.generos = _normalizar(fila.get("generos")) or "[PENDIENTE]"
+        artista.genero_dominante = clasificar_genero_dominante(
+            str(slug), artista.generos
+        )
         artista.estado_registro = _normalizar(fila.get("estado_registro")) or "investigado (web)"
         artista.es_propio = _normalizar(fila.get("es_propio")).lower() in (
             "1", "true", "x", "si", "verdadero",
