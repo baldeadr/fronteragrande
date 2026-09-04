@@ -293,18 +293,6 @@ export default async function PerfilPage({
                       Insignias
                     </h2>
                     <span
-                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
-                      style={{
-                        borderColor: `${colorLiga}80`,
-                        backgroundColor: `${colorLiga}1a`,
-                        color: colorLiga,
-                      }}
-                      title={`Insignias ganadas dentro de la liga ${ligaMostrada}`}
-                    >
-                      <IconoLiga nivel={ligaMostrada} className="h-3 w-3" />
-                      en {ligaMostrada}
-                    </span>
-                    <span
                       className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
                       title="Cada proyecto compite por insignias dentro de su liga: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Las Ligas (En Ascenso, Ligas Mayores, Leyenda) muestran además su badge de liga."
                     >
@@ -339,7 +327,7 @@ export default async function PerfilPage({
                       return (
                         <li
                           key={m}
-                          title={m}
+                          title={`${m} · Liga ${ligaMostrada}`}
                           className={`flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight ${
                             esEscena
                               ? "border-en-duda/50 bg-en-duda/10 font-medium text-en-duda"
@@ -348,7 +336,9 @@ export default async function PerfilPage({
                         >
                           <IconoMencion tipo={tipo} className="h-5 w-5 shrink-0" />
                           <span className="line-clamp-3 font-medium">{m}</span>
-                          <span className="text-[9px] text-muted uppercase">{tipo}</span>
+                          <span className="max-w-full truncate text-[9px] uppercase text-muted">
+                            {ligaMostrada}
+                          </span>
                         </li>
                       );
                     })}
