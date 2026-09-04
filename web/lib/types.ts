@@ -72,6 +72,7 @@ export interface ArtistCard {
   catalogado: boolean;
   ciudad: string;
   generos: string[];
+  genero_dominante: string;
   estado_activo: string;
   color_estado: string;
   metodo_actividad: string;

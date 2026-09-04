@@ -8,8 +8,23 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ArtistCard } from "@/lib/types";
 import { IconoLiga, INFO_LIGAS } from "@/components/IconoLiga";
+import { ciudadBase } from "@/lib/ciudades";
 
 const GRUPO_COLOR = { audiencia: "var(--accent)", consumo: "#f5a623" };
+
+// Orden estable de los 9 géneros dominantes del catálogo (coincide con la
+// taxonomía de `lib.helpers.GENEROS_DOMINANTES` del backend).
+const GENEROS_DOMINANTES = [
+  "Regional Mexicano",
+  "Rock",
+  "Metal",
+  "Urbano",
+  "EDM",
+  "Dark",
+  "Pop",
+  "Cumbia y Tropical",
+  "Raíces",
+];
 
 const COLOR_NIVEL: Record<string, string> = {
   "Ligas Mayores": "#f5b301",
@@ -22,8 +37,7 @@ type ClaveGrupo =
   | "escena"
   | "ligas_mayores"
   | "en_ascenso"
-  | "leyenda"
-  | "ligas";
+  | "leyenda";
 
 const GRUPOS: {
   clave: ClaveGrupo;
@@ -67,13 +81,6 @@ const GRUPOS: {
     icono: "Leyenda de la Frontera",
     seleccionar: (a) => a.nivel === "Leyenda de la Frontera",
   },
-  {
-    clave: "ligas",
-    etiqueta: "Ligas",
-    color: "var(--text)",
-    icono: null,
-    seleccionar: (a) => a.catalogado,
-  },
 ];
 
 function desglose(a: ArtistCard) {
@@ -102,9 +109,25 @@ export default function RankingFiltrable({
   const [grupo, setGrupo] = useState<ClaveGrupo>("escena");
   const [limite, setLimite] = useState<number | null>(10);
   const [sel, setSel] = useState<string | null>(null);
+  const [generoSel, setGeneroSel] = useState<string>("");
+  const [ciudadSel, setCiudadSel] = useState<string>("");
+
+  const generosDisponibles = GENEROS_DOMINANTES.filter((g) =>
+    artistas.some((a) => a.genero_dominante === g),
+  );
+  const ciudadesDisponibles = [
+    ...new Set(
+      artistas
+        .map((a) => ciudadBase(a.ciudad))
+        .filter((c) => c && c !== "[PENDIENTE]"),
+    ),
+  ].sort();
 
   const grupoActivo = GRUPOS.find((g) => g.clave === grupo)!;
-  const miembros = artistas.filter(grupoActivo.seleccionar);
+  const miembros = artistas
+    .filter(grupoActivo.seleccionar)
+    .filter((a) => !generoSel || a.genero_dominante === generoSel)
+    .filter((a) => !ciudadSel || ciudadBase(a.ciudad) === ciudadSel);
   // Se ordena por el índice universal (comparable entre todas las ligas) en
   // todos los grupos: así cada liga muestra su clasificación real derivada del
   // índice universal (coincide con `rank_liga` del perfil).
@@ -187,6 +210,36 @@ export default function RankingFiltrable({
             </button>
           ))}
         </div>
+        {generosDisponibles.length > 0 && (
+          <select
+            value={generoSel}
+            onChange={(e) => setGeneroSel(e.target.value)}
+            className="rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs text-muted outline-none focus:border-accent"
+            aria-label="Filtrar por género dominante"
+          >
+            <option value="">Todos los géneros</option>
+            {generosDisponibles.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        )}
+        {ciudadesDisponibles.length > 0 && (
+          <select
+            value={ciudadSel}
+            onChange={(e) => setCiudadSel(e.target.value)}
+            className="rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs text-muted outline-none focus:border-accent"
+            aria-label="Filtrar por ciudad"
+          >
+            <option value="">Todas las ciudades</option>
+            {ciudadesDisponibles.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
         <span className="ml-auto flex gap-x-3 gap-y-1 text-xs text-muted">
           {["audiencia", "consumo"].map((clave) => (
             <span
@@ -302,7 +355,7 @@ export default function RankingFiltrable({
           <span className="text-xs">
             Pasa el cursor o toca una fila para ver la proporción de audiencia
             y consumo · posiciones por índice universal (comparable entre todas
-            las ligas).
+            las ligas) · filtra por género dominante y ciudad si lo deseas.
           </span>
         )}
       </p>
