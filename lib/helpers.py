@@ -269,7 +269,7 @@ METRICA_ALCANCE_POR_PLATAFORMA = {
     "fb": ("seguidores",),
     "yt": ("seguidores", "vistas"),
     "tt": ("vistas", "seguidores"),
-    "spotify": ("reproducciones", "seguidores"),
+    "spotify": ("oyentes_mensuales", "seguidores"),
     "bandcamp": ("reproducciones",),
     "soundcloud": ("reproducciones",),
     "beatport": ("seguidores",),
@@ -377,7 +377,7 @@ def indices_audiencia_consumo(
         plataforma, tipo = señal
         datos = metricas.get(plataforma) or {}
         if plataforma == "spotify" and tipo == "consumo":
-            return datos.get("oyentes_mensuales") or datos.get("reproducciones")
+            return datos.get("oyentes_mensuales", 0)
         if plataforma == "yt" and tipo == "vistas":
             return _vistas_yt_capacidad(metricas)
         return datos.get(tipo, 0)
@@ -445,9 +445,7 @@ def ratio_social_musica(metricas: dict) -> float | None:
     sociales = sum(
         _valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "tt", "yt")
     )
-    musica = _valor_seguro(metricas, "spotify", "oyentes_mensuales") or _valor_seguro(
-        metricas, "spotify", "reproducciones"
-    )
+    musica = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
     musica += _valor_seguro(metricas, "bandcamp", "reproducciones")
     musica += _valor_seguro(metricas, "soundcloud", "reproducciones")
     if sociales <= 0 or musica <= 0:
@@ -474,7 +472,7 @@ MAPEO_AUDIENCIA = {
 
 MAPEO_CONSUMO = {
     "yt": ("vistas",),
-    "spotify": ("reproducciones", "oyentes_mensuales"),
+    "spotify": ("oyentes_mensuales",),
     "bandcamp": ("reproducciones",),
     "soundcloud": ("reproducciones",),
 }
@@ -542,7 +540,6 @@ def balance_audiencia_consumo(metricas: dict) -> str:
     )
     consumo = (
         _valor_seguro(metricas, "yt", "vistas")
-        + _valor_seguro(metricas, "spotify", "reproducciones")
         + _valor_seguro(metricas, "spotify", "oyentes_mensuales")
         + _valor_seguro(metricas, "bandcamp", "reproducciones")
         + _valor_seguro(metricas, "soundcloud", "reproducciones")
@@ -633,9 +630,7 @@ def patron_dominancia(metricas: dict) -> str:
     'distribuido' o 'sin_datos'.
     """
     vistas_yt = _valor_seguro(metricas, "yt", "vistas")
-    oyentes_sp = _valor_seguro(metricas, "spotify", "oyentes_mensuales") or _valor_seguro(
-        metricas, "spotify", "reproducciones"
-    )
+    oyentes_sp = _valor_seguro(metricas, "spotify", "oyentes_mensuales")
     sociales = sum(
         _valor_seguro(metricas, p, "seguidores") for p in ("ig", "fb", "tt", "yt")
     )
@@ -1005,8 +1000,7 @@ def normalizar_ciudad(ciudad: str | None) -> str:
 # Cada señal se normaliza contra un techo mundial absoluto (no contra el máximo
 # local de la escena, que inflaba números semilla como seguidores de FB):
 # IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
-# seguidores 20M · Spotify reproducciones 1B · SoundCloud 10M · Bandcamp 1M ·
-# Beatport 100K · Mixcloud 50K.
+# seguidores 20M · SoundCloud 10M · Bandcamp 1M · Beatport 100K · Mixcloud 50K.
 TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("ig", "seguidores"): 50_000_000,
     ("fb", "seguidores"): 50_000_000,
@@ -1015,7 +1009,6 @@ TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("yt", "vistas"): 10_000_000_000,
     ("spotify", "seguidores"): 20_000_000,
     ("spotify", "oyentes_mensuales"): 50_000_000,
-    ("spotify", "reproducciones"): 1_000_000_000,
     ("soundcloud", "reproducciones"): 10_000_000,
     ("bandcamp", "reproducciones"): 1_000_000,
     ("beatport", "seguidores"): 100_000,
@@ -1029,7 +1022,6 @@ SEÑALES_SOCIALES = {"ig", "fb", "tt"}
 SEÑALES_CONSUMO = {
     ("yt", "vistas"),
     ("spotify", "oyentes_mensuales"),
-    ("spotify", "reproducciones"),
     ("soundcloud", "reproducciones"),
     ("bandcamp", "reproducciones"),
 }

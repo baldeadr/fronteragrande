@@ -29,7 +29,9 @@ def test_analisis_detecta_oportunidad_de_puente_musical():
     assert resultado["actualizado"] == date(2026, 8, 16)
 
 
-def test_analisis_no_confunde_reproducciones_con_audiencia():
+def test_reproducciones_spotify_retiradas_no_aportan_senal():
+    # `reproducciones_spotify` ya no es una señal (solo oyentes mensuales):
+    # un perfil con solo ese dato no alcanza a generar un análisis.
     resultado = analisis_artista(
         {
             "tt": {"seguidores": 100_000},
@@ -37,7 +39,7 @@ def test_analisis_no_confunde_reproducciones_con_audiencia():
         }
     )
 
-    assert resultado["tipo"] == "presencia_social"
+    assert resultado["tipo"] == "datos_insuficientes"
 
 
 def test_analisis_reporta_datos_insuficientes():
@@ -76,7 +78,7 @@ def test_dominancia_plataforma():
     metricas = {
         "ig": {"seguidores": 100},
         "yt": {"vistas": 300},
-        "spotify": {"reproducciones": 100},
+        "spotify": {"oyentes_mensuales": 100},
     }
     dom = dominancia_plataforma(metricas)
     assert "yt" in dom
@@ -139,7 +141,7 @@ def test_analisis_consumo_sin_datos():
 def test_analisis_separa_audiencia_de_consumo():
     metricas = {
         "ig": {"seguidores": 100_000},
-        "spotify": {"seguidores": 500, "reproducciones": 1_000},
+        "spotify": {"seguidores": 500, "oyentes_mensuales": 1_000},
         "yt": {"vistas": 5_000_000, "seguidores": 10_000},
     }
     resultado = analisis_consumo(metricas)
@@ -154,16 +156,16 @@ def test_analisis_separa_audiencia_de_consumo():
 def test_balance_audiencia_consumo():
     assert balance_audiencia_consumo({}) == "sin_datos"
     assert balance_audiencia_consumo(
-        {"ig": {"seguidores": 1000}, "spotify": {"reproducciones": 100_000}}
+        {"ig": {"seguidores": 1000}, "spotify": {"oyentes_mensuales": 100_000}}
     ) == "consumo_dominante"
     assert balance_audiencia_consumo(
-        {"ig": {"seguidores": 100_000}, "spotify": {"reproducciones": 1000}}
+        {"ig": {"seguidores": 100_000}, "spotify": {"oyentes_mensuales": 1000}}
     ) == "social_dominante"
     assert balance_audiencia_consumo(
-        {"ig": {"seguidores": 1000}, "spotify": {"reproducciones": 4000}}
+        {"ig": {"seguidores": 1000}, "spotify": {"oyentes_mensuales": 4000}}
     ) == "inclinado_consumo"
     assert balance_audiencia_consumo(
-        {"ig": {"seguidores": 5000}, "spotify": {"reproducciones": 8000}}
+        {"ig": {"seguidores": 5000}, "spotify": {"oyentes_mensuales": 8000}}
     ) == "equilibrado"
 
 
@@ -177,7 +179,7 @@ def test_dominancia_dimensiones_reparte_en_escala_log():
     assert patron_aud == "instagram_dominante"
 
     shares_cons, _ = dominancia_consumo(
-        {"yt": {"vistas": 5_000_000}, "spotify": {"reproducciones": 100_000}}
+        {"yt": {"vistas": 5_000_000}, "spotify": {"oyentes_mensuales": 100_000}}
     )
     # Ambas cuentan aunque YouTube tenga más reproducciones brutas.
     assert "spotify" in shares_cons

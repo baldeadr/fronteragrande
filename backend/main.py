@@ -544,7 +544,6 @@ def artist_detail(
             },
             "spotify": {
                 "seguidores": artist.followers_spotify,
-                "reproducciones": artist.reproducciones_spotify,
             },
             "bandcamp": {
                 "reproducciones": artist.reproducciones_bandcamp,

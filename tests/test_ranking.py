@@ -37,7 +37,7 @@ def test_indice_normalizacion_mayor_domina():
 def test_indice_respeta_rango():
     metricas = {
         "a": {"ig": {"seguidores": 1}, "fb": {"seguidores": 1},
-              "spotify": {"reproducciones": 1}, "yt": {"vistas": 1}},
+              "spotify": {"oyentes_mensuales": 1}, "yt": {"vistas": 1}},
         "b": {"tt": {"vistas": 1}, "bandcamp": {"reproducciones": 1},
               "soundcloud": {"reproducciones": 1}},
     }
@@ -88,13 +88,13 @@ def test_indices_separan_audiencia_y_consumo_youtube():
     assert 0 <= resultado["a"]["indice"] <= 100
 
 
-def test_indices_spotify_prefiere_oyentes_sobre_reproducciones():
+def test_indices_consumo_spotify_usa_oyentes():
     from lib.helpers import indices_audiencia_consumo
 
     resultado = indices_audiencia_consumo(
         {
             "a": {"spotify": {"oyentes_mensuales": 100}},
-            "b": {"spotify": {"reproducciones": 10}},
+            "b": {"spotify": {"oyentes_mensuales": 1}},
         }
     )
 
@@ -162,14 +162,13 @@ def test_indice_universal_dominancia_real_vence_al_ruido():
 
     # Caso de producto: una señal real enorme (Grupo Frontera: 38.5M oyentes
     # Spotify) supera a muchas señales pequeñas juntas (Don Bravo: FB semilla
-    # 24.6K + 553K vistas YT + 654 reproducciones Spotify).
+    # 24.6K + 553K vistas YT).
     resultado = calcular_indice_universal(
         {
             "grupo_frontera": {"spotify": {"oyentes_mensuales": 38_500_000}},
             "don_bravo": {
                 "fb": {"seguidores": 24_664},
                 "yt": {"vistas": 553_000},
-                "spotify": {"reproducciones": 654},
             },
         }
     )
@@ -182,12 +181,12 @@ def test_indice_universal_satura_frente_al_techo():
     from lib.helpers import calcular_indice_universal
 
     # Un valor al nivel (o superior) del techo mundial satura el ratio a 1.
-    # Con una sola señal el tope real es 72.5: la cobertura (1/12) no puede
-    # igualar a la señal dominante (0.7·1 + 0.3·(1/12) = 0.725).
+    # Con una sola señal el tope real es 72.7: la cobertura (1/11) no puede
+    # igualar a la señal dominante (0.7·1 + 0.3·(1/11) = 0.7273).
     resultado = calcular_indice_universal(
         {"a": {"spotify": {"oyentes_mensuales": 100_000_000}}}
     )
-    assert resultado["a"] == 72.5
+    assert resultado["a"] == 72.7
 
 
 def test_indice_universal_vacio_y_sin_metricas():
@@ -207,7 +206,7 @@ def test_indice_universal_anti_trampa_recorta_social_inflado():
         {
             "pillo": {
                 "fb": {"seguidores": 40_000_000},
-                "spotify": {"reproducciones": 10},
+                "soundcloud": {"reproducciones": 10},
             }
         }
     )

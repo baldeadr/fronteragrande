@@ -293,7 +293,6 @@ def metricas_artista(fila) -> dict:
         },
         "spotify": {
             "seguidores": fila["followers_spotify"],
-            "reproducciones": fila["reproducciones_spotify"],
         },
         "bandcamp": {"reproducciones": fila["reproducciones_bandcamp"]},
         "soundcloud": {"reproducciones": fila["reproducciones_soundcloud"]},
@@ -335,7 +334,6 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
         valor(plataforma, tipo) > 0
         for plataforma, tipo in (
             ("yt", "vistas"),
-            ("spotify", "reproducciones"),
             ("spotify", "oyentes_mensuales"),
             ("bandcamp", "reproducciones"),
             ("soundcloud", "reproducciones"),
@@ -348,7 +346,7 @@ def analisis_artista(metricas: dict, actualizado=None) -> dict:
             ("fb", ("seguidores",)),
             ("tt", ("seguidores",)),
             ("yt", ("seguidores", "vistas")),
-            ("spotify", ("seguidores", "oyentes_mensuales", "reproducciones")),
+            ("spotify", ("seguidores", "oyentes_mensuales")),
             ("bandcamp", ("reproducciones",)),
             ("soundcloud", ("reproducciones",)),
             ("beatport", ("seguidores",)),
@@ -735,7 +733,7 @@ def stats_escena(session: Session) -> dict:
         "fb": ("followers_fb", "seguidores"),
         "yt": ("followers_yt", "seguidores"),
         "tt": ("followers_tt", "seguidores"),
-        "spotify": ("reproducciones_spotify", "reproducciones"),
+        "spotify": ("followers_spotify", "seguidores"),
         "bandcamp": ("reproducciones_bandcamp", "reproducciones"),
         "soundcloud": ("reproducciones_soundcloud", "reproducciones"),
         "beatport": ("followers_beatport", "seguidores"),
