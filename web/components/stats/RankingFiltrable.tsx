@@ -14,7 +14,7 @@ const GRUPO_COLOR = { audiencia: "var(--accent)", consumo: "#f5a623" };
 const COLOR_NIVEL: Record<string, string> = {
   "Ligas Mayores": "#f5b301",
   "En Ascenso": "#2fb8a6",
-  "Leyenda de la Frontera": "#8a63d2",
+  "Leyenda de la Frontera": "#aab4c8",
 };
 
 type ClaveGrupo =
@@ -29,42 +29,49 @@ const GRUPOS: {
   clave: ClaveGrupo;
   etiqueta: string;
   color: string;
+  icono: string | null;
   seleccionar: (a: ArtistCard) => boolean;
 }[] = [
   {
     clave: "todos",
     etiqueta: "Todos",
     color: "var(--text)",
+    icono: null,
     seleccionar: () => true,
   },
   {
     clave: "escena",
     etiqueta: "Escena",
     color: "var(--accent)",
+    icono: "Escena",
     seleccionar: (a) => !a.catalogado,
   },
   {
     clave: "ligas_mayores",
     etiqueta: "Ligas Mayores",
     color: COLOR_NIVEL["Ligas Mayores"],
+    icono: "Ligas Mayores",
     seleccionar: (a) => a.nivel === "Ligas Mayores",
   },
   {
     clave: "en_ascenso",
     etiqueta: "En Ascenso",
     color: COLOR_NIVEL["En Ascenso"],
+    icono: "En Ascenso",
     seleccionar: (a) => a.nivel === "En Ascenso",
   },
   {
     clave: "leyenda",
     etiqueta: "Leyenda",
     color: COLOR_NIVEL["Leyenda de la Frontera"],
+    icono: "Leyenda de la Frontera",
     seleccionar: (a) => a.nivel === "Leyenda de la Frontera",
   },
   {
     clave: "ligas",
     etiqueta: "Ligas",
     color: "var(--text)",
+    icono: null,
     seleccionar: (a) => a.catalogado,
   },
 ];
@@ -143,10 +150,16 @@ export default function RankingFiltrable({
                   : "border-line bg-surface-2 text-muted hover:text-text"
               }`}
             >
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: g.color }}
-              />
+              {g.icono ? (
+                <span style={{ color: g.color }}>
+                  <IconoLiga nivel={g.icono} className="h-3.5 w-3.5" />
+                </span>
+              ) : (
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: g.color }}
+                />
+              )}
               {g.etiqueta}
               <span
                 className={`tabular-nums ${activo ? "text-accent" : "text-muted"}`}

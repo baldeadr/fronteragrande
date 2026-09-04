@@ -2,7 +2,7 @@ export const INFO_LIGAS: Record<string, string> = {
   Escena: "#9d4edd",
   "Ligas Mayores": "#f5b301",
   "En Ascenso": "#2fb8a6",
-  "Leyenda de la Frontera": "#8a63d2",
+  "Leyenda de la Frontera": "#aab4c8",
 };
 
 export function IconoLiga({

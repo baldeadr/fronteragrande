@@ -374,7 +374,7 @@ export default function AcercaDePage() {
             <b>Ligas Mayores</b> — índice <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
-            <span style={{ color: "#8a63d2" }}>
+            <span style={{ color: "#aab4c8" }}>
               <IconoLiga
                 nivel="Leyenda de la Frontera"
                 className="h-3.5 w-3.5 shrink-0"
