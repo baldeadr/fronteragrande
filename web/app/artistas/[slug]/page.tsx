@@ -374,15 +374,15 @@ export default async function PerfilPage({
               artist.ranking.rank_liga !== null &&
               artist.ranking.rank_liga !== undefined && (
                 <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 px-3 py-2.5">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:gap-x-5">
+                  <div className="flex items-center gap-x-3.5 text-xs sm:gap-x-5">
                     <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
                       Ranking
                     </span>
                     <span
-                      className="flex min-w-0 items-baseline gap-1.5 cursor-help"
+                      className="flex min-w-0 flex-1 items-baseline gap-1.5 cursor-help"
                       title={`Posición dentro de la liga ${artist.ranking.liga ?? ""} (${artist.ranking.total_liga} proyectos)`}
                     >
-                      <b className="text-lg leading-none">
+                      <b className="text-base leading-none">
                         #{artist.ranking.rank_liga}
                       </b>
                       <span className="truncate font-medium text-muted">
@@ -392,14 +392,14 @@ export default async function PerfilPage({
                     {artist.ranking.rank_universal !== null &&
                       artist.ranking.rank_universal !== undefined && (
                         <span
-                          className="flex shrink-0 items-baseline gap-1.5 cursor-help"
+                          className="flex shrink-0 items-baseline gap-1 cursor-help"
                           title={`Ranking universal: mide a todas las ligas a la vez (${artist.ranking.total_universal} proyectos)`}
                         >
                           <b>#{artist.ranking.rank_universal}</b>
                           <span className="font-medium text-muted">Global</span>
                         </span>
                       )}
-                    <div className="ml-auto flex shrink-0 items-center gap-x-3">
+                    <div className="flex shrink-0 items-center gap-x-2.5">
                       <MetricaRanking
                         abreviatura="A"
                         nombre="Audiencia"

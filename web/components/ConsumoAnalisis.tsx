@@ -128,7 +128,7 @@ export default function ConsumoAnalisis({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <span className="font-bold">Consumo y audiencia: </span>
+        <span className="font-bold">Análisis: </span>
         <span className="font-bold text-text">
           {ETIQUETA_BALANCE[consumo.balance] ?? "Análisis"}
         </span>
