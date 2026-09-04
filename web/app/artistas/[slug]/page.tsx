@@ -293,6 +293,18 @@ export default async function PerfilPage({
                       Insignias
                     </h2>
                     <span
+                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                      style={{
+                        borderColor: `${colorLiga}80`,
+                        backgroundColor: `${colorLiga}1a`,
+                        color: colorLiga,
+                      }}
+                      title={`Insignias ganadas dentro de la liga ${ligaMostrada}`}
+                    >
+                      <IconoLiga nivel={ligaMostrada} className="h-3 w-3" />
+                      en {ligaMostrada}
+                    </span>
+                    <span
                       className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
                       title="Cada proyecto compite por insignias dentro de su liga: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Las Ligas (En Ascenso, Ligas Mayores, Leyenda) muestran además su badge de liga."
                     >
@@ -361,20 +373,20 @@ export default async function PerfilPage({
             {artist.ranking.indice !== null &&
               artist.ranking.rank_liga !== null &&
               artist.ranking.rank_liga !== undefined && (
-                <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-[10px] sm:gap-x-6 sm:text-xs">
+                <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 px-3 py-2.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:gap-x-5">
                     <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
                       Ranking
                     </span>
-                    <span className="flex min-w-0 items-baseline gap-1.5">
-                      <b className="text-base">
+                    <span
+                      className="flex min-w-0 items-baseline gap-1.5 cursor-help"
+                      title={`Posición dentro de la liga ${artist.ranking.liga ?? ""} (${artist.ranking.total_liga} proyectos)`}
+                    >
+                      <b className="text-lg leading-none">
                         #{artist.ranking.rank_liga}
                       </b>
-                      <span
-                        className="truncate font-semibold uppercase tracking-wide text-muted"
-                        title={`Posición dentro de la liga ${artist.ranking.liga ?? ""}`}
-                      >
-                        de {artist.ranking.liga ?? ""}
+                      <span className="truncate font-medium text-muted">
+                        {artist.ranking.liga ?? ""}
                       </span>
                     </span>
                     {artist.ranking.rank_universal !== null &&
@@ -383,13 +395,11 @@ export default async function PerfilPage({
                           className="flex shrink-0 items-baseline gap-1.5 cursor-help"
                           title={`Ranking universal: mide a todas las ligas a la vez (${artist.ranking.total_universal} proyectos)`}
                         >
-                          <b className="text-sm">#{artist.ranking.rank_universal}</b>
-                          <span className="font-semibold uppercase tracking-wide text-muted">
-                            Global
-                          </span>
+                          <b>#{artist.ranking.rank_universal}</b>
+                          <span className="font-medium text-muted">Global</span>
                         </span>
                       )}
-                    <div className="ml-auto flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="ml-auto flex shrink-0 items-center gap-x-3">
                       <MetricaRanking
                         abreviatura="A"
                         nombre="Audiencia"
