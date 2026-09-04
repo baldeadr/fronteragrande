@@ -92,6 +92,7 @@ def test_excepciones_editoriales():
     assert clasificar_genero_dominante("apex_ultra", "Rock, Electronica, Industrial, Drum and Bass") == "Dark"
     assert clasificar_genero_dominante("angelic_oz", "hyperpop/reggaeton triste/cybercore") == "Urbano"
     assert clasificar_genero_dominante("de_regreso_a_nocheosfera", "indie/shoegaze/noise rock/dreampop") == "Dark"
+    assert clasificar_genero_dominante("anidonia", "noise/experimental") == "Dark"
 
 
 def test_seed_puebla_genero_dominante(session):

@@ -865,6 +865,7 @@ EXCEPCIONES_GENERO_DOMINANTE: dict[str, str] = {
     "apex_ultra": "Dark",
     "angelic_oz": "Urbano",
     "de_regreso_a_nocheosfera": "Dark",
+    "anidonia": "Dark",
 }
 
 
