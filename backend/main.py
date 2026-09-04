@@ -48,8 +48,7 @@ from lib.servicios import (
     feed_df,
     metricas_artista,
     onboarding_artista,
-    ranking_global,
-    ranking_ligas,
+    ranking_por_ligas,
     recalcular_actividad,
     registrar_alta,
     stats_escena,
@@ -303,8 +302,7 @@ def list_artists(
     # El ranking y el nivel se calculan del MISMO df recién leído, para que
     # `nivel`/`catalogado` y la posición de ranking nunca se desincronicen
     # (un artista recién ascendido siempre aparece con su lugar en las Ligas).
-    ranking, menciones = ranking_global(df)
-    ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
+    ranking, menciones, _ligas_meta = ranking_por_ligas(df)
 
     if q:
         q = q.lower()
@@ -327,9 +325,7 @@ def list_artists(
         artist = artistas_cargados.get(fila["id"])
         nivel_calculado = (fila.get("nivel_calculado") or "") if "nivel_calculado" in fila else ""
         catalogado = bool(nivel_calculado)
-        ranking_artista = (
-            ranking_ligas_data if catalogado else ranking
-        )
+        rank_artista = ranking.get(fila["slug"], {})
         tarjeta = {
             "slug": fila["slug"],
             "nombre": fila["nombre"],
@@ -361,23 +357,22 @@ def list_artists(
             "imagen_perfil": fila.get("imagen_perfil") or None,
             "imagen_origen": fila.get("imagen_origen") or None,
             "ranking": {
-                **ranking_artista.get(
-                    fila["slug"],
-                    {
-                        "indice": None,
-                        "audiencia": None,
-                        "consumo": None,
-                        "rank": None,
-                        "total": len(ranking_artista),
-                    },
-                ),
+                "indice": rank_artista.get("indice"),
+                "audiencia": rank_artista.get("audiencia"),
+                "consumo": rank_artista.get("consumo"),
+                "liga": rank_artista.get("liga"),
+                "rank_liga": rank_artista.get("rank_liga"),
+                "total_liga": rank_artista.get("total_liga"),
+                "rank_universal": rank_artista.get("rank_universal"),
+                "total_universal": rank_artista.get("total_universal"),
+                # Compatibilidad: `rank`/`total` = posición dentro de su liga.
+                "rank": rank_artista.get("rank_liga"),
+                "total": rank_artista.get("total_liga"),
                 # Índice universal (0-100 contra techos fijos): comparable entre
-                # Escena y Ligas. El front lo usa para ordenar el grupo "Todos".
+                # todas las ligas. El front lo usa para ordenar el grupo "Todos".
                 "indice_universal": round(fila.get("indice_universal", 0.0), 1),
             },
-            "menciones": (
-                menciones_ligas_data if catalogado else menciones
-            ).get(fila["slug"], []),
+            "menciones": menciones.get(fila["slug"], []),
             "link_principal": (
                 artista_link_principal(db, artist) if artist else None
             ),
@@ -465,12 +460,11 @@ def artist_detail(
     df = artistas_df(db)
     fila = df[df["slug"] == slug].iloc[0] if not df.empty else None
 
-    ranking, menciones = ranking_global(df)
-    ranking_ligas_data, menciones_ligas_data = ranking_ligas(df)
+    ranking, menciones, _ligas_meta = ranking_por_ligas(df)
     nivel_calculado = (fila.get("nivel_calculado") or "") if fila is not None else ""
     catalogado_artista = bool(nivel_calculado)
-    ranking_artista = ranking_ligas_data if catalogado_artista else ranking
-    menciones_artista = menciones_ligas_data if catalogado_artista else menciones
+    ranking_artista = ranking.get(artist.slug, {})
+    menciones_artista = menciones.get(artist.slug, [])
     analisis = analisis_artista(
         metricas_artista(fila) if fila is not None else {},
         artist.fecha_captura,
@@ -564,23 +558,24 @@ def artist_detail(
         "nivel": nivel_calculado,
         "catalogado": catalogado_artista,
         "ranking": {
-            **ranking_artista.get(
-                artist.slug,
-                {
-                    "indice": None,
-                    "audiencia": None,
-                    "consumo": None,
-                    "rank": None,
-                    "total": len(ranking_artista),
-                },
-            ),
+            "indice": ranking_artista.get("indice"),
+            "audiencia": ranking_artista.get("audiencia"),
+            "consumo": ranking_artista.get("consumo"),
+            "liga": ranking_artista.get("liga"),
+            "rank_liga": ranking_artista.get("rank_liga"),
+            "total_liga": ranking_artista.get("total_liga"),
+            "rank_universal": ranking_artista.get("rank_universal"),
+            "total_universal": ranking_artista.get("total_universal"),
+            # Compatibilidad: `rank`/`total` = posición dentro de su liga.
+            "rank": ranking_artista.get("rank_liga"),
+            "total": ranking_artista.get("total_liga"),
             "indice_universal": (
                 round(fila.get("indice_universal", 0.0), 1)
                 if fila is not None
                 else 0.0
             ),
         },
-        "menciones": menciones_artista.get(artist.slug, []),
+        "menciones": menciones_artista,
         "analisis": analisis,
         "consumo": consumo,
         "igfb": {

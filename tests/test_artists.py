@@ -49,15 +49,17 @@ def test_artists_ranking_grupos(client):
     consecutivos dentro de cada grupo (no conviven la escena local y las Ligas).
     """
     datos = client.get("/api/artists").json()
-    base = [a for a in datos if not a["catalogado"]]
-    ligados = [a for a in datos if a["catalogado"]]
+    # El ranking ahora es por liga: Escena, En Ascenso, Ligas Mayores, Leyenda.
+    por_liga: dict[str, list] = {}
+    for a in datos:
+        por_liga.setdefault(a["ranking"]["liga"], []).append(a)
 
-    for grupo in (base, ligados):
+    for grupo in por_liga.values():
         indices = [a["ranking"]["indice"] for a in grupo]
         assert all(i >= 0 and i <= 100 for i in indices)
         if grupo:
-            assert all(a["ranking"]["total"] == len(grupo) for a in grupo)
-            ranks = sorted(a["ranking"]["rank"] for a in grupo)
+            assert all(a["ranking"]["total_liga"] == len(grupo) for a in grupo)
+            ranks = sorted(a["ranking"]["rank_liga"] for a in grupo)
             assert ranks == list(range(1, len(grupo) + 1))
 
 
@@ -91,12 +93,13 @@ def test_ranking_coherente_con_nivel(client):
     catalogados = [a for a in datos if a["catalogado"]]
     for a in catalogados:
         assert a["ranking"]["indice"] is not None, a["slug"]
-        assert a["ranking"]["rank"] is not None, a["slug"]
-        assert a["ranking"]["total"] == len(catalogados), a["slug"]
+        assert a["ranking"]["rank_liga"] is not None, a["slug"]
+        assert a["ranking"]["total_liga"] is not None, a["slug"]
+        assert a["ranking"]["rank_universal"] is not None, a["slug"]
         detalle = client.get(f"/api/artists/{a['slug']}").json()
         assert detalle["catalogado"] is True
         assert detalle["nivel"] == a["nivel"]
-        assert detalle["ranking"]["rank"] == a["ranking"]["rank"]
+        assert detalle["ranking"]["rank_liga"] == a["ranking"]["rank_liga"]
         assert detalle["ranking"]["indice"] == a["ranking"]["indice"]
 
 

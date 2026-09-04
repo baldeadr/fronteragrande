@@ -323,9 +323,11 @@ export default function AcercaDePage() {
         </summary>
         <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
           <p>
-            Las <b>Ligas</b> catalogan a los proyectos que destacan por su
-            alcance real. Salen del ranking de la escena base y en Stats se
-            muestran en su propio grupo, para no aplastar a la escena.
+            La escena se organiza en <b>cuatro ligas</b>: <b>Escena</b> (la
+            base, todos los proyectos), <b>En Ascenso</b>, <b>Ligas Mayores</b>{" "}
+            y <b>Leyenda de la Frontera</b>. Cada una tiene su propia
+            clasificación y, aparte, un <b>ranking universal</b> que las mide a
+            todas a la vez.
           </p>
           <p>
             Se miden con un <b>índice universal 0-100</b>: cada señal
@@ -348,17 +350,28 @@ export default function AcercaDePage() {
             (IG/FB/TikTok) no puede superar <b>consumo real × 3</b> (un perfil
             de seguidores comprados no infla el índice).
           </p>
+          <p>
+            La posición de cada proyecto sale de su <b>índice universal</b>,
+            tanto dentro de su liga como en el ranking global: así la Escena y
+            las Ligas son siempre comparables.
+          </p>
           <p className="flex items-center gap-2">
-            <span style={{ color: "#f5b301" }}>
-              <IconoLiga nivel="Ligas Mayores" className="h-3.5 w-3.5 shrink-0" />
+            <span style={{ color: "#9d4edd" }}>
+              <IconoLiga nivel="Escena" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>Ligas Mayores</b> — índice <b>≥ 60</b>.
+            <b>Escena</b> — la base de todos los proyectos registrados.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#2fb8a6" }}>
               <IconoLiga nivel="En Ascenso" className="h-3.5 w-3.5 shrink-0" />
             </span>
             <b>En Ascenso</b> — índice <b>≥ 50</b> (y menor a 60).
+          </p>
+          <p className="flex items-center gap-2">
+            <span style={{ color: "#f5b301" }}>
+              <IconoLiga nivel="Ligas Mayores" className="h-3.5 w-3.5 shrink-0" />
+            </span>
+            <b>Ligas Mayores</b> — índice <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#8a63d2" }}>
@@ -383,7 +396,7 @@ export default function AcercaDePage() {
         </summary>
         <div className="flex flex-col gap-3 px-4 pb-4 sm:px-5 sm:pb-5">
           <p className="text-sm leading-relaxed text-muted">
-            Los artistas <b>sin Liga</b> compiten por estas cuatro insignias
+            Dentro de cada liga los proyectos compiten por estas insignias
             (mínimo 3 artistas en el grupo):
           </p>
 
@@ -423,8 +436,10 @@ export default function AcercaDePage() {
           </div>
 
           <p className="text-sm leading-relaxed text-muted">
-            Quien tiene <b>Liga</b> (ver «Cómo se clasifican las Ligas» arriba)
-            solo muestra su badge de Liga y no acumula estas cuatro.
+            Los proyectos de <b>En Ascenso</b>, <b>Ligas Mayores</b> y{" "}
+            <b>Leyenda de la Frontera</b> compiten dentro de su liga y muestran
+            además su badge de liga. La <b>Escena</b> (la base) compite entre
+            todos sus proyectos.
           </p>
         </div>
       </details>

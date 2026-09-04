@@ -151,7 +151,6 @@ export default async function PerfilPage({
   const infoActividad = [
     artist.ultimo_lanzamiento &&
       `Último lanzamiento: ${fechaCorta(artist.ultimo_lanzamiento)}`,
-    artist.ultimo_evento && `Último evento: ${fechaCorta(artist.ultimo_evento)}`,
   ].filter(Boolean);
 
   return (
@@ -276,54 +275,16 @@ export default async function PerfilPage({
           </div>
 
           {(() => {
+              const ligaMostrada = artist.ranking.liga || (artist.nivel ? artist.nivel : "Escena");
               const tieneLiga = !!artist.nivel;
+              const insigniasFiltradas = artist.menciones;
 
-              // Si tiene Liga, SOLO muestra la Liga; si no, muestra insignias normales filtradas
-              if (tieneLiga) {
-                const colorLiga = INFO_LIGAS[artist.nivel] ?? "#888";
+              // Todos muestran sus insignias competitivas (dentro de su liga).
+              // Quien tiene Liga (En Ascenso, Ligas Mayores, Leyenda) además
+              // lleva un badge de identificación de su liga.
+              if (insigniasFiltradas.length === 0 && !tieneLiga) return null;
 
-                return (
-                  <div className="border-t border-line/50 pt-3">
-                    <div className="mb-3 flex items-center gap-2">
-                      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
-                        Insignias
-                      </h2>
-                      <span
-                        className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
-                        title="Artistas CON Liga (Ligas Mayores, En Ascenso, Leyenda): solo muestran su badge de Liga. Artistas SIN Liga: compiten por insignias de categoría, género, ciudad y 'Nº X de la Frontera Grande'."
-                      >
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                          <circle cx="12" cy="12" r="10"/>
-                          <path d="M12 16v-4M12 8h.01"/>
-                        </svg>
-                      </span>
-                    </div>
-                    <ul className="flex flex-wrap gap-2">
-                      <li
-                        key={`liga-${artist.nivel}`}
-                        title={artist.nivel}
-                        className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight"
-                        style={{
-                          borderColor: `${colorLiga}80`,
-                          backgroundColor: `${colorLiga}1a`,
-                          color: colorLiga,
-                        }}
-                      >
-                        <IconoLiga
-                          nivel={artist.nivel}
-                          className="h-5 w-5 shrink-0"
-                        />
-                        <span className="line-clamp-3 font-medium">{artist.nivel}</span>
-                      </li>
-                    </ul>
-                  </div>
-                );
-              }
-
-              // SIN Liga: insignias normales filtradas
-const insigniasFiltradas = artist.menciones;
-
-              if (insigniasFiltradas.length === 0) return null;
+              const colorLiga = INFO_LIGAS[ligaMostrada] ?? INFO_LIGAS["Escena"] ?? "#888";
 
               return (
                 <div className="border-t border-line/50 pt-3">
@@ -333,7 +294,7 @@ const insigniasFiltradas = artist.menciones;
                     </h2>
                     <span
                       className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
-                      title="Artistas SIN Liga compiten por insignias: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Quien gane su grupo (mínimo 3 participantes) gana la insignia. Si el artista obtiene una Liga, estas insignias se ocultan y solo se muestra la Liga."
+                      title="Cada proyecto compite por insignias dentro de su liga: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Las Ligas (En Ascenso, Ligas Mayores, Leyenda) muestran además su badge de liga."
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                         <circle cx="12" cy="12" r="10"/>
@@ -342,6 +303,24 @@ const insigniasFiltradas = artist.menciones;
                     </span>
                   </div>
                   <ul className="flex flex-wrap gap-2">
+                    {tieneLiga && (
+                      <li
+                        key={`liga-${ligaMostrada}`}
+                        title={`Liga: ${ligaMostrada}`}
+                        className="flex h-[80px] max-h-[80px] min-h-[80px] w-[80px] max-w-[80px] min-w-[80px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border p-2 text-center text-[10px] leading-tight"
+                        style={{
+                          borderColor: `${colorLiga}80`,
+                          backgroundColor: `${colorLiga}1a`,
+                          color: colorLiga,
+                        }}
+                      >
+                        <IconoLiga
+                          nivel={ligaMostrada}
+                          className="h-5 w-5 shrink-0"
+                        />
+                        <span className="line-clamp-3 font-medium">{ligaMostrada}</span>
+                      </li>
+                    )}
                     {insigniasFiltradas.map((m) => {
                       const tipo = tipoMencion(m);
                       const esEscena = tipo === "escena";
@@ -379,36 +358,54 @@ const insigniasFiltradas = artist.menciones;
                 </span>
               )}
             </div>
-            {artist.ranking.indice !== null && artist.ranking.rank !== null && (
-              <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
-                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-[10px] sm:gap-3 sm:text-xs">
-                  <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
-                    Ranking
-                  </span>
-                  <b className="text-base">
-                    #{artist.ranking.rank}
-                  </b>
-                  <MetricaRanking
-                    abreviatura="G"
-                    nombre="Global"
-                    descripcion="Combinación de audiencia y consumo"
-                    valor={artist.ranking.indice}
-                  />
-                  <MetricaRanking
-                    abreviatura="A"
-                    nombre="Audiencia"
-                    descripcion="Tamaño relativo de la comunidad"
-                    valor={artist.ranking.audiencia}
-                  />
-                  <MetricaRanking
-                    abreviatura="C"
-                    nombre="Consumo"
-                    descripcion="Reproducciones, oyentes y vistas registradas"
-                    valor={artist.ranking.consumo}
-                  />
+            {artist.ranking.indice !== null &&
+              artist.ranking.rank_liga !== null &&
+              artist.ranking.rank_liga !== undefined && (
+                <div className="mb-3 overflow-visible rounded-2xl border border-accent/40 bg-accent-soft/60 p-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-[10px] sm:gap-x-6 sm:text-xs">
+                    <span className="shrink-0 font-semibold uppercase tracking-wide text-muted">
+                      Ranking
+                    </span>
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <b className="text-base">
+                        #{artist.ranking.rank_liga}
+                      </b>
+                      <span
+                        className="truncate font-semibold uppercase tracking-wide text-muted"
+                        title={`Posición dentro de la liga ${artist.ranking.liga ?? ""}`}
+                      >
+                        de {artist.ranking.liga ?? ""}
+                      </span>
+                    </span>
+                    {artist.ranking.rank_universal !== null &&
+                      artist.ranking.rank_universal !== undefined && (
+                        <span
+                          className="flex shrink-0 items-baseline gap-1.5 cursor-help"
+                          title={`Ranking universal: mide a todas las ligas a la vez (${artist.ranking.total_universal} proyectos)`}
+                        >
+                          <b className="text-sm">#{artist.ranking.rank_universal}</b>
+                          <span className="font-semibold uppercase tracking-wide text-muted">
+                            Global
+                          </span>
+                        </span>
+                      )}
+                    <div className="ml-auto flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1">
+                      <MetricaRanking
+                        abreviatura="A"
+                        nombre="Audiencia"
+                        descripcion="Tamaño relativo de la comunidad"
+                        valor={artist.ranking.audiencia}
+                      />
+                      <MetricaRanking
+                        abreviatura="C"
+                        nombre="Consumo"
+                        descripcion="Reproducciones, oyentes y vistas registradas"
+                        valor={artist.ranking.consumo}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             <div className="grid auto-rows-[112px] grid-cols-2 gap-3 sm:grid-cols-2">
               {stats.map((s) => {
                 const p = infoPlataforma(s.plataforma);

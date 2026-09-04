@@ -509,6 +509,108 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
     return menciones
 
 
+# Las 4 ligas de la escena: la Escena (base) es una liga más.
+LIGAS_ORDEN = ["Escena", "En Ascenso", "Ligas Mayores", "Leyenda de la Frontera"]
+
+
+def liga_de_nivel(nivel_calculado: str) -> str:
+    """Nombre de liga de un `nivel_calculado` (la Escena es la base `""`)."""
+    nivel = (nivel_calculado or "").strip()
+    if not nivel:
+        return "Escena"
+    return nivel if nivel in LIGAS_ORDEN else "Escena"
+
+
+def ranking_por_ligas(
+    df: pd.DataFrame,
+) -> tuple[dict[str, dict], dict[str, list[str]], dict[str, dict]]:
+    """Ranking de alcance por cada una de las 4 ligas + ranking universal.
+
+    La posición dentro de cada liga (`rank_liga`) y la posición del ranking
+    universal (`rank_universal`) se derivan del **índice universal** (techos
+    fijos, comparable entre todas las ligas, opción B): no se re-normaliza por
+    liga, así la comparación entre ligas es coherente.
+
+    Devuelve (ranking, menciones, ligas_meta):
+      - ranking: {slug: {indice, audiencia, consumo, liga, rank_liga,
+                          total_liga, rank_universal, total_universal}}
+      - menciones: {slug: [texto]} con las menciones competitivas **dentro de
+        la liga propia** del artista (categoría/género/ciudad, Nº de la Frontera).
+      - ligas_meta: {liga: {"rank": {slug: puesto}, "total": int}}
+    """
+    from lib.helpers import indices_audiencia_consumo
+
+    metricas = {fila["slug"]: metricas_artista(fila) for _, fila in df.iterrows()}
+    indices = indices_audiencia_consumo(metricas)
+
+    # Liga por artista y sub-DataFrames por liga.
+    liga_por_slug: dict[str, str] = {}
+    df_por_liga: dict[str, list[pd.DataFrame]] = {}
+    for _, fila in df.iterrows():
+        liga = liga_de_nivel(str(fila.get("nivel_calculado") or ""))
+        liga_por_slug[fila["slug"]] = liga
+        df_por_liga.setdefault(liga, []).append(fila)
+    por_liga: dict[str, pd.DataFrame] = {
+        liga: pd.DataFrame(filas) for liga, filas in df_por_liga.items()
+    }
+
+    # Índice universal ya calculado en `artistas_df`.
+    indice_universal = {
+        _s: float(fila.get("indice_universal") or 0.0)
+        for _, fila in df.iterrows()
+        for _s in [fila["slug"]]
+    }
+
+    # Posición universal: todos ordenados por índice universal.
+    universo_ordenado = sorted(
+        indice_universal.items(), key=lambda x: x[1], reverse=True
+    )
+    rank_universal = {
+        slug: i + 1 for i, (slug, _) in enumerate(universo_ordenado)
+    }
+    total_universal = len(universo_ordenado)
+
+    # Posición por liga y menciones dentro de cada liga.
+    rank_por_liga: dict[str, dict[str, int]] = {}
+    menciones: dict[str, list[str]] = {}
+    for liga, sub_df in por_liga.items():
+        indices_liga = {
+            slug: indice_universal[slug]
+            for slug in sub_df["slug"]
+        }
+        ordenados = sorted(
+            indices_liga.items(), key=lambda x: x[1], reverse=True
+        )
+        rank_por_liga[liga] = {
+            slug: i + 1 for i, (slug, _) in enumerate(ordenados)
+        }
+        menciones.update(
+            menciones_ranking(sub_df, indices_liga)
+        )
+
+    ligas_meta: dict[str, dict] = {}
+    for liga, rank in rank_por_liga.items():
+        ligas_meta[liga] = {"rank": rank, "total": len(rank)}
+
+    ranking: dict[str, dict] = {}
+    for _, fila in df.iterrows():
+        slug = fila["slug"]
+        valores = indices.get(slug, {"indice": 0.0, "audiencia": 0.0, "consumo": 0.0})
+        liga = liga_por_slug[slug]
+        ranking[slug] = {
+            "indice": valores["indice"],
+            "audiencia": valores["audiencia"],
+            "consumo": valores["consumo"],
+            "liga": liga,
+            "rank_liga": rank_por_liga[liga][slug],
+            "total_liga": len(rank_por_liga[liga]),
+            "rank_universal": rank_universal[slug],
+            "total_universal": total_universal,
+        }
+
+    return ranking, menciones, ligas_meta
+
+
 def _ranking_de(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
     """Ranking de alcance y menciones sobre un subconjunto del df.
 

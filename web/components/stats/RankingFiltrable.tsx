@@ -98,10 +98,10 @@ export default function RankingFiltrable({
 
   const grupoActivo = GRUPOS.find((g) => g.clave === grupo)!;
   const miembros = artistas.filter(grupoActivo.seleccionar);
-  // En "Todos" se ordena por el índice universal (comparable entre Escena y
-  // Ligas); en los demás grupos, por el índice normalizado del propio grupo.
-  const valorOrden = (a: ArtistCard) =>
-    grupo === "todos" ? a.ranking.indice_universal ?? 0 : a.ranking.indice ?? 0;
+  // Se ordena por el índice universal (comparable entre todas las ligas) en
+  // todos los grupos: así cada liga muestra su clasificación real derivada del
+  // índice universal (coincide con `rank_liga` del perfil).
+  const valorOrden = (a: ArtistCard) => a.ranking.indice_universal ?? 0;
   const conIndice = miembros
     .filter((a) => {
       const v = valorOrden(a);
@@ -278,11 +278,9 @@ export default function RankingFiltrable({
       <p className="mt-2 min-h-5 text-sm text-muted">
         {foco ? (
           <span>
-            <b>{foco.nombre}</b> · índice{" "}
-            {grupo === "todos"
-              ? foco.ranking.indice_universal ?? 0
-              : foco.ranking.indice}{" "}
-            de {foco.ranking.total}:{" "}
+            <b>{foco.nombre}</b> · índice universal{" "}
+            {foco.ranking.indice_universal ?? 0} de{" "}
+            {foco.ranking.total_universal ?? foco.ranking.total}:{" "}
             {desglose(foco)
               .map((p) => `${p.clave.toUpperCase()} ${Math.round(p.share * 100)}%`)
               .join(", ")}
@@ -290,10 +288,8 @@ export default function RankingFiltrable({
         ) : (
           <span className="text-xs">
             Pasa el cursor o toca una fila para ver la proporción de audiencia
-            y consumo ·{" "}
-            {grupo === "todos"
-              ? "posiciones por índice universal (comparable entre la Escena y las Ligas): la insignia marca a los catalogados."
-              : "posición dentro del grupo mostrado."}
+            y consumo · posiciones por índice universal (comparable entre todas
+            las ligas).
           </span>
         )}
       </p>

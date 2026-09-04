@@ -24,9 +24,10 @@ export default function Directorio({
     () => [...new Set(artistas.map((a) => a.segmento))].sort(),
     [artistas],
   );
-  const niveles = useMemo(
-    () => [...new Set(artistas.map((a) => a.nivel).filter(Boolean))].sort(),
-    [artistas],
+  // Las 4 ligas: la Escena es la base (nivel vacío).
+  const LIGAS = ["Escena", "En Ascenso", "Ligas Mayores", "Leyenda de la Frontera"];
+  const ligasPresentes = LIGAS.filter((l) =>
+    artistas.some((a) => (l === "Escena" ? !a.nivel : a.nivel === l)),
   );
   const ciudades = useMemo(
     () =>
@@ -43,7 +44,10 @@ export default function Directorio({
     const ql = q.toLowerCase().trim();
     return artistas.filter((a) => {
       if (segmento !== "todos" && a.segmento !== segmento) return false;
-      if (nivel !== "todos" && a.nivel !== nivel) return false;
+      if (nivel !== "todos") {
+        const liga = nivel === "Escena" ? "" : nivel;
+        if (a.nivel !== liga) return false;
+      }
       if (ciudad !== "todos" && a.ciudad !== ciudad) return false;
       if (estado !== "todos" && a.estado_activo !== estado) return false;
       if (generosSel.length > 0 && !generosSel.some((g) => a.generos.includes(g)))
@@ -100,9 +104,9 @@ export default function Directorio({
             className="rounded-lg border border-line bg-surface px-2 py-2 text-sm outline-none focus:border-accent"
           >
             <option value="todos">Todas</option>
-            {niveles.map((n) => (
-              <option key={n} value={n}>
-                {n}
+            {ligasPresentes.map((l) => (
+              <option key={l} value={l}>
+                {l}
               </option>
             ))}
           </select>

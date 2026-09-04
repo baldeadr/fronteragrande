@@ -29,6 +29,11 @@ export interface Ranking {
   consumo: number | null;
   rank: number | null;
   total: number;
+  liga?: string;
+  rank_liga?: number | null;
+  total_liga?: number;
+  rank_universal?: number | null;
+  total_universal?: number;
   indice_universal?: number | null;
 }
 
