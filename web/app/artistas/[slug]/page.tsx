@@ -16,6 +16,7 @@ import ConexionTikTok from "@/components/ConexionTikTok";
 import EditarPerfilPropio from "@/components/EditarPerfilPropio";
 import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
+import BotonCompartir from "@/components/BotonCompartir";
 import ConsumoAnalisis from "@/components/ConsumoAnalisis";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
 import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
@@ -203,6 +204,7 @@ export default async function PerfilPage({
               </p>
             </div>
             <EstadoBadge estado={artist.estado_activo} size="lg" />
+            <BotonCompartir nombre={artist.nombre} slug={artist.slug} />
             <BotonEditarAdmin slug={artist.slug} />
             <EditarPerfilPropio
               slug={artist.slug}
