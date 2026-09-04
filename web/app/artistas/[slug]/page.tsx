@@ -35,6 +35,13 @@ function esMencionFronteraGrande(mencion: string): boolean {
   return mencion.includes("de la Frontera Grande");
 }
 
+function ligaCorta(liga: string): string {
+  if (liga === "Leyenda de la Frontera") return "Leyenda";
+  if (liga === "Ligas Mayores") return "Ligas May.";
+  if (liga === "En Ascenso") return "En Ascenso";
+  return liga || "Escena";
+}
+
 function MetricaRanking({
   abreviatura,
   nombre,
@@ -336,8 +343,8 @@ export default async function PerfilPage({
                         >
                           <IconoMencion tipo={tipo} className="h-5 w-5 shrink-0" />
                           <span className="line-clamp-3 font-medium">{m}</span>
-                          <span className="max-w-full truncate text-[9px] uppercase text-muted">
-                            {ligaMostrada}
+                          <span className="line-clamp-2 text-[9px] uppercase leading-tight text-muted">
+                            {ligaCorta(ligaMostrada)}
                           </span>
                         </li>
                       );
@@ -375,9 +382,7 @@ export default async function PerfilPage({
                       <b className="text-base leading-none">
                         #{artist.ranking.rank_liga}
                       </b>
-                      <span className="truncate font-medium text-muted">
-                        {artist.ranking.liga ?? ""}
-                      </span>
+                      <span className="shrink-0 font-semibold text-muted">L</span>
                     </span>
                     {artist.ranking.rank_universal !== null &&
                       artist.ranking.rank_universal !== undefined && (
@@ -386,7 +391,7 @@ export default async function PerfilPage({
                           title={`Ranking universal: mide a todas las ligas a la vez (${artist.ranking.total_universal} proyectos)`}
                         >
                           <b>#{artist.ranking.rank_universal}</b>
-                          <span className="font-medium text-muted">Global</span>
+                          <span className="shrink-0 font-semibold text-muted">G</span>
                         </span>
                       )}
                     <div className="flex shrink-0 items-center gap-x-2.5">
