@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from db.database import SessionLocal, engine
 from db.models import Artist, ArtistLink, Base, Event
-from lib.helpers import clasificar_genero_dominante
+from lib.helpers import clasificar_genero_dominante, normalizar_ciudad
 
 _RAIZ = Path(__file__).resolve().parent.parent
 
@@ -147,7 +147,7 @@ def cargar_artistas(
 
         artista.nombre = _normalizar(fila.get("nombre")) or slug
         artista.segmento = _normalizar(fila.get("segmento")) or "Sin confirmar"
-        artista.ciudad = _normalizar(fila.get("ciudad")) or "[PENDIENTE]"
+        artista.ciudad = normalizar_ciudad(_normalizar(fila.get("ciudad"))) or "[PENDIENTE]"
         artista.generos = _normalizar(fila.get("generos")) or "[PENDIENTE]"
         artista.genero_dominante = clasificar_genero_dominante(
             str(slug), artista.generos
@@ -201,7 +201,7 @@ def cargar_eventos(session: Session, csv_path: str = SEED_EVENTS) -> int:
             nombre=nombre,
             fecha=_parse_fecha(fila.get("fecha")),
             lugar=_normalizar(fila.get("lugar")),
-            ciudad=_normalizar(fila.get("ciudad")),
+            ciudad=normalizar_ciudad(_normalizar(fila.get("ciudad"))),
             artistas=_normalizar(fila.get("artistas")),
             que_demuestra=_normalizar(fila.get("que_demuestra")),
             fuente=_normalizar(fila.get("fuente")),

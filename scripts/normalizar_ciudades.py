@@ -1,12 +1,9 @@
-"""Normaliza las ciudades a base única (sin sufijo de estado incrustado).
+"""Normaliza la ciudad de artistas y eventos a la forma canónica "Base TM/TX".
 
-La región cubre solo Tamaulipas (MX) y el Valle del Río Grande (TX); las
-ciudades texanas quedaron en el semilla con el texto ", Texas" incrustado
-("Roma, Texas", "Laredo, Texas", …) y otras sin él ("McAllen"), lo que rompe
-agrupaciones. Este script pasa todas a la base única; la bandera (🇲🇽/🇺🇸) se
-decide en display vía `web/lib/ciudades.ts` (PAIS_CIUDAD), no con una columna.
-
-Idempotente: los valores ya en base no se tocan.
+Uniforma el lado de frontera en la BD: toda ciudad de la región cerrada
+(Tamaulipas + Valle del Río Grande) queda como "Ciudad TM" o "Ciudad TX"
+(espejo de `web/lib/ciudades.ts`). Los valores desconocidos y `[PENDIENTE]`
+se conservan tal cual (no se inventa el lado).
 
 Uso:
     .venv/bin/python scripts/normalizar_ciudades.py
@@ -19,40 +16,36 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from db.database import SessionLocal
 from db.models import Artist, Event
-
-# {proviene: base}. Solo apertura para las ciudades texanas del semilla.
-CIUDADES_NORMALIZAR: dict[str, str] = {
-    "roma, texas": "Roma",
-    "laredo, texas": "Laredo",
-    "edinburg, texas": "Edinburg",
-    "brownsville, texas": "Brownsville",
-    "south padre island, texas": "South Padre Island",
-}
+from lib.helpers import normalizar_ciudad
 
 
-def _base(nombre: str | None) -> str | None:
-    if not nombre:
-        return None
-    return CIUDADES_NORMALIZAR.get(nombre.strip().lower(), nombre.strip())
-
-
-def main() -> int:
+def main() -> None:
     session = SessionLocal()
-    cambiados = 0
-    try:
-        for modelo in (Artist, Event):
-            for registro in session.query(modelo).all():
-                base = _base(getattr(registro, "ciudad", None))
-                if base is not None and base != registro.ciudad:
-                    print(f"[OK] {modelo.__name__}: '{registro.ciudad}' → '{base}'")
-                    registro.ciudad = base
-                    cambiados += 1
-        session.commit()
-    finally:
-        session.close()
-    print(f"\nCiudades normalizadas: {cambiados}")
-    return 0
+    cambios: list[tuple[str, str, str]] = []
+
+    for artista in session.query(Artist).all():
+        nuevo = normalizar_ciudad(artista.ciudad)
+        if nuevo != artista.ciudad:
+            cambios.append((f"artista {artista.slug}", artista.ciudad, nuevo))
+            artista.ciudad = nuevo
+
+    for evento in session.query(Event).all():
+        nuevo = normalizar_ciudad(evento.ciudad)
+        if nuevo != evento.ciudad:
+            cambios.append((f"evento {evento.nombre!r}", evento.ciudad, nuevo))
+            evento.ciudad = nuevo
+
+    session.commit()
+
+    if cambios:
+        print(f"=== Ciudades normalizadas ({len(cambios)}) ===")
+        for quien, antes, despues in sorted(cambios):
+            print(f"  {quien}: {antes!r} → {despues!r}")
+    else:
+        print("Sin cambios: todas las ciudades ya están en forma canónica.")
+
+    session.close()
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

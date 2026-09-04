@@ -7,6 +7,7 @@ y el acceso a datos en `lib/repository`.
 
 import math
 import re
+import unicodedata
 from urllib.parse import quote
 
 import pandas as pd
@@ -939,6 +940,65 @@ def normalizar_url_para_duplicados(url: str) -> str:
         host = host[4:]
     path = parsed.path.rstrip("/")
     return urlunparse((parsed.scheme.lower(), host, path, "", "", ""))
+
+
+# ---------------------------------------------------------------------------
+# Ciudades y lado de frontera (TM/TX)
+# ---------------------------------------------------------------------------
+
+# Mapa de ciudad base → lado de frontera. Región cerrada: Tamaulipas + Valle
+# del Río Grande; las claves van normalizadas (minúsculas, sin acentos) para
+# comparar robusto (espejo de `web/lib/ciudades.ts::PAIS_CIUDAD`). Si aparece
+# un 3.er origen se migra a una columna `pais` en BD (ver docs/vision.md).
+_PAIS_CIUDAD: dict[str, str] = {
+    "reynosa": "TM",
+    "matamoros": "TM",
+    "rio bravo": "TM",
+    "camargo": "TM",
+    "cd. camargo": "TM",
+    "diaz ordaz": "TM",
+    "mcallen": "TX",
+    "roma": "TX",
+    "laredo": "TX",
+    "edinburg": "TX",
+    "hidalgo": "TX",
+    "south padre island": "TX",
+    "brownsville": "TX",
+}
+
+
+def _clave_ciudad(ciudad: str) -> str:
+    """Clave normalizada (minúsculas y sin acentos) para comparar ciudades."""
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFD", ciudad.lower())
+        if unicodedata.category(c) != "Mn"
+    ).strip()
+
+
+def ciudad_base(ciudad: str | None) -> str:
+    """Ciudad base: quita el texto tras la coma y un sufijo TM/TX final."""
+    if not ciudad:
+        return ""
+    base = ciudad.split(",")[0].strip()
+    return re.sub(r"\s+(?:TM|TX)$", "", base, flags=re.IGNORECASE).strip() or ciudad.strip()
+
+
+def normalizar_ciudad(ciudad: str | None) -> str:
+    """Devuelve la ciudad en forma canónica "Base TM"/"Base TX".
+
+    Uniforma el lado de frontera en la BD (la etiqueta de lado se decide en
+    display vía `web/lib/ciudades.ts`, pero la BD guarda una sola forma). Si la
+    ciudad no pertenece a la región cerrada, se devuelve tal cual (sin inventar
+    el lado) y `[PENDIENTE]` se conserva.
+    """
+    if not ciudad or ciudad.strip() == "[PENDIENTE]":
+        return (ciudad or "").strip()
+    base = ciudad_base(ciudad)
+    lado = _PAIS_CIUDAD.get(_clave_ciudad(base))
+    if not lado:
+        return ciudad.strip()
+    return f"{base} {lado}"
 
 
 # Clasificación por índice universal (techos de referencia fijos)
