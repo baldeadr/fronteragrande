@@ -1,0 +1,33 @@
+name: Sincronizar estadísticas de SoundCloud
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 6 * * *"
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Sincronizar reproducciones de SoundCloud
+        run: python scripts/sync_soundcloud_stats.py
+
+      - name: Invalidar caché de la API
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: bash scripts/invalidar_cache_api.sh

@@ -194,3 +194,51 @@ def ultimas_pistas(url: str, limite: int = 6) -> list[dict]:
             }
         )
     return items[:limite]
+
+
+def reproducciones(url: str) -> int:
+    """Reproducciones acumuladas del artista (suma de plays de sus pistas).
+
+    Recorre todas las pistas públicas vía api-v2 (`/users/{id}/tracks`,
+    paginado con `next_href`) y suma su `playback_count`. Si la fuente no se
+    puede leer (sin `client_id` o error de red/HTTP), lanza `SoundCloudError`
+    para que el llamador conserve el valor anterior y no invente un cero.
+    """
+    user_id = _user_id(url)
+    client_id = _client_id(url)
+    if not user_id or not client_id:
+        raise SoundCloudError(f"No se pudo resolver el perfil de SoundCloud: {url}")
+    total = 0
+    siguiente = f"{API_V2}/users/{user_id}/tracks?client_id={client_id}&limit=200"
+    for _ in range(25):
+        try:
+            respuesta = requests.get(
+                siguiente, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT
+            )
+        except requests.RequestException as exc:
+            raise SoundCloudError(
+                f"Error de red con SoundCloud: {url}"
+            ) from exc
+        if not respuesta.ok:
+            raise SoundCloudError(
+                f"SoundCloud respondió HTTP {respuesta.status_code}: {url}"
+            )
+        try:
+            datos = respuesta.json()
+        except ValueError as exc:
+            raise SoundCloudError(
+                f"SoundCloud devolvió JSON inválido: {url}"
+            ) from exc
+        for t in datos.get("collection", []):
+            if t.get("kind") != "track":
+                continue
+            try:
+                total += int(t.get("playback_count") or 0)
+            except (TypeError, ValueError):
+                continue
+        siguiente = datos.get("next_href")
+        if not siguiente:
+            break
+        if "client_id" not in siguiente:
+            siguiente += ("&" if "?" in siguiente else "?") + f"client_id={client_id}"
+    return total

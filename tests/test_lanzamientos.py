@@ -103,6 +103,52 @@ def test_soundcloud_sin_client_id_devuelve_vacio(monkeypatch):
     assert soundcloud.ultimas_pistas("https://soundcloud.com/Oxte", 6) == []
 
 
+def test_soundcloud_reproducciones(monkeypatch):
+    class Respuesta:
+        ok = True
+
+        def json(self):
+            return {
+                "collection": [
+                    {"kind": "track", "playback_count": 120},
+                    {"kind": "playlist", "playback_count": 999},
+                    {"kind": "track", "playback_count": None},
+                    {"kind": "track", "playback_count": "5"},
+                ],
+                "next_href": None,
+            }
+
+    monkeypatch.setattr(soundcloud, "_user_id", lambda url: 123)
+    monkeypatch.setattr(soundcloud, "_client_id", lambda url: "cid")
+    monkeypatch.setattr(soundcloud.requests, "get", lambda *a, **k: Respuesta())
+    assert soundcloud.reproducciones("https://soundcloud.com/Oxte") == 125
+
+
+def test_soundcloud_reproducciones_sin_client_id_lanza_error(monkeypatch):
+    monkeypatch.setattr(soundcloud, "_user_id", lambda url: 123)
+    monkeypatch.setattr(soundcloud, "_client_id", lambda url: "")
+    try:
+        soundcloud.reproducciones("https://soundcloud.com/Oxte")
+        assert False
+    except soundcloud.SoundCloudError:
+        pass
+
+
+def test_soundcloud_reproducciones_error_red(monkeypatch):
+    class Respuesta:
+        ok = False
+        status_code = 403
+
+    monkeypatch.setattr(soundcloud, "_user_id", lambda url: 123)
+    monkeypatch.setattr(soundcloud, "_client_id", lambda url: "cid")
+    monkeypatch.setattr(soundcloud.requests, "get", lambda *a, **k: Respuesta())
+    try:
+        soundcloud.reproducciones("https://soundcloud.com/Oxte")
+        assert False
+    except soundcloud.SoundCloudError:
+        pass
+
+
 def test_mixcloud_ultimos_sets(monkeypatch):
     class Respuesta:
         ok = True
