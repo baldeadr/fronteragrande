@@ -18,7 +18,7 @@ from lib.repository import ArtistRepository, FeedRepository
 from scraper.adapters.youtube import latest_videos
 from scraper.errors import ScraperError
 
-MAX_VIDEOS = 5
+MAX_VIDEOS = 15
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
                     fuente="yt",
                     tipo="video",
                     titulo=v["titulo"],
-                    url=v["url"],
+                    url=feed._url_canonica(v["url"]),
                     fecha=v["fecha"],
                     imagen=v["imagen"] or None,
                     detalle=v["descripcion"],

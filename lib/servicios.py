@@ -176,7 +176,7 @@ def feed_df(
         if artista is not None and nombre_art != artista:
             continue
         imagen = fi.imagen or (
-            youtube_thumbnail(fi.url) if fi.fuente == "youtube" else ""
+            youtube_thumbnail(fi.url) if fi.fuente == "yt" else ""
         )
         filas.append(
             {
@@ -1103,7 +1103,7 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
                     fuente="yt",
                     tipo="video",
                     titulo=v["titulo"],
-                    url=v["url"],
+                    url=feed._url_canonica(v["url"]),
                     fecha=v["fecha"],
                     imagen=v["imagen"] or None,
                     detalle=v["descripcion"],

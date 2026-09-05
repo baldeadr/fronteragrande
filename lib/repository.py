@@ -237,8 +237,26 @@ class FeedRepository:
 
     def por_url(self, url: str) -> FeedItem | None:
         return self.session.execute(
-            select(FeedItem).where(FeedItem.url == url)
+            select(FeedItem).where(FeedItem.url == self._url_canonica(url))
         ).scalar_one_or_none()
+
+    @staticmethod
+    def _url_canonica(url: str) -> str:
+        """Normaliza la URL de un ítem de feed para la des-duplicación.
+
+        Los enlaces de YouTube admiten varias formas del mismo video
+        (`watch?v=<id>`, `/shorts/<id>`, `/embed/<id>`, `youtu.be/<id>`)
+        que YouTube alterna según el tipo de contenido y la época. Como la
+        identidad de un ítem es su URL, se declara canónica la forma
+        `https://www.youtube.com/watch?v=<id>` para que la misma pieza no se
+        duplique al cambiar de formato.
+        """
+        from lib.helpers import youtube_video_id
+
+        vid = youtube_video_id(url)
+        if vid:
+            return f"https://www.youtube.com/watch?v={vid}"
+        return url
 
     def de_artista(self, artist_id: int) -> list[FeedItem]:
         return self.session.execute(
@@ -355,6 +373,7 @@ class FeedRepository:
         url = item.get("url") or ""
         if not url or self.existe_url(url):
             return False
+        url = self._url_canonica(url)
         self.crear(
             artist_id=artist_id,
             fuente=fuente,
