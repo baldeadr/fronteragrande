@@ -286,23 +286,25 @@ export default function RankingFiltrable({
                   >
                     {tienenIndice ? `#${i + 1}` : "—"}
                   </span>
-                  <Link
-                    href={`/artistas/${a.slug}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-28 shrink-0 truncate text-sm text-muted transition-colors hover:text-accent sm:w-40"
-                    title={a.nombre}
-                  >
-                    {a.nombre}
-                  </Link>
-                  {(esLiga || grupo === "todos") && a.catalogado && (
-                    <span
-                      className="inline-flex shrink-0 items-center"
-                      style={{ color: INFO_LIGAS[a.nivel] ?? "#888" }}
-                      title={`Liga: ${a.nivel}`}
+                  <div className="flex w-28 shrink-0 items-center gap-1 sm:w-40">
+                    <Link
+                      href={`/artistas/${a.slug}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="min-w-0 flex-1 truncate text-sm text-muted transition-colors hover:text-accent"
+                      title={a.nombre}
                     >
-                      <IconoLiga nivel={a.nivel} className="h-3.5 w-3.5" />
-                    </span>
-                  )}
+                      {a.nombre}
+                    </Link>
+                    {(esLiga || grupo === "todos") && a.catalogado && (
+                      <span
+                        className="inline-flex shrink-0 items-center"
+                        style={{ color: INFO_LIGAS[a.nivel] ?? "#888" }}
+                        title={`Liga: ${a.nivel}`}
+                      >
+                        <IconoLiga nivel={a.nivel} className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                  </div>
                   <div className="flex h-5 flex-1 items-stretch overflow-hidden rounded bg-surface-2">
                     {tienenIndice && partes.length > 0 ? (
                       partes.map((p) => (
