@@ -1000,7 +1000,10 @@ def normalizar_ciudad(ciudad: str | None) -> str:
 # Cada señal se normaliza contra un techo mundial absoluto (no contra el máximo
 # local de la escena, que inflaba números semilla como seguidores de FB):
 # IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
-# seguidores 20M · SoundCloud 10M · Bandcamp 1M · Beatport 100K · Mixcloud 50K.
+# seguidores 20M · SoundCloud 100M · Bandcamp 1M · Beatport 100K · Mixcloud 50K
+# (techo de SoundCloud subido 2026-09-05: 10M resultaba demasiado barato frente
+# a los techos de YT/Spotify y dejaba a un artista con reproducciones medias
+# por encima de artistas con oyentes/vistas mucho mayores).
 TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("ig", "seguidores"): 50_000_000,
     ("fb", "seguidores"): 50_000_000,
@@ -1009,7 +1012,7 @@ TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("yt", "vistas"): 10_000_000_000,
     ("spotify", "seguidores"): 20_000_000,
     ("spotify", "oyentes_mensuales"): 50_000_000,
-    ("soundcloud", "reproducciones"): 10_000_000,
+    ("soundcloud", "reproducciones"): 100_000_000,
     ("bandcamp", "reproducciones"): 1_000_000,
     ("beatport", "seguidores"): 100_000,
     ("mixcloud", "seguidores"): 50_000,

@@ -153,12 +153,16 @@ Umbrales **fijos y documentados** (no dependen de la composición de la escena):
 ### Techos de referencia (documentados)
 ```
 IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M ·
-Spotify seguidores 20M · Spotify reproducciones 1B · SoundCloud 10M ·
+Spotify seguidores 20M · SoundCloud 100M ·
 Bandcamp 1M · Beatport 100K · Mixcloud 50K
 ```
 > **Nota**: los techos son fijos y representan el nivel mundial de cada
 > plataforma. Si en el futuro algún artista supera un techo, el ratio se satura
-> a 1 (ver `lib/helpers.py:TECHOS_REFERENCIA`).
+> a 1 (ver `lib/helpers.py:TECHOS_REFERENCIA`). El techo de SoundCloud se subió
+> de 10M a 100M (2026-09-05): con 10M las reproducciones de SoundCloud resultaban
+> demasiado baratas de acumular frente a los techos de YT/Spotify y podían colocar
+> a un artista con métricas medias por encima de artistas con oyentes/vistas
+> mucho mayores.
 
 ### Persistencia
 - La clasificación se computa **on-the-fly** en cada request (columna `nivel_calculada` en DataFrame).
