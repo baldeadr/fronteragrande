@@ -100,6 +100,12 @@ def _asegurar_columnas_extra():
                 conn.execute(
                     text(
                         "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "followers_soundcloud INTEGER"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
                         "tt_user_id VARCHAR(120)"
                     )
                 )
@@ -199,6 +205,7 @@ def _asegurar_columnas_extra():
         for columna, tipo in (
             ("followers_beatport", "INTEGER"),
             ("followers_mixcloud", "INTEGER"),
+            ("followers_soundcloud", "INTEGER"),
         ):
             if columna not in columnas:
                 with engine.begin() as conn:

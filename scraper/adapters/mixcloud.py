@@ -13,6 +13,7 @@ from datetime import datetime
 import requests
 
 from scraper.adapters.oembed import oembed_get
+from scraper.errors import ScraperError
 
 OEMBED_ENDPOINT = "https://www.mixcloud.com/oembed/"
 API_REST = "https://api.mixcloud.com"
@@ -95,3 +96,29 @@ def ultimos_sets(url: str, limite: int = 6) -> list[dict]:
             }
         )
     return items
+
+
+def seguidores(url: str) -> int:
+    """Seguidores del usuario vía API REST pública (`/usuario/`).
+
+    Una sola llamada al perfil (sin lógica de oEmbed). Si la API no responde
+    o el usuario no existe, lanza `ScraperError` para que el llamador
+    conserve el valor anterior y no invente un cero.
+    """
+    usuario = _usuario(url)
+    if not usuario:
+        raise ScraperError(f"No se pudo extraer el usuario de Mixcloud: {url}")
+    try:
+        respuesta = requests.get(f"{API_REST}/{usuario}/", timeout=TIMEOUT)
+    except requests.RequestException as exc:
+        raise ScraperError(f"Error de red con Mixcloud: {url}") from exc
+    if not respuesta.ok:
+        raise ScraperError(f"Mixcloud respondió HTTP {respuesta.status_code}: {url}")
+    try:
+        datos = respuesta.json()
+    except ValueError as exc:
+        raise ScraperError(f"Mixcloud devolvió JSON inválido: {url}") from exc
+    try:
+        return int(datos.get("follower_count") or 0)
+    except (TypeError, ValueError):
+        return 0

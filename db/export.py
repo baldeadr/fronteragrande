@@ -47,6 +47,7 @@ COLUMNAS_ARTISTA = [
     "followers_spotify",
     "followers_beatport",
     "followers_mixcloud",
+    "followers_soundcloud",
     "fecha_captura",
     "ultimo_lanzamiento",
     "ultimo_evento",
@@ -99,12 +100,24 @@ def _int(valor) -> str:
     return str(valor) if valor is not None else ""
 
 
+SEPARADOR_URLS = " | "
+
+
 def _links_artista(artista: Artist) -> dict[str, str]:
+    """Enlaces por columna; varias URLs de la misma plataforma van separadas por `|`.
+
+    El seed invierte la operación (divide por `SEPARADOR_URLS`), así el
+    round-trip export → seed no pierde perfiles secundarios de una plataforma.
+    """
     urls = {col: "" for col in LINK_A_COLUMNA.values()}
     for link in artista.links:
         columna = LINK_A_COLUMNA.get(link.plataforma)
-        if columna:
-            urls[columna] = link.url or ""
+        if columna and link.url:
+            urls[columna] = (
+                urls[columna] + SEPARADOR_URLS + link.url
+                if urls[columna]
+                else link.url
+            )
     return urls
 
 
@@ -137,6 +150,7 @@ def _fila_artista(artista: Artist) -> dict[str, str]:
         "followers_spotify": _int(artista.followers_spotify),
         "followers_beatport": _int(artista.followers_beatport),
         "followers_mixcloud": _int(artista.followers_mixcloud),
+        "followers_soundcloud": _int(artista.followers_soundcloud),
         "fecha_captura": _fecha(artista.fecha_captura),
         "ultimo_lanzamiento": _fecha(artista.ultimo_lanzamiento),
         "ultimo_evento": _fecha(artista.ultimo_evento),

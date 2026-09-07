@@ -94,6 +94,7 @@ class Artist(Base):
     followers_spotify: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_beatport: Mapped[int | None] = mapped_column(Integer, nullable=True)
     followers_mixcloud: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    followers_soundcloud: Mapped[int | None] = mapped_column(Integer, nullable=True)
     oyentes_mensuales_spotify: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fecha_oyentes_spotify: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     fuente_oyentes_spotify: Mapped[str] = mapped_column(String(80), default="")

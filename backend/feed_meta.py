@@ -556,6 +556,8 @@ def editar_perfil_propio(
         try:
             editar_artista(session, slug, datos)
         except ValueError as exc:
+            if "ya está vinculada" in str(exc).lower():
+                raise HTTPException(status_code=409, detail=str(exc))
             raise HTTPException(status_code=400, detail=str(exc))
         session.commit()
         invalidate_public_cache(get_cache())

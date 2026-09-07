@@ -11,6 +11,7 @@ from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select
 
 from db.database import SessionLocal
 from db.export import exportar_artistas, exportar_eventos
@@ -64,6 +65,70 @@ def test_round_trip_export_seed_export():
         assert n_eventos_2 == n_eventos
         assert _iguales(csv_1, csv_2)
         assert _iguales(eventos_1, eventos_2)
+
+
+def test_round_trip_preserva_varias_urls_de_una_plataforma():
+    """Si un artista tiene dos perfiles oficiales de la misma plataforma (ej.
+    cuentas duplicadas de Spotify/YouTube), el export no pisa el secundario: la
+    celda los une con ` | ` y el seed vuelve a separarlos en dos enlaces."""
+    from db.models import Artist, ArtistLink
+
+    with tempfile.TemporaryDirectory() as tmp:
+        engine = create_engine(f"sqlite:///{tmp}/multi.db")
+        Base.metadata.create_all(engine)
+        Sesion = sessionmaker(bind=engine)
+
+        s = Sesion()
+        artista = Artist(
+            slug="doble_spotify",
+            nombre="Doble Spotify",
+            segmento="Solista",
+            ciudad="Reynosa TM",
+        )
+        artista.links = [
+            ArtistLink(plataforma="spotify", url="https://open.spotify.com/artist/abc"),
+            ArtistLink(plataforma="spotify", url="https://open.spotify.com/artist/leg"),
+            ArtistLink(plataforma="yt", url="https://www.youtube.com/@canal-a"),
+            ArtistLink(plataforma="yt", url="https://www.youtube.com/@canal-b"),
+        ]
+        s.add(artista)
+        s.commit()
+        s.close()
+
+        csv_1 = str(Path(tmp) / "escena_local.csv")
+        s = Sesion()
+        exportar_artistas(s, csv_path=csv_1, respaldo=False)
+        s.close()
+
+        # Re-seed en una BD nueva y re-export: nada debe perderse.
+        engine2 = create_engine(f"sqlite:///{tmp}/multi2.db")
+        Base.metadata.create_all(engine2)
+        Sesion2 = sessionmaker(bind=engine2)
+        s2 = Sesion2()
+        cargar_artistas(s2, csv_path=csv_1)
+        s2.close()
+
+        csv_2 = str(Path(tmp) / "escena_local_2.csv")
+        s3 = Sesion2()
+        exportar_artistas(s3, csv_path=csv_2, respaldo=False)
+        s3.close()
+        assert _iguales(csv_1, csv_2)
+
+        # La BD re-sembrada conserva los dos enlaces de cada plataforma.
+        s4 = Sesion2()
+        try:
+            fila = s4.execute(
+                select(Artist).where(Artist.slug == "doble_spotify")
+            ).scalar_one()
+            urls = sorted(l.url for l in fila.links)
+            assert urls == [
+                "https://open.spotify.com/artist/abc",
+                "https://open.spotify.com/artist/leg",
+                "https://www.youtube.com/@canal-a",
+                "https://www.youtube.com/@canal-b",
+            ]
+        finally:
+            s4.close()
 
 
 def test_export_artistas_respeta_esquema():

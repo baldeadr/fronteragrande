@@ -1,8 +1,10 @@
 """Sincroniza estadísticas públicas de YouTube de los artistas.
 
-Requiere `YOUTUBE_API_KEY`. Resuelve el canal desde el enlace registrado y
-actualiza suscriptores, vistas totales y fecha de captura. Si un canal oculta
-los suscriptores, conserva el valor anterior y no inventa un cero.
+Requiere `YOUTUBE_API_KEY`. Resuelve los canales registrados y actualiza
+suscriptores y vistas totales. Si un artista tiene varios canales oficiales
+(cuentas duplicadas por disputas o pérdida de acceso), las métricas se SUMAN:
+cada canal sigue vigente, así el metro refleja el alcance real combinado. Si un
+canal oculta los suscriptores, conserva lo anterior y no inventa un cero.
 
 Uso:
     .venv/bin/python scripts/sync_youtube_stats.py
@@ -35,26 +37,45 @@ def sincronizar(api_key: str) -> tuple[int, int]:
             ]
             if not canales:
                 continue
-            try:
-                channel_id = channel_id_from_url(canales[0].url)
-                if not channel_id:
-                    raise ScraperError("No se pudo resolver el channel_id")
-                datos = channel_statistics(channel_id, api_key)
+
+            suscriptores: list[int] = []
+            vistas: list[int] = []
+            fallos = 0
+            for link in canales:
+                try:
+                    channel_id = channel_id_from_url(link.url)
+                    if not channel_id:
+                        raise ScraperError("No se pudo resolver el channel_id")
+                    datos = channel_statistics(channel_id, api_key)
+                except Exception as exc:
+                    fallos += 1
+                    print(f"  [error] {artista.nombre} · {link.url}: {exc}")
+                    continue
                 if datos["suscriptores"] is not None:
-                    artista.followers_yt = datos["suscriptores"]
+                    suscriptores.append(datos["suscriptores"])
                 if datos["vistas"] is not None:
-                    artista.vistas_yt = datos["vistas"]
-                artista.fecha_captura = date.today()
-                session.commit()
-                actualizados += 1
-                print(
-                    f"{artista.nombre}: {artista.followers_yt or 'ocultos'} "
-                    f"suscriptores · {artista.vistas_yt or 0} vistas"
-                )
-            except Exception as exc:
-                session.rollback()
-                errores += 1
-                print(f"Error con {artista.nombre}: {exc}")
+                    vistas.append(datos["vistas"])
+
+            if not suscriptores and not vistas:
+                if fallos == len(canales):
+                    errores += 1
+                    print(
+                        f"Error con {artista.nombre}: no se leyeron sus "
+                        f"{len(canales)} canal(es)"
+                    )
+                continue
+            if suscriptores:
+                artista.followers_yt = sum(suscriptores)
+            if vistas:
+                artista.vistas_yt = sum(vistas)
+            artista.fecha_captura = date.today()
+            session.commit()
+            actualizados += 1
+            n_canales = f" · {len(canales)} canales" if len(canales) > 1 else ""
+            print(
+                f"{artista.nombre}{n_canales}: {artista.followers_yt or 'ocultos'} "
+                f"suscriptores · {artista.vistas_yt or 0} vistas"
+            )
     finally:
         session.close()
     return actualizados, errores

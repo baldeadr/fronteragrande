@@ -33,27 +33,28 @@ def main():
             ]
             if not canales:
                 continue
-            try:
-                videos = latest_videos(canales[0].url, max_videos=MAX_VIDEOS)
-            except ScraperError as exc:
-                errores.append(f"{artista.nombre}: {exc}")
-                continue
-            feed = FeedRepository(session)
-            for v in videos:
-                if feed.existe_url(v["url"]):
-                    ya_existentes += 1
+            for link in canales:
+                try:
+                    videos = latest_videos(link.url, max_videos=MAX_VIDEOS)
+                except ScraperError as exc:
+                    errores.append(f"{artista.nombre} · {link.url}: {exc}")
                     continue
-                feed.crear(
-                    artist_id=artista.id,
-                    fuente="yt",
-                    tipo="video",
-                    titulo=v["titulo"],
-                    url=feed._url_canonica(v["url"]),
-                    fecha=v["fecha"],
-                    imagen=v["imagen"] or None,
-                    detalle=v["descripcion"],
-                )
-                nuevos += 1
+                feed = FeedRepository(session)
+                for v in videos:
+                    if feed.existe_url(v["url"]):
+                        ya_existentes += 1
+                        continue
+                    feed.crear(
+                        artist_id=artista.id,
+                        fuente="yt",
+                        tipo="video",
+                        titulo=v["titulo"],
+                        url=feed._url_canonica(v["url"]),
+                        fecha=v["fecha"],
+                        imagen=v["imagen"] or None,
+                        detalle=v["descripcion"],
+                    )
+                    nuevos += 1
             session.commit()
     finally:
         session.close()

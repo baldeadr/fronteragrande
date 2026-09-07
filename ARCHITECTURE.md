@@ -216,7 +216,7 @@ flowchart TD
 
 ## Flujos Críticos
 
-1. **Alta de artista** -> `POST /api/artists` (validaciones, rate-limit, onboarding YT) -> `ArtistRepository.crear` -> `FeedRepository` (primer video YT) -> BD.
+1. **Alta de artista** -> `POST /api/artists` (validaciones, rate-limit, onboarding YT + SC/Mixcloud seguidores + oyentes Spotify) -> `ArtistRepository.crear` -> `FeedRepository` (primer video YT) -> BD.
 2. **Verificación Meta** -> OAuth callback -> guarda `fb_page_token`/`ig_user_id` -> `verificado = true` -> dispara `sync_feed_igfb` + promo IG.
 3. **Verificación TikTok** -> PKCE callback -> guarda `tt_user_id`/`tt_refresh_token` -> `verificado = true` -> dispara `sync_feed_tiktok`.
 3. **Feed automático** -> GH Action cada 6h -> adapters -> `FeedRepository.crear_si_nuevo` (anti-dup por URL) -> `recalcular_actividad` actualiza `estado_activo`.

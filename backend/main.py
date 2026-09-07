@@ -357,6 +357,7 @@ def list_artists(
                 "tt": fila["followers_tt"],
                 "beatport": fila["followers_beatport"],
                 "mixcloud": fila["followers_mixcloud"],
+                "soundcloud": fila["followers_soundcloud"],
             },
             "imagen_perfil": fila.get("imagen_perfil") or None,
             "imagen_origen": fila.get("imagen_origen") or None,
@@ -530,6 +531,7 @@ def artist_detail(
             "spotify": artist.followers_spotify,
             "beatport": artist.followers_beatport,
             "mixcloud": artist.followers_mixcloud,
+            "soundcloud": artist.followers_soundcloud,
         },
         "stats": {
             "ig": {"seguidores": artist.followers_ig},
@@ -549,6 +551,7 @@ def artist_detail(
                 "reproducciones": artist.reproducciones_bandcamp,
             },
             "soundcloud": {
+                "seguidores": artist.followers_soundcloud,
                 "reproducciones": artist.reproducciones_soundcloud,
             },
             "beatport": {
@@ -1039,6 +1042,8 @@ def editar_artista_endpoint(
             db, slug, entrada.model_dump(exclude_unset=True)
         )
     except ValueError as exc:
+        if "ya está vinculada" in str(exc).lower():
+            raise HTTPException(status_code=409, detail=str(exc))
         raise HTTPException(status_code=400, detail=str(exc))
     if artista is None:
         raise HTTPException(status_code=404, detail="Artista no encontrado")

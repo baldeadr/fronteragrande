@@ -6,6 +6,7 @@ directo: delegan en `lib.repository`.
 """
 
 import hashlib
+import os
 from collections import Counter
 from datetime import date, datetime, timedelta
 
@@ -73,6 +74,7 @@ def artistas_df(session: Session) -> pd.DataFrame:
             "followers_spotify": a.followers_spotify,
             "followers_beatport": a.followers_beatport,
             "followers_mixcloud": a.followers_mixcloud,
+            "followers_soundcloud": a.followers_soundcloud,
             "oyentes_mensuales_spotify": a.oyentes_mensuales_spotify,
             "fecha_oyentes_spotify": a.fecha_oyentes_spotify,
             "vistas_yt": a.vistas_yt,
@@ -295,7 +297,10 @@ def metricas_artista(fila) -> dict:
             "seguidores": fila["followers_spotify"],
         },
         "bandcamp": {"reproducciones": fila["reproducciones_bandcamp"]},
-        "soundcloud": {"reproducciones": fila["reproducciones_soundcloud"]},
+        "soundcloud": {
+            "seguidores": fila["followers_soundcloud"],
+            "reproducciones": fila["reproducciones_soundcloud"],
+        },
         "beatport": {"seguidores": fila["followers_beatport"]},
         "mixcloud": {"seguidores": fila["followers_mixcloud"]},
     }
@@ -916,20 +921,43 @@ def _reemplazar_redes(session: Session, artista: Artist, redes: list[dict]) -> N
     Borra los enlaces no-búsqueda existentes y crea los nuevos (misma regla
     de detección de plataforma que el alta). Los enlaces de búsqueda
     (`es_busqueda`) se conservan: son respaldo de "dónde escucharlo".
+
+    Aplica las mismas defensas que el alta: ninguna URL puede repetirse dentro
+    del mismo envío (evita dobles conteos) ni estar ya vinculada a otro
+    proyecto (evita robarse el enlace de un tercero para inflar números).
     """
+    from lib.helpers import normalizar_url_para_duplicados
     from lib.plataformas import plataforma_y_url
 
     links_repo = LinkRepository(session)
-    for link in list(artista.links):
-        if not link.es_busqueda:
-            session.delete(link)
+
+    vistos: set[str] = set()
+    nuevas: list[tuple[str, str, bool]] = []
     for red in redes:
         url = (red.get("url") or "").strip()
         if not url:
             continue
+        existente = links_repo.url_ya_vinculada(
+            url, excluir_artist_id=artista.id
+        )
+        if existente is not None:
+            nombre_duplicado = existente.artist.nombre if existente.artist else "otro proyecto"
+            raise ValueError(
+                f"La URL {url} ya está vinculada a '{nombre_duplicado}'"
+            )
         declarada = (red.get("plataforma") or "").strip().lower()
         plataforma, url = plataforma_y_url(declarada, url)
+        canon = normalizar_url_para_duplicados(url)
+        if canon in vistos:
+            raise ValueError(f"El enlace {url} está repetido en las redes")
+        vistos.add(canon)
         es_busqueda = "/results?" in url or "/search?" in url
+        nuevas.append((plataforma, url, es_busqueda))
+
+    for link in list(artista.links):
+        if not link.es_busqueda:
+            session.delete(link)
+    for plataforma, url, es_busqueda in nuevas:
         links_repo.crear_para_artista(
             artista, plataforma=plataforma, url=url, es_busqueda=es_busqueda
         )
@@ -1024,14 +1052,30 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     if len(redes_limpias) > 6:
         raise ValueError("Puedes incluir como máximo 6 enlaces")
 
+    # Normaliza cada enlace y valida antes de crear nada: ninguna URL puede
+    # repetirse dentro del mismo alta (evita dobles conteos) ni pertenecer ya a
+    # otro proyecto (evita inflar números con el enlace de un tercero).
+    from lib.helpers import normalizar_url_para_duplicados
+
     links_repo = LinkRepository(session)
+    redes_normalizadas: list[tuple[str, str, bool]] = []
+    vistos: set[str] = set()
     for red in redes_limpias:
-        existente = links_repo.url_ya_vinculada(red["url"])
+        url = red["url"]
+        declarada = red["plataforma"]
+        plataforma, url = plataforma_y_url(declarada, url)
+        canon = normalizar_url_para_duplicados(url)
+        if canon in vistos:
+            raise ValueError(f"El enlace {url} está repetido en tus redes")
+        vistos.add(canon)
+        existente = links_repo.url_ya_vinculada(url)
         if existente is not None:
             nombre_duplicado = existente.artist.nombre if existente.artist else "otro proyecto"
             raise ValueError(
-                f"La URL {red['url']} ya está vinculada a '{nombre_duplicado}'"
+                f"La URL {url} ya está vinculada a '{nombre_duplicado}'"
             )
+        es_busqueda = "/results?" in url or "/search?" in url
+        redes_normalizadas.append((plataforma, url, es_busqueda))
 
     repos = ArtistRepository(session)
     artista = repos.crear(
@@ -1047,11 +1091,7 @@ def crear_artista(session: Session, datos: dict) -> Artist:
     artista.bio = bio
     artista.genero_dominante = clasificar_genero_dominante(artista.slug, artista.generos)
 
-    for red in redes_limpias:
-        url = red["url"]
-        declarada = red["plataforma"]
-        plataforma, url = plataforma_y_url(declarada, url)
-        es_busqueda = "/results?" in url or "/search?" in url
+    for plataforma, url, es_busqueda in redes_normalizadas:
         links_repo.crear_para_artista(
             artista, plataforma=plataforma, url=url, es_busqueda=es_busqueda
         )
@@ -1062,8 +1102,10 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
     """Scraping inicial tras el alta (best-effort, nunca rompe la creación).
 
     Resuelve foto de perfil desde las redes, inserta los últimos videos de
-    YouTube (si hay canal) en el feed y recalcula `estado_activo` con la señal
-    más reciente. Las fallas de red se registran y se continúa.
+    YouTube (si hay canal) en el feed, captura oyentes mensuales de Spotify,
+    suscriptores/vistas de YouTube, seguidores de SoundCloud y de Mixcloud, y
+    recalcula `estado_activo` con la señal más reciente. Las fallas de red se
+    registran y se continúa.
     """
     from scraper.adapters import imagenes
     from scraper.adapters.youtube import latest_videos
@@ -1074,6 +1116,9 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
         "imagen": None,
         "videos": 0,
         "spotify_oyentes": None,
+        "yt_suscriptores": None,
+        "soundcloud_seguidores": None,
+        "mixcloud_seguidores": None,
         "estado": artista.estado_activo,
     }
 
@@ -1093,46 +1138,115 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
         l for l in artista.links if l.plataforma == "yt" and not l.es_busqueda
     ]
     if canales:
-        try:
-            feed = FeedRepository(session)
-            for v in latest_videos(canales[0].url, max_videos=5):
-                if feed.existe_url(v["url"]):
-                    continue
-                feed.crear(
-                    artist_id=artista.id,
-                    fuente="yt",
-                    tipo="video",
-                    titulo=v["titulo"],
-                    url=feed._url_canonica(v["url"]),
-                    fecha=v["fecha"],
-                    imagen=v["imagen"] or None,
-                    detalle=v["descripcion"],
-                )
-                resultado["videos"] += 1
-        except ScraperError:
-            pass
+        feed = FeedRepository(session)
+        for canal in canales:
+            try:
+                for v in latest_videos(canal.url, max_videos=5):
+                    if feed.existe_url(v["url"]):
+                        continue
+                    feed.crear(
+                        artist_id=artista.id,
+                        fuente="yt",
+                        tipo="video",
+                        titulo=v["titulo"],
+                        url=feed._url_canonica(v["url"]),
+                        fecha=v["fecha"],
+                        imagen=v["imagen"] or None,
+                        detalle=v["descripcion"],
+                    )
+                    resultado["videos"] += 1
+            except ScraperError:
+                continue
 
-    # Oyentes mensuales desde el perfil público de Spotify (captura única).
+        # Estadísticas de YouTube (suscriptores/vistas, Data API v3).
+        from scraper.adapters.youtube import channel_id_from_url, channel_statistics
+
+        api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
+        if api_key:
+            suscriptores: list[int] = []
+            vistas: list[int] = []
+            for canal in canales:
+                try:
+                    channel_id = channel_id_from_url(canal.url)
+                    if not channel_id:
+                        continue
+                    datos = channel_statistics(channel_id, api_key)
+                except Exception:
+                    continue
+                if datos.get("suscriptores") is not None:
+                    suscriptores.append(datos["suscriptores"])
+                if datos.get("vistas") is not None:
+                    vistas.append(datos["vistas"])
+            if suscriptores:
+                artista.followers_yt = sum(suscriptores)
+                resultado["yt_suscriptores"] = sum(suscriptores)
+            if vistas:
+                artista.vistas_yt = sum(vistas)
+
+    # Oyentes mensuales desde los perfiles públicos de Spotify. Si hay varios
+    # perfiles oficiales (cuentas duplicadas), se suma cada lectura y se guarda
+    # la suma; los snapshots conservan el valor por perfil.
     spotify_links = [
         l for l in artista.links if l.plataforma == "spotify" and not l.es_busqueda
     ]
     if spotify_links:
         from scraper.adapters.spotify_public import SpotifyPublicError, obtener_oyentes
 
-        url_spotify = spotify_links[0].url
-        try:
-            oyentes = obtener_oyentes(url_spotify)
-            artista.oyentes_mensuales_spotify = oyentes
+        snapshots = SpotifySnapshotRepository(session)
+        suma = 0
+        for link in spotify_links:
+            try:
+                oyentes = obtener_oyentes(link.url)
+                if oyentes is not None:
+                    suma += oyentes
+                snapshots.crear(
+                    artist_id=artista.id,
+                    url_spotify=link.url,
+                    oyentes_mensuales=oyentes,
+                )
+            except SpotifyPublicError:
+                continue
+        if suma > 0:
+            artista.oyentes_mensuales_spotify = suma
             artista.fecha_oyentes_spotify = datetime.utcnow()
             artista.fuente_oyentes_spotify = "spotify_public_profile"
-            SpotifySnapshotRepository(session).crear(
-                artist_id=artista.id,
-                url_spotify=url_spotify,
-                oyentes_mensuales=oyentes,
-            )
-            resultado["spotify_oyentes"] = oyentes
-        except SpotifyPublicError:
-            pass
+            resultado["spotify_oyentes"] = suma
+
+    # Seguidores de SoundCloud (api-v2, una llamada por perfil).
+    soundcloud_links = [
+        l for l in artista.links
+        if l.plataforma == "soundcloud" and not l.es_busqueda
+    ]
+    if soundcloud_links:
+        from scraper.adapters.soundcloud import SoundCloudError, seguidores
+
+        suma_sc = 0
+        for link in soundcloud_links:
+            try:
+                suma_sc += seguidores(link.url)
+            except SoundCloudError:
+                continue
+        if suma_sc > 0:
+            artista.followers_soundcloud = suma_sc
+            resultado["soundcloud_seguidores"] = suma_sc
+
+    # Seguidores de Mixcloud (API REST pública, una llamada por perfil).
+    mixcloud_links = [
+        l for l in artista.links
+        if l.plataforma == "mixcloud" and not l.es_busqueda
+    ]
+    if mixcloud_links:
+        from scraper.adapters.mixcloud import seguidores as mixcloud_seguidores
+
+        suma_mx = 0
+        for link in mixcloud_links:
+            try:
+                suma_mx += mixcloud_seguidores(link.url)
+            except ScraperError:
+                continue
+        if suma_mx > 0:
+            artista.followers_mixcloud = suma_mx
+            resultado["mixcloud_seguidores"] = suma_mx
 
     # Recalcular actividad con la señal más reciente (feed incluido).
     ultimo_feed = ultimo_feed_de_artista(session, artista)

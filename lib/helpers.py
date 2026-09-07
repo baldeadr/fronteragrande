@@ -921,7 +921,13 @@ def normalizar_url_para_duplicados(url: str) -> str:
     a minúsculas, elimina `www.`, elimina querystring y fragmento, y quita la
     barra final del path. Esto cubre variantes comunes de un mismo perfil
     social (ej. `instagram.com/user/`, `www.instagram.com/user?igsh=...`).
+
+    Para Spotify y YouTube, la forma canónica va por **identidad de plataforma**
+    (ID de artista/canal, sin depender de la ortografía de la URL): así dos
+    escrituras del MISMO perfil se detectan como duplicado (evita dobles
+    conteos y respaldar el enlace de un tercero con otra URL).
     """
+    import re
     from urllib.parse import urlparse, urlunparse
 
     url = (url or "").strip()
@@ -933,6 +939,16 @@ def normalizar_url_para_duplicados(url: str) -> str:
     host = (parsed.hostname or "").lower()
     if host.startswith("www."):
         host = host[4:]
+    # Spotify: canónico por ID de artista (ignora `?si=`, `/intl-es/`, etc.).
+    if "spotify.com" in host:
+        match = re.search(r"/artist/([A-Za-z0-9]+)", parsed.path)
+        if match:
+            return f"spotify:artist:{match.group(1)}"
+    # YouTube: canónico por ID de canal cuando la URL lo lleva explícito.
+    if "youtube.com" in host or host == "youtu.be":
+        match = re.search(r"/channel/(UC[A-Za-z0-9_-]+)", parsed.path)
+        if match:
+            return f"yt:channel:{match.group(1)}"
     path = parsed.path.rstrip("/")
     return urlunparse((parsed.scheme.lower(), host, path, "", "", ""))
 

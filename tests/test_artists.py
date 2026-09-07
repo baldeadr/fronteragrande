@@ -34,7 +34,7 @@ def test_artists_shape(client):
     assert "color_estado" in first and first["color_estado"].startswith("#")
     assert isinstance(first["followers"], dict)
     assert set(first["followers"]) == {
-        "ig", "fb", "yt", "spotify", "tt", "beatport", "mixcloud"
+        "ig", "fb", "yt", "spotify", "tt", "beatport", "mixcloud", "soundcloud"
     }
     assert isinstance(first["links"], list)
     assert isinstance(first["menciones"], list)
@@ -177,10 +177,16 @@ _SLUGS_PRUEBA = (
     "equipo_doble",
     "equipo_doble_2",
     "equipo_tres",
+    "banda_doble_catalogo",
     "banda_a_borrar",
     "banda_a_editar",
     "banda_a_editar_2",
     "banda_a_validar",
+    "banda_duplicado",
+    "spotty_uno",
+    "spotty_dos",
+    "banda_roba",
+    "banda_victima",
 )
 
 
@@ -519,6 +525,45 @@ def test_crear_artista_con_spotify(client, monkeypatch):
     _limpiar_altas()
 
 
+def test_onboarding_suma_dos_perfiles_spotify(client, monkeypatch):
+    """Con dos perfiles oficiales de Spotify, el onboarding guarda la SUMA.
+
+    Es el caso de artistas con cuentas duplicadas vigentes (contratos,
+    disputas o acceso perdido): ambos perfiles suman y la API expone un solo
+    número combinado en `stats.spotify.oyentes_mensuales`.
+    """
+    def _oyentes(url):
+        return 40000 if "catalogo" in url else 8000
+
+    monkeypatch.setattr(
+        "scraper.adapters.spotify_public.obtener_oyentes", _oyentes
+    )
+    respuesta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Doble Catálogo",
+            "categoria": "Banda",
+            "ciudad": "Reynosa",
+            "redes": [
+                {
+                    "plataforma": "spotify",
+                    "url": "https://open.spotify.com/artist/catalogo",
+                },
+                {
+                    "plataforma": "spotify",
+                    "url": "https://open.spotify.com/artist/activo",
+                },
+            ],
+        },
+    )
+    assert respuesta.status_code == 201
+    assert respuesta.json()["onboarding"]["spotify_oyentes"] == 48000
+
+    detalle = client.get(f"/api/artists/{respuesta.json()['slug']}").json()
+    assert detalle["stats"]["spotify"]["oyentes_mensuales"] == 48000
+    _limpiar_altas()
+
+
 def test_crear_artista_rechaza_url_duplicada(client, tiempo_congelado):
     """No se puede dar de alta un enlace que ya pertenece a otro artista."""
     url = "https://www.instagram.com/duplicado/"
@@ -607,4 +652,150 @@ def test_crear_artista_cooldown_entre_altas(client, tiempo_congelado):
     )
     assert segunda.status_code == 429
     assert "espera" in segunda.json()["detail"].lower()
+    _limpiar_altas()
+
+
+def test_crear_artista_rechaza_url_repetida_en_payload(client):
+    """La misma URL dos veces dentro del alta se rechaza (evita dobles conteos)."""
+    respuesta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Duplicado",
+            "categoria": "Banda",
+            "redes": [
+                {"plataforma": "ig", "url": "https://www.instagram.com/repe/"},
+                {"plataforma": "ig", "url": "https://www.instagram.com/repe/"},
+            ],
+        },
+        headers={"X-Forwarded-For": "203.0.113.20"},
+    )
+    assert respuesta.status_code == 400
+    assert "repetido" in respuesta.json()["detail"].lower()
+    _limpiar_altas()
+
+
+def test_crear_artista_rechaza_spotify_misma_identidad_otra_url(
+    client, monkeypatch, tiempo_congelado
+):
+    """Dos escrituras del MISMO perfil de Spotify se detectan por ID.
+
+    Aunque la URL cambie (locale `intl-es`, `?si=...`, etc.), la identidad
+    `spotify:artist:<id>` es la misma y el segundo alta se rechaza: no se puede
+    registrar el perfil de otro aunque lo escribas con otra URL.
+    """
+    monkeypatch.setattr(
+        "scraper.adapters.spotify_public.obtener_oyentes", lambda url: 1234
+    )
+    id_spotify = "4ABCDEfGhiJ"
+    primera = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Spotty Uno",
+            "categoria": "DJ",
+            "ciudad": "Reynosa",
+            "redes": [
+                {
+                    "plataforma": "spotify",
+                    "url": f"https://open.spotify.com/artist/{id_spotify}",
+                }
+            ],
+        },
+        headers={"X-Forwarded-For": "203.0.113.31"},
+    )
+    assert primera.status_code == 201
+
+    tiempo_congelado.avanzar(11)
+    segunda = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Spotty Dos",
+            "categoria": "DJ",
+            "ciudad": "Reynosa",
+            "redes": [
+                {
+                    "plataforma": "spotify",
+                    "url": (
+                        f"https://open.spotify.com/intl-es/artist/{id_spotify}"
+                        "?si=abc123def"
+                    ),
+                }
+            ],
+        },
+        headers={"X-Forwarded-For": "203.0.113.32"},
+    )
+    assert segunda.status_code == 409
+    assert "ya está vinculada" in segunda.json()["detail"].lower()
+    _limpiar_altas()
+
+
+def test_editar_artista_rechaza_enlace_de_otro_artista(client, tiempo_congelado):
+    """La edición (con token de admin) no puede robarse el enlace de otro."""
+    url_ajena = "https://www.instagram.com/ajena_roba/"
+    primera = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Roba",
+            "categoria": "Banda",
+            "ciudad": "Matamoros",
+            "redes": [{"plataforma": "ig", "url": url_ajena}],
+        },
+        headers={"X-Forwarded-For": "203.0.113.41"},
+    )
+    assert primera.status_code == 201
+
+    tiempo_congelado.avanzar(11)
+    segunda = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Víctima",
+            "categoria": "Banda",
+            "ciudad": "Reynosa",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/victima/"}],
+        },
+        headers={"X-Forwarded-For": "203.0.113.42"},
+    )
+    assert segunda.status_code == 201
+    slug_victima = segunda.json()["slug"]
+
+    token = {"X-Admin-Token": "clave_admin_test"}
+    respuesta = client.put(
+        f"/api/artists/{slug_victima}",
+        json={"redes": [{"plataforma": "ig", "url": url_ajena}]},
+        headers=token,
+    )
+    assert respuesta.status_code == 409
+    assert "ya está vinculada" in respuesta.json()["detail"].lower()
+
+    detalle = client.get(f"/api/artists/{slug_victima}").json()
+    assert not any(l["url"] == url_ajena for l in detalle["links"])
+    _limpiar_altas()
+
+
+def test_editar_artista_rechaza_url_repetida_en_redes(client):
+    """La edición tampoco permite repetir el mismo enlace dentro de las redes."""
+    alta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Victima",
+            "categoria": "Banda",
+            "ciudad": "Reynosa",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/vic2/"}],
+        },
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+
+    token = {"X-Admin-Token": "clave_admin_test"}
+    respuesta = client.put(
+        f"/api/artists/{slug}",
+        json={
+            "redes": [
+                {"plataforma": "yt", "url": "https://www.youtube.com/@vic2"},
+                {"plataforma": "yt", "url": "https://www.youtube.com/@vic2/"},
+            ]
+        },
+        headers=token,
+    )
+    assert respuesta.status_code == 400
+    assert "repetido" in respuesta.json()["detail"].lower()
     _limpiar_altas()

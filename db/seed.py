@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from db.database import SessionLocal, engine
+from db.export import SEPARADOR_URLS
 from db.models import Artist, ArtistLink, Base, Event
 from lib.helpers import clasificar_genero_dominante, normalizar_ciudad
 
@@ -43,6 +44,7 @@ COLUMNAS_FOLLOWERS = {
     "followers_spotify": "followers_spotify",
     "followers_beatport": "followers_beatport",
     "followers_mixcloud": "followers_mixcloud",
+    "followers_soundcloud": "followers_soundcloud",
 }
 
 COLUMNAS_METRICAS = {
@@ -97,18 +99,19 @@ def _parse_int(valor) -> int | None:
 def _crear_links(artist: Artist, fila: pd.Series) -> list[ArtistLink]:
     links = []
     for columna, plataforma in COLUMNAS_LINKS.items():
-        url = _normalizar(fila.get(columna))
-        if not url:
+        celda = _normalizar(fila.get(columna))
+        if not celda:
             continue
-        es_busqueda = "/results?" in url or "/search?" in url
-        links.append(
-            ArtistLink(
-                artist=artist,
-                plataforma=plataforma,
-                url=url,
-                es_busqueda=es_busqueda,
+        for url in (u.strip() for u in celda.split(SEPARADOR_URLS) if u.strip()):
+            es_busqueda = "/results?" in url or "/search?" in url
+            links.append(
+                ArtistLink(
+                    artist=artist,
+                    plataforma=plataforma,
+                    url=url,
+                    es_busqueda=es_busqueda,
+                )
             )
-        )
     return links
 
 

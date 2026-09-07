@@ -11,6 +11,7 @@ export interface Followers {
   tt: number | null;
   beatport?: number | null;
   mixcloud?: number | null;
+  soundcloud?: number | null;
 }
 
 export interface StatsPlataforma {

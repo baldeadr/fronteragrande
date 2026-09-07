@@ -168,6 +168,18 @@ La captura es puntual por ahora: no hay cron. El onboarding de un artista nuevo
 intenta capturar el dato una vez después de registrar su URL de Spotify; si
 Spotify bloquea o cambia el HTML, el registro del artista continúa.
 
+El onboarding (`lib/servicios.onboarding_artista`) también captura al momento
+del alta, para que el perfil no muestre ceros hasta el siguiente GitHub Action
+(cada 6 h): **suscriptores/vistas de YouTube** (Data API v3, requiere
+`YOUTUBE_API_KEY`; suma todos los canales oficiales), **seguidores de
+SoundCloud** (api-v2, `scraper/adapters/soundcloud.py::seguidores`) y
+**seguidores de Mixcloud** (API REST pública,
+`scraper/adapters/mixcloud.py::seguidores`). El sync diario
+`scripts/sync_soundcloud_stats.py` actualiza después reproducciones y
+seguidores de SoundCloud en lote. Instagram/Facebook/TikTok siguen sin
+seguidores en el alta: solo llegan por OAuth del artista conectado
+(`sync_feed_igfb.py` / `sync_feed_tiktok.py`).
+
 El dato debe mostrarse como **capturado del perfil público de Spotify** con su
 fecha, no como una métrica en vivo ni como una estadística privada de Spotify
 for Artists. No se buscan ni se registran perfiles ambiguos sin validación.

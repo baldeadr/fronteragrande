@@ -242,3 +242,39 @@ def reproducciones(url: str) -> int:
         if "client_id" not in siguiente:
             siguiente += ("&" if "?" in siguiente else "?") + f"client_id={client_id}"
     return total
+
+
+def seguidores(url: str) -> int:
+    """Seguidores del perfil del artista vía api-v2 (`/users/{id}`).
+
+    Una sola llamada al perfil (sin paginar). Si la fuente no se puede leer
+    (sin `client_id` o error de red/HTTP), lanza `SoundCloudError` para que el
+    llamador conserve el valor anterior y no invente un cero.
+    """
+    user_id = _user_id(url)
+    client_id = _client_id(url)
+    if not user_id or not client_id:
+        raise SoundCloudError(f"No se pudo resolver el perfil de SoundCloud: {url}")
+    try:
+        respuesta = requests.get(
+            f"{API_V2}/users/{user_id}",
+            params={"client_id": client_id},
+            headers={"User-Agent": USER_AGENT},
+            timeout=TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise SoundCloudError(f"Error de red con SoundCloud: {url}") from exc
+    if not respuesta.ok:
+        raise SoundCloudError(
+            f"SoundCloud respondió HTTP {respuesta.status_code}: {url}"
+        )
+    try:
+        datos = respuesta.json()
+    except ValueError as exc:
+        raise SoundCloudError(
+            f"SoundCloud devolvió JSON inválido: {url}"
+        ) from exc
+    try:
+        return int(datos.get("followers_count") or 0)
+    except (TypeError, ValueError):
+        return 0

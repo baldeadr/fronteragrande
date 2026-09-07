@@ -1,8 +1,10 @@
-"""Sincroniza las reproducciones de SoundCloud de los artistas con link.
+"""Sincroniza las métricas de SoundCloud de los artistas con link:
+reproducciones (`playback_count` de todas las pistas) y seguidores.
 
 Suma el `playback_count` de todas las pistas públicas vía la api-v2 de
-SoundCloud (`scraper/adapters/soundcloud.py::reproducciones`). Si la fuente no
-se puede leer, conserva el valor anterior y no inventa un cero.
+SoundCloud (`scraper/adapters/soundcloud.py::reproducciones` y
+`scraper/adapters/soundcloud.py::seguidores`). Si la fuente no se puede leer,
+conserva el valor anterior y no inventa un cero.
 
 Uso:
     .venv/bin/python scripts/sync_soundcloud_stats.py
@@ -16,11 +18,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from db.database import SessionLocal
 from lib.repository import ArtistRepository
-from scraper.adapters.soundcloud import reproducciones
+from scraper.adapters.soundcloud import reproducciones, seguidores
 
 
 def sincronizar() -> tuple[int, int]:
-    """Sincroniza las reproducciones y devuelve `(actualizados, errores)`."""
+    """Sincroniza reproducciones y seguidores; devuelve `(actualizados, errores)`."""
     session = SessionLocal()
     actualizados = 0
     errores = 0
@@ -34,12 +36,16 @@ def sincronizar() -> tuple[int, int]:
             if not enlaces:
                 continue
             try:
-                total = reproducciones(enlaces[0].url)
-                artista.reproducciones_soundcloud = total
+                total_repros = reproducciones(enlaces[0].url)
+                artista.reproducciones_soundcloud = total_repros
+                artista.followers_soundcloud = seguidores(enlaces[0].url)
                 artista.fecha_captura = date.today()
                 session.commit()
                 actualizados += 1
-                print(f"{artista.nombre}: {total} reproducciones en soundcloud")
+                print(
+                    f"{artista.nombre}: {total_repros} reproducciones · "
+                    f"{artista.followers_soundcloud} seguidores en soundcloud"
+                )
             except Exception as exc:
                 session.rollback()
                 errores += 1
