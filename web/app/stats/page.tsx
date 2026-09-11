@@ -10,6 +10,7 @@ import ComposicionPorCiudad from "@/components/stats/ComposicionPorCiudad";
 import CruceLigasGeneros from "@/components/stats/CruceLigasGeneros";
 import DonaCategorias from "@/components/stats/DonaCategorias";
 import DonaCiudades from "@/components/stats/DonaCiudades";
+import DonaGeneros from "@/components/stats/DonaGeneros";
 import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
@@ -334,10 +335,12 @@ export default async function StatsPage() {
         <h2 className="mb-1 font-bold">Ligas y géneros</h2>
         <p className="mb-4 text-sm text-muted">
           Cuántos proyectos hay de cada liga según su género dominante (cada
-          proyecto cuenta una sola vez). Elige una ciudad para ver su cruce;
-          el porcentaje de cada celda es dentro de su liga y solo se muestra
-          cuando la liga tiene suficientes proyectos. Desliza la tabla hacia
-          los lados si es muy ancha.
+          proyecto cuenta una sola vez). Elige una ciudad para ver su cruce; el
+          porcentaje de cada celda es dentro de su liga y solo se muestra
+          cuando la liga tiene suficientes proyectos (el color sí siempre
+          refleja la concentración). La fila y la columna de Total indican la
+          participación de cada liga/género sobre el total de la vista.
+          Desliza la tabla hacia los lados si es muy ancha.
         </p>
         <CruceLigasGeneros
           generos={generosOrden}
@@ -345,6 +348,15 @@ export default async function StatsPage() {
           matrizGlobal={matrizLigasGeneros}
           matrizPorCiudad={matrizPorCiudad}
         />
+      </section>
+
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
+        <h2 className="mb-1 font-bold">Proyectos por género dominante</h2>
+        <p className="mb-4 text-sm text-muted">
+          Cada proyecto cuenta una sola vez con su género dominante. Toca un
+          género para ver qué proyectos lo integran.
+        </p>
+        <DonaGeneros artistas={artistas} />
       </section>
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
