@@ -52,6 +52,8 @@ export default function CruceLigasGeneros({
               </td>
               {generos.map((g) => {
                 const n = matriz[liga]?.[g] || 0;
+                const total = totalPorLiga(liga);
+                const pct = total ? Math.round((n / total) * 100) : 0;
                 return (
                   <td
                     key={g}
@@ -59,7 +61,12 @@ export default function CruceLigasGeneros({
                       n > 0 ? "text-text" : "text-muted/40"
                     }`}
                   >
-                    {n}
+                    <div className="text-sm font-medium leading-tight">{n}</div>
+                    {n > 0 && (
+                      <div className="text-[11px] leading-tight text-muted">
+                        {pct}%
+                      </div>
+                    )}
                   </td>
                 );
               })}

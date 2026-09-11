@@ -318,8 +318,8 @@ export default async function StatsPage() {
         <h2 className="mb-1 font-bold">Ligas y géneros</h2>
         <p className="mb-4 text-sm text-muted">
           Cuántos proyectos hay de cada liga según su género dominante (cada
-          proyecto cuenta una sola vez). Desliza la tabla hacia los lados si
-          es muy ancha.
+          proyecto cuenta una sola vez); el porcentaje de cada celda es dentro
+          de su liga. Desliza la tabla hacia los lados si es muy ancha.
         </p>
         <CruceLigasGeneros generos={generosOrden} matriz={matrizLigasGeneros} />
       </section>
