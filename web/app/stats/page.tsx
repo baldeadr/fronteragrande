@@ -105,13 +105,27 @@ export default async function StatsPage() {
   );
 
   const matrizLigasGeneros: Record<string, Record<string, number>> = {};
-  for (const liga of Object.keys(NIVEL_COLOR)) matrizLigasGeneros[liga] = {};
+  const matrizPorCiudad: Record<
+    string,
+    Record<string, Record<string, number>>
+  > = {};
+  const conteoPorCiudad = new Map<string, number>();
   for (const a of artistas) {
+    const ciudad = ciudadBase(a.ciudad) || "Sin ciudad";
     const liga = a.catalogado ? a.nivel : "Escena";
     const genero = a.genero_dominante || "Sin clasificar";
+    matrizLigasGeneros[liga] ??= {};
     matrizLigasGeneros[liga][genero] =
       (matrizLigasGeneros[liga][genero] ?? 0) + 1;
+    matrizPorCiudad[ciudad] ??= {};
+    matrizPorCiudad[ciudad][liga] ??= {};
+    matrizPorCiudad[ciudad][liga][genero] =
+      (matrizPorCiudad[ciudad][liga][genero] ?? 0) + 1;
+    conteoPorCiudad.set(ciudad, (conteoPorCiudad.get(ciudad) ?? 0) + 1);
   }
+  const ciudadesCruce = Array.from(conteoPorCiudad.keys()).sort(
+    (a, b) => (conteoPorCiudad.get(b) ?? 0) - (conteoPorCiudad.get(a) ?? 0),
+  );
 
   const kpis = [
     { valor: total, etiqueta: "proyectos registrados", color: "var(--accent)" },
@@ -320,11 +334,17 @@ export default async function StatsPage() {
         <h2 className="mb-1 font-bold">Ligas y géneros</h2>
         <p className="mb-4 text-sm text-muted">
           Cuántos proyectos hay de cada liga según su género dominante (cada
-          proyecto cuenta una sola vez). El porcentaje de cada celda es dentro
-          de su liga y la intensidad del color refleja ese porcentaje. Desliza
-          la tabla hacia los lados si es muy ancha.
+          proyecto cuenta una sola vez). Elige una ciudad para ver su cruce;
+          el porcentaje de cada celda es dentro de su liga y solo se muestra
+          cuando la liga tiene suficientes proyectos. Desliza la tabla hacia
+          los lados si es muy ancha.
         </p>
-        <CruceLigasGeneros generos={generosOrden} matriz={matrizLigasGeneros} />
+        <CruceLigasGeneros
+          generos={generosOrden}
+          ciudades={ciudadesCruce}
+          matrizGlobal={matrizLigasGeneros}
+          matrizPorCiudad={matrizPorCiudad}
+        />
       </section>
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
