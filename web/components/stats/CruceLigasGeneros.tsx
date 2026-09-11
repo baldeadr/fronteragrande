@@ -4,6 +4,14 @@
 
 import { NIVEL_COLOR } from "@/components/stats/colores";
 
+function hexToRgba(hex: string, alfa: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alfa})`;
+}
+
 export default function CruceLigasGeneros({
   generos,
   matriz,
@@ -54,12 +62,18 @@ export default function CruceLigasGeneros({
                 const n = matriz[liga]?.[g] || 0;
                 const total = totalPorLiga(liga);
                 const pct = total ? Math.round((n / total) * 100) : 0;
+                // Heatmap: intensidad del color de la liga según el % dentro
+                // de esa liga (0 = celda vacía).
+                const alfa = n > 0 ? 0.1 + 0.55 * (pct / 100) : 0;
                 return (
                   <td
                     key={g}
                     className={`px-2 py-1.5 text-center tabular-nums ${
                       n > 0 ? "text-text" : "text-muted/40"
                     }`}
+                    style={{
+                      backgroundColor: alfa > 0 ? hexToRgba(NIVEL_COLOR[liga], alfa) : undefined,
+                    }}
                   >
                     <div className="text-sm font-medium leading-tight">{n}</div>
                     {n > 0 && (
@@ -72,6 +86,9 @@ export default function CruceLigasGeneros({
               })}
               <td className="px-2 py-1.5 text-right font-bold tabular-nums">
                 {totalPorLiga(liga)}
+                <div className="text-[11px] font-normal leading-tight text-muted">
+                  100%
+                </div>
               </td>
             </tr>
           ))}
