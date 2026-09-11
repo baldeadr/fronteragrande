@@ -7,6 +7,7 @@ import { ciudadBase } from "@/lib/ciudades";
 import ActividadTemporal from "@/components/stats/ActividadTemporal";
 import CiudadesApiladas from "@/components/stats/CiudadesApiladas";
 import ComposicionPorCiudad from "@/components/stats/ComposicionPorCiudad";
+import CruceLigasGeneros from "@/components/stats/CruceLigasGeneros";
 import DonaCategorias from "@/components/stats/DonaCategorias";
 import DonaCiudades from "@/components/stats/DonaCiudades";
 import DonaVerificados from "@/components/stats/DonaVerificados";
@@ -100,6 +101,15 @@ export default async function StatsPage() {
     artistas,
     (a) => a.genero_dominante,
   );
+
+  const matrizLigasGeneros: Record<string, Record<string, number>> = {};
+  for (const liga of Object.keys(NIVEL_COLOR)) matrizLigasGeneros[liga] = {};
+  for (const a of artistas) {
+    const liga = a.catalogado ? a.nivel : "Escena";
+    const genero = a.genero_dominante || "Sin clasificar";
+    matrizLigasGeneros[liga][genero] =
+      (matrizLigasGeneros[liga][genero] ?? 0) + 1;
+  }
 
   const kpis = [
     { valor: total, etiqueta: "proyectos registrados", color: "var(--accent)" },
@@ -303,6 +313,16 @@ export default async function StatsPage() {
           />
         </section>
       </div>
+
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
+        <h2 className="mb-1 font-bold">Ligas y géneros</h2>
+        <p className="mb-4 text-sm text-muted">
+          Cuántos proyectos hay de cada liga según su género dominante (cada
+          proyecto cuenta una sola vez). Desliza la tabla hacia los lados si
+          es muy ancha.
+        </p>
+        <CruceLigasGeneros generos={generosOrden} matriz={matrizLigasGeneros} />
+      </section>
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 font-bold">Ecosistema de redes</h2>
