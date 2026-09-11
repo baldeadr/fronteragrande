@@ -39,7 +39,6 @@ export default function DesglosePorCiudad({
   const [sel, setSel] = useState<number | null>(null);
 
   const filasVista = filas.slice(0, limite);
-  const max = Math.max(...filasVista.map((f) => f.total), 1);
   const etiquetaPorClave = Object.fromEntries(
     atributos.map((a) => [a.clave, a.etiqueta]),
   );
@@ -78,11 +77,7 @@ export default function DesglosePorCiudad({
       <div className="flex flex-col gap-2">
         {filasVista.map((f, i) => {
           const activo = sel === i;
-          const totalVisible = atributos.reduce(
-            (acc, a) =>
-              visibles.includes(a.clave) ? acc + (f.atributos[a.clave] || 0) : acc,
-            0,
-          );
+          const total = f.total > 0 ? f.total : 1;
           return (
             <div
               key={f.nombre}
@@ -103,7 +98,7 @@ export default function DesglosePorCiudad({
                     <div
                       key={a.clave}
                       style={{
-                        width: `${((f.atributos[a.clave] || 0) / max) * 100}%`,
+                        width: `${((f.atributos[a.clave] || 0) / total) * 100}%`,
                         backgroundColor: a.color,
                       }}
                     />
@@ -111,7 +106,7 @@ export default function DesglosePorCiudad({
                 )}
               </div>
               <span className="w-8 shrink-0 text-right text-sm font-medium tabular-nums text-muted">
-                {totalVisible}
+                {f.total}
               </span>
             </div>
           );
@@ -123,18 +118,30 @@ export default function DesglosePorCiudad({
           <span>
             <b>{filasVista[sel].nombre}</b> · {filasVista[sel].total} proyectos:{" "}
             {atributos
-              .filter((a) => (filasVista[sel].atributos[a.clave] || 0) > 0)
-              .map((a, i) => (
+              .map((a) => ({
+                a,
+                n: filasVista[sel].atributos[a.clave] || 0,
+              }))
+              .filter(({ n }) => n > 0)
+              .map(({ a, n }, i) => (
                 <span key={a.clave}>
                   {i > 0 && ", "}
-                  {filasVista[sel].atributos[a.clave]}{" "}
-                  {etiquetaPorClave[a.clave].toLowerCase()}
+                  {etiquetaPorClave[a.clave]}{" "}
+                  <b className="tabular-nums">
+                    {n}{" "}
+                    <span className="text-muted">
+                      (
+                      {Math.round((n / filasVista[sel].total) * 100) || 0}
+                      %)
+                    </span>
+                  </b>
                 </span>
               ))}
           </span>
         ) : (
           <span className="text-xs">
-            Toca la leyenda para ocultar una categoría o una barra para verla.
+            Toca la leyenda para ocultar una categoría o una barra para verla
+            con sus cantidades y porcentajes.
           </span>
         )}
       </p>

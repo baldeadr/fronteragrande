@@ -6,16 +6,17 @@ import type { ArtistCard } from "@/lib/types";
 import { ciudadBase } from "@/lib/ciudades";
 import ActividadTemporal from "@/components/stats/ActividadTemporal";
 import CiudadesApiladas from "@/components/stats/CiudadesApiladas";
-import DesglosePorCiudad, {
-  type AtributoDesglose,
-  type FilaDesglose,
-} from "@/components/stats/DesglosePorCiudad";
+import ComposicionPorCiudad from "@/components/stats/ComposicionPorCiudad";
 import DonaCategorias from "@/components/stats/DonaCategorias";
 import DonaCiudades from "@/components/stats/DonaCiudades";
 import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
 import RankingFiltrable from "@/components/stats/RankingFiltrable";
+import type {
+  AtributoDesglose,
+  FilaDesglose,
+} from "@/components/stats/DesglosePorCiudad";
 import {
   GENERO_PALETA,
   NIVEL_COLOR,
@@ -288,29 +289,20 @@ export default async function StatsPage() {
         </section>
 
         <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="mb-1 font-bold">Ligas por ciudad</h2>
+          <h2 className="mb-1 font-bold">Composición por ciudad</h2>
           <p className="mb-4 text-sm text-muted">
-            Cuántos proyectos hay de cada liga en cada ciudad. Toca la leyenda
-            para mostrar u ocultar una liga.
+            Qué hay en cada ciudad: cuántos proyectos por liga o por género
+            dominante. Cada barra suma 100% de su ciudad; pasa el cursor por
+            una barra para ver cantidades y porcentajes.
           </p>
-          <DesglosePorCiudad
-            filas={filasLigas}
-            atributos={LIGAS_ATRIBUTOS}
+          <ComposicionPorCiudad
+            filasLigas={filasLigas}
+            atributosLigas={LIGAS_ATRIBUTOS}
+            filasGeneros={filasGeneros}
+            atributosGeneros={atributosGenero}
           />
         </section>
       </div>
-
-      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-        <h2 className="mb-1 font-bold">Género por ciudad</h2>
-        <p className="mb-4 text-sm text-muted">
-          Género dominante de los proyectos de cada ciudad (un proyecto cuenta
-          una sola vez, en su género principal).
-        </p>
-        <DesglosePorCiudad
-          filas={filasGeneros}
-          atributos={atributosGenero}
-        />
-      </section>
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 font-bold">Ecosistema de redes</h2>
