@@ -86,7 +86,9 @@ export default async function StatsPage() {
     a.catalogado ? a.nivel : "Escena",
   );
   const generosEnDatos = Array.from(
-    new Set(artistas.map((a) => a.genero_dominante).filter(Boolean)),
+    new Set(
+      artistas.map((a) => a.genero_dominante || "Sin clasificar"),
+    ),
   );
   const generosOrden = [
     ...GENEROS_DOMINANTES,
