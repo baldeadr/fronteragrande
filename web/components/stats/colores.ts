@@ -31,4 +31,26 @@ export const CIUDAD_PALETA: string[] = [
   "#ff6384",
 ];
 
+/** Colores de las 4 ligas (Escena incluida), estables para las gráficas por ciudad. */
+export const NIVEL_COLOR: Record<string, string> = {
+  Escena: "#9d4edd",
+  "En Ascenso": "#2fb8a6",
+  "Ligas Mayores": "#f5b301",
+  "Leyenda de la Frontera": "#aab4c8",
+};
+
+/** Paleta estable de los 9 géneros dominantes del catálogo (mismo orden que
+ * `lib.helpers.GENEROS_DOMINANTES`), para el desglose de género por ciudad. */
+export const GENERO_PALETA: Record<string, string> = {
+  "Regional Mexicano": "#4fa3e8",
+  Rock: "#e4572e",
+  Metal: "#7d9bb5",
+  Urbano: "#f5a623",
+  EDM: "#36d6d9",
+  Dark: "#9d4edd",
+  Pop: "#ff6384",
+  "Cumbia y Tropical": "#1db954",
+  Raíces: "#b57edc",
+};
+
 export const OTRAS_COLOR = "var(--muted)";

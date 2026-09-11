@@ -138,9 +138,9 @@ export interface CiudadActividad {
   inactivo: number;
 }
 
-export interface EventoProximo {
+export interface UltimaAlta {
   nombre: string;
-  ciudad: string | null;
+  slug: string;
   fecha: string | null;
 }
 
@@ -159,7 +159,7 @@ export interface Stats {
   cobertura: Record<string, number>;
   posts_90dias: number;
   por_ciudad: CiudadActividad[];
-  eventos_proximos: { total: number; ciudad: string | null; proximos: EventoProximo[] };
+  ultima_alta: UltimaAlta | null;
   ligas: {
     total: number;
     por_nivel: Record<string, number>;

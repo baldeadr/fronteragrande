@@ -7,8 +7,7 @@ directo: delegan en `lib.repository`.
 
 import hashlib
 import os
-from collections import Counter
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 from sqlalchemy import select
@@ -701,7 +700,7 @@ def stats_escena(session: Session) -> dict:
     Todo se calcula con fuente (DataFrames semilla o repositorios): además de
     los conteos básicos, la huella digital agregada por plataforma, la
     cobertura (% de proyectos con cada red), la actividad mensual del feed,
-    las altas por mes y los eventos próximos. Caller: `GET /api/stats`.
+    las altas por mes y la última alta registrada. Caller: `GET /api/stats`.
     """
     feed_repo = FeedRepository(session)
     df = artistas_df(session)
@@ -721,7 +720,7 @@ def stats_escena(session: Session) -> dict:
             "cobertura": {},
             "posts_90dias": 0,
             "por_ciudad": [],
-            "eventos_proximos": {"total": 0, "ciudad": None, "proximos": []},
+            "ultima_alta": None,
         }
 
     total = len(df)
@@ -774,25 +773,24 @@ def stats_escena(session: Session) -> dict:
         )
     por_ciudad.sort(key=lambda x: x["total"], reverse=True)
 
-    eventos_repo = EventRepository(session)
-    proximos = eventos_repo.proximos(desde=date.today())
-    ciudad_proxima = None
-    if proximos:
-        agrupado = Counter(e.ciudad for e in proximos if e.ciudad)
-        if agrupado:
-            ciudad_proxima = agrupado.most_common(1)[0][0]
-    eventos_proximos = {
-        "total": len(proximos),
-        "ciudad": ciudad_proxima,
-        "proximos": [
-            {
-                "nombre": e.nombre,
-                "ciudad": e.ciudad,
-                "fecha": e.fecha,
+    filas_con_alta = df[
+        df["fecha_registro"].notna() | df["fecha_creacion"].notna()
+    ].copy()
+    ultima_alta = None
+    if not filas_con_alta.empty:
+        filas_con_alta["_alta"] = pd.to_datetime(
+            filas_con_alta["fecha_registro"].fillna(
+                filas_con_alta["fecha_creacion"]
+            ),
+            errors="coerce",
+        ).dropna()
+        if not filas_con_alta.empty:
+            tope = filas_con_alta.loc[filas_con_alta["_alta"].idxmax()]
+            ultima_alta = {
+                "nombre": tope["nombre"],
+                "slug": tope["slug"],
+                "fecha": str(tope["_alta"].date()),
             }
-            for e in proximos[:3]
-        ],
-    }
 
     verificados = sum(
         1
@@ -832,7 +830,7 @@ def stats_escena(session: Session) -> dict:
         "cobertura": cobertura,
         "posts_90dias": posts_90dias,
         "por_ciudad": por_ciudad,
-        "eventos_proximos": eventos_proximos,
+        "ultima_alta": ultima_alta,
         "ligas": ligas,
         "rookies": rookies,
     }

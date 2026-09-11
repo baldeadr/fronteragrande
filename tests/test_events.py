@@ -56,7 +56,8 @@ def test_stats_panorama(client):
     assert isinstance(stats["por_ciudad"], list)
     for ciudad in stats["por_ciudad"]:
         assert set(ciudad) >= {"nombre", "total", "activo", "en_duda", "inactivo"}
-    assert set(stats["eventos_proximos"]) >= {"total", "ciudad", "proximos"}
+    if stats["ultima_alta"] is not None:
+        assert set(stats["ultima_alta"]) >= {"nombre", "slug", "fecha"}
 
 
 def test_genres(client):

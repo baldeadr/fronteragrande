@@ -2,19 +2,30 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { fechaCorta } from "@/lib/formato";
+import type { ArtistCard } from "@/lib/types";
+import { ciudadBase } from "@/lib/ciudades";
 import ActividadTemporal from "@/components/stats/ActividadTemporal";
 import CiudadesApiladas from "@/components/stats/CiudadesApiladas";
+import DesglosePorCiudad, {
+  type AtributoDesglose,
+  type FilaDesglose,
+} from "@/components/stats/DesglosePorCiudad";
 import DonaCategorias from "@/components/stats/DonaCategorias";
 import DonaCiudades from "@/components/stats/DonaCiudades";
 import DonaVerificados from "@/components/stats/DonaVerificados";
 import EcosistemaRedes from "@/components/stats/EcosistemaRedes";
 import EstadoRegistroBarras from "@/components/stats/EstadoRegistroBarras";
 import RankingFiltrable from "@/components/stats/RankingFiltrable";
+import {
+  GENERO_PALETA,
+  NIVEL_COLOR,
+  OTRAS_COLOR,
+} from "@/components/stats/colores";
 
 export const metadata: Metadata = {
   title: "Stats de la escena",
   description:
-    "Indicadores de la escena de la frontera grande: actividad en el tiempo, ranking de alcance, huella por red, categorías, ciudades y estados.",
+    "Indicadores de la escena de la frontera grande: actividad en el tiempo, ranking de alcance, huella por red, categorías, ciudades, ligas y géneros.",
 };
 
 const ETIQUETA_ESTADO: Record<string, string> = {
@@ -22,6 +33,37 @@ const ETIQUETA_ESTADO: Record<string, string> = {
   en_duda: "En duda",
   inactivo: "Inactivos",
 };
+
+const GENEROS_DOMINANTES = Object.keys(GENERO_PALETA);
+
+const LIGAS_ATRIBUTOS: AtributoDesglose[] = Object.keys(NIVEL_COLOR).map(
+  (clave) => ({ clave, etiqueta: clave, color: NIVEL_COLOR[clave] }),
+);
+
+function desglosePorCiudad(
+  artistas: ArtistCard[],
+  atributo: (a: ArtistCard) => string | null | undefined,
+): FilaDesglose[] {
+  const porCiudad = new Map<string, Map<string, number>>();
+  for (const a of artistas) {
+    const ciudad = ciudadBase(a.ciudad) || "Sin ciudad";
+    const clave = atributo(a) || "Sin clasificar";
+    if (!porCiudad.has(ciudad)) porCiudad.set(ciudad, new Map());
+    const interno = porCiudad.get(ciudad)!;
+    interno.set(clave, (interno.get(clave) ?? 0) + 1);
+  }
+  const filas: FilaDesglose[] = [];
+  for (const [ciudad, interno] of porCiudad) {
+    const atributos = Object.fromEntries(interno);
+    filas.push({
+      nombre: ciudad,
+      total: Object.values(atributos).reduce((acc, n) => acc + n, 0),
+      atributos,
+    });
+  }
+  filas.sort((a, b) => b.total - a.total);
+  return filas;
+}
 
 export default async function StatsPage() {
   const [stats, artistas] = await Promise.all([api.stats(), api.artists()]);
@@ -35,12 +77,34 @@ export default async function StatsPage() {
   ).length;
   const catalogados = artistas.filter((a) => a.catalogado).length;
   const generos = Object.entries(stats.generos).sort((a, b) => b[1] - a[1]);
+  const altasEsteMes =
+    stats.altas_por_mes[stats.altas_por_mes.length - 1]?.conteo ?? 0;
+
+  const filasLigas = desglosePorCiudad(artistas, (a) =>
+    a.catalogado ? a.nivel : "Escena",
+  );
+  const generosEnDatos = Array.from(
+    new Set(artistas.map((a) => a.genero_dominante).filter(Boolean)),
+  );
+  const generosOrden = [
+    ...GENEROS_DOMINANTES,
+    ...generosEnDatos.filter((g) => !(g in GENERO_PALETA)),
+  ];
+  const atributosGenero: AtributoDesglose[] = generosOrden.map((clave) => ({
+    clave,
+    etiqueta: clave,
+    color: GENERO_PALETA[clave] ?? OTRAS_COLOR,
+  }));
+  const filasGeneros = desglosePorCiudad(
+    artistas,
+    (a) => a.genero_dominante,
+  );
 
   const kpis = [
     { valor: total, etiqueta: "proyectos registrados", color: "var(--accent)" },
     { valor: `${activos}`, etiqueta: `activos (${pctActivos}%)`, color: "var(--activo)" },
     { valor: stats.posts_90dias, etiqueta: "publicaciones en 90 días", color: "var(--en-duda)" },
-    { valor: stats.eventos_proximos.total, etiqueta: "eventos próximos", color: "var(--inactivo)" },
+    { valor: altasEsteMes, etiqueta: "altas este mes", color: "var(--inactivo)" },
   ];
 
   return (
@@ -98,6 +162,18 @@ export default async function StatsPage() {
             color="var(--activo)"
             rotulo="altas"
           />
+          {stats.ultima_alta && (
+            <p className="mt-4 text-sm text-muted">
+              Último en sumarse:{" "}
+              <Link
+                href={`/artistas/${stats.ultima_alta.slug}`}
+                className="font-semibold text-accent hover:underline"
+              >
+                {stats.ultima_alta.nombre}
+              </Link>{" "}
+              · {fechaCorta(stats.ultima_alta.fecha)}
+            </p>
+          )}
         </section>
       </div>
 
@@ -212,39 +288,29 @@ export default async function StatsPage() {
         </section>
 
         <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="mb-3 font-bold">Eventos próximos</h2>
-          {stats.eventos_proximos.proximos.length ? (
-            <div className="flex flex-col gap-2">
-              {stats.eventos_proximos.proximos.map((e) => (
-                <div
-                  key={`${e.nombre}-${e.fecha}`}
-                  className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-3 py-2 text-sm"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{e.nombre}</p>
-                    <p className="text-muted">
-                      {e.ciudad}
-                      {stats.eventos_proximos.ciudad === e.ciudad &&
-                        " · sede principal"}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-sm tabular-nums text-muted">
-                    {fechaCorta(e.fecha)}
-                  </span>
-                </div>
-              ))}
-              <Link
-                href="/eventos"
-                className="text-sm font-semibold text-accent hover:underline"
-              >
-                Ver todos los eventos →
-              </Link>
-            </div>
-          ) : (
-            <p className="text-sm text-muted">Sin eventos programados.</p>
-          )}
+          <h2 className="mb-1 font-bold">Ligas por ciudad</h2>
+          <p className="mb-4 text-sm text-muted">
+            Cuántos proyectos hay de cada liga en cada ciudad. Toca la leyenda
+            para mostrar u ocultar una liga.
+          </p>
+          <DesglosePorCiudad
+            filas={filasLigas}
+            atributos={LIGAS_ATRIBUTOS}
+          />
         </section>
       </div>
+
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
+        <h2 className="mb-1 font-bold">Género por ciudad</h2>
+        <p className="mb-4 text-sm text-muted">
+          Género dominante de los proyectos de cada ciudad (un proyecto cuenta
+          una sola vez, en su género principal).
+        </p>
+        <DesglosePorCiudad
+          filas={filasGeneros}
+          atributos={atributosGenero}
+        />
+      </section>
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 font-bold">Ecosistema de redes</h2>
