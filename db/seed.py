@@ -152,9 +152,14 @@ def cargar_artistas(
         artista.segmento = _normalizar(fila.get("segmento")) or "Sin confirmar"
         artista.ciudad = normalizar_ciudad(_normalizar(fila.get("ciudad"))) or "[PENDIENTE]"
         artista.generos = _normalizar(fila.get("generos")) or "[PENDIENTE]"
-        artista.genero_dominante = clasificar_genero_dominante(
-            str(slug), artista.generos
-        )
+        manual = _normalizar(fila.get("genero_dominante_manual"))
+        if manual:
+            artista.genero_dominante = manual
+            artista.genero_dominante_manual = manual
+        else:
+            artista.genero_dominante = clasificar_genero_dominante(
+                str(slug), artista.generos
+            )
         artista.estado_registro = _normalizar(fila.get("estado_registro")) or "investigado (web)"
         artista.es_propio = _normalizar(fila.get("es_propio")).lower() in (
             "1", "true", "x", "si", "verdadero",

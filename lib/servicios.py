@@ -17,6 +17,7 @@ from db.models import ESTADOS_ACTIVO, NIVELES, Artist, ActivityCheck, AltaRegist
 from lib.helpers import (
     TIPOS_FEED,
     TEXTO_BALANCE_AUDIENCIA_CONSUMO,
+    GENEROS_DOMINANTES,
     balance_audiencia_consumo,
     calcular_indice_universal,
     clasificar_genero_dominante,
@@ -879,9 +880,21 @@ def editar_artista(session: Session, slug: str, datos: dict) -> Artist | None:
         artista.ciudad = (datos.get("ciudad") or "").strip() or "[PENDIENTE]"
     if "generos" in datos:
         artista.generos = (datos.get("generos") or "").strip() or "[PENDIENTE]"
-        artista.genero_dominante = clasificar_genero_dominante(
-            artista.slug, artista.generos
-        )
+        if not artista.genero_dominante_manual:
+            artista.genero_dominante = clasificar_genero_dominante(
+                artista.slug, artista.generos
+            )
+    if "genero_dominante" in datos:
+        manual = (datos.get("genero_dominante") or "").strip()
+        if manual and manual not in GENEROS_DOMINANTES:
+            raise ValueError(f"Género dominante inválido: {manual}")
+        artista.genero_dominante_manual = manual
+        if manual:
+            artista.genero_dominante = manual
+        else:
+            artista.genero_dominante = clasificar_genero_dominante(
+                artista.slug, artista.generos
+            )
     if "bio" in datos:
         artista.bio = datos.get("bio") or ""
     if "notas" in datos:

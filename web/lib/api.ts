@@ -80,6 +80,7 @@ export async function editarArtista(
     nivel: string;
     es_leyenda: boolean;
     generos: string;
+    genero_dominante: string;
     bio: string;
     notas: string;
     logros: string;

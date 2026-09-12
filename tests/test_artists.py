@@ -496,6 +496,58 @@ def test_editar_artista_validaciones(client):
     _limpiar_altas()
 
 
+def test_editar_artista_genero_dominante_manual(client):
+    """El admin puede forzar el dominante y volver al automático.
+
+    `genero_dominante` fija un valor manual que sobrevive a cambios de
+    géneros; enviarlo vacío lo devuelve a la clasificación automática.
+    """
+    alta = client.post(
+        "/api/artists",
+        json={
+            "nombre": "Banda Genero Manual",
+            "categoria": "Banda",
+            "generos": "cumbia / norteño",
+            "redes": [{"plataforma": "ig", "url": "https://www.instagram.com/gm/"}],
+        },
+    )
+    assert alta.status_code == 201
+    slug = alta.json()["slug"]
+    token = {"X-Admin-Token": "clave_admin_test"}
+
+    inicial = client.get(f"/api/artists/{slug}").json()
+    assert inicial["genero_dominante"] == "Cumbia"
+
+    forzado = client.put(
+        f"/api/artists/{slug}", json={"genero_dominante": "Metal"}, headers=token
+    )
+    assert forzado.status_code == 200
+    detalle = client.get(f"/api/artists/{slug}").json()
+    assert detalle["genero_dominante"] == "Metal"
+
+    invalido = client.put(
+        f"/api/artists/{slug}", json={"genero_dominante": "NoExiste"}, headers=token
+    )
+    assert invalido.status_code == 400
+
+    con_generos = client.put(
+        f"/api/artists/{slug}", json={"generos": "cumbia"}, headers=token
+    )
+    assert con_generos.status_code == 200
+    detalle = client.get(f"/api/artists/{slug}").json()
+    assert detalle["genero_dominante"] == "Metal"
+    assert detalle["generos"] == ["cumbia"]
+
+    automatico = client.put(
+        f"/api/artists/{slug}", json={"genero_dominante": ""}, headers=token
+    )
+    assert automatico.status_code == 200
+    detalle = client.get(f"/api/artists/{slug}").json()
+    assert detalle["genero_dominante"] == "Cumbia"
+
+    _limpiar_altas()
+
+
 def test_crear_artista_con_spotify(client, monkeypatch):
     """Alta con enlace de Spotify: el onboarding crea su snapshot sin romper."""
     monkeypatch.setattr(

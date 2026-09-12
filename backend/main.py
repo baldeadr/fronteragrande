@@ -148,12 +148,15 @@ class EditarArtistaEntrada(BaseModel):
     """Cuerpo de PUT /api/artists/{slug} (edición desde el panel de admin).
 
     Todos los campos son opcionales: solo se aplican los presentes.
+    `genero_dominante` fuerza el dominante manualmente ("" lo devuelve a la
+    clasificación automática desde los géneros).
     """
 
     nombre: str | None = None
     ciudad: str | None = None
     categoria: str | None = None
     generos: str | None = None
+    genero_dominante: str | None = None
     bio: str | None = None
     notas: str | None = None
     logros: str | None = None
@@ -957,6 +960,8 @@ def admin_list_artists(
                 "es_leyenda": a.es_leyenda,
                 "ciudad": a.ciudad,
                 "generos": a.generos,
+                "genero_dominante": a.genero_dominante or "",
+                "genero_dominante_manual": a.genero_dominante_manual or "",
                 "estado_activo": a.estado_activo,
                 "estado_registro": a.estado_registro,
                 "es_propio": a.es_propio,

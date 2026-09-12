@@ -145,6 +145,12 @@ def _asegurar_columnas_extra():
                         "genero_dominante VARCHAR(40)"
                     )
                 )
+                conn.execute(
+                    text(
+                        "ALTER TABLE artists ADD COLUMN IF NOT EXISTS "
+                        "genero_dominante_manual VARCHAR(40)"
+                    )
+                )
         if "promo_posts" in inspector.get_table_names():
             # La playlist semanal registra posts sin artista ligado: permitir NULL.
             with engine.begin() as conn:
@@ -228,6 +234,11 @@ def _asegurar_columnas_extra():
             with engine.begin() as conn:
                 conn.execute(
                     text("ALTER TABLE artists ADD COLUMN genero_dominante VARCHAR(40)")
+                )
+        if "genero_dominante_manual" not in columnas:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE artists ADD COLUMN genero_dominante_manual VARCHAR(40)")
                 )
 
 

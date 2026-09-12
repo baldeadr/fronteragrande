@@ -82,6 +82,7 @@ class Artist(Base):
     ciudad: Mapped[str] = mapped_column(String(120), default="[PENDIENTE]")
     generos: Mapped[str] = mapped_column(String(300), default="[PENDIENTE]")
     genero_dominante: Mapped[str] = mapped_column(String(40), default="")
+    genero_dominante_manual: Mapped[str] = mapped_column(String(40), default="")
     estado_registro: Mapped[str] = mapped_column(String(80), default="investigado (web)")
     es_propio: Mapped[bool] = mapped_column(Boolean, default=False)
     nivel: Mapped[str] = mapped_column(String(40), default="", index=True)

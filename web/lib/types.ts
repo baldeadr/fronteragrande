@@ -270,6 +270,8 @@ export interface AdminArtist {
   es_leyenda: boolean;
   ciudad: string;
   generos: string;
+  genero_dominante?: string;
+  genero_dominante_manual?: string;
   estado_activo: string;
   estado_registro: string;
   es_propio: boolean;

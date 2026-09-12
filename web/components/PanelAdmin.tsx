@@ -21,10 +21,12 @@ import {
   eliminarArtista,
 } from "@/lib/api";
 import PanelEventos from "@/components/PanelEventos";
+import { GENERO_PALETA } from "@/components/stats/colores";
 import type { AdminArtist, ArtistaPendiente, LinkAdmin } from "@/lib/types";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"];
 const NIVELES = ["", "Ligas Mayores", "En Ascenso", "Leyenda de la Frontera"];
+const GENEROS_DOMINANTES = Object.keys(GENERO_PALETA);
 
 const PLATAFORMAS: { valor: string; texto: string }[] = [
   { valor: "ig", texto: "Instagram" },
@@ -404,6 +406,9 @@ function FormEditar({
   const [nivel, setNivel] = useState(artista.nivel ?? "");
   const [esLeyenda, setEsLeyenda] = useState(artista.es_leyenda ?? false);
   const [generos, setGeneros] = useState(artista.generos);
+  const [generoDominanteManual, setGeneroDominanteManual] = useState(
+    artista.genero_dominante_manual ?? "",
+  );
   const [estado, setEstado] = useState(artista.estado_activo);
   const [bio, setBio] = useState(artista.bio);
   const [notas, setNotas] = useState(artista.notas);
@@ -430,6 +435,7 @@ function FormEditar({
         nivel,
         es_leyenda: esLeyenda,
         generos: generos.trim(),
+        genero_dominante: generoDominanteManual.trim(),
         estado_activo: estado,
         bio,
         notas,
@@ -509,6 +515,19 @@ function FormEditar({
           placeholder="Géneros (separados por / o ,)"
           className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
         />
+        <select
+          value={generoDominanteManual}
+          onChange={(e) => setGeneroDominanteManual(e.target.value)}
+          title="Género dominante (vacío = automático desde los géneros)"
+          className="rounded-lg border border-line bg-surface px-2 py-2 text-sm outline-none focus:border-accent"
+        >
+          <option value="">Dominante: automático</option>
+          {GENEROS_DOMINANTES.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
         <select
           value={estado}
           onChange={(e) => setEstado(e.target.value)}

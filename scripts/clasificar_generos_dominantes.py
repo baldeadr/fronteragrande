@@ -30,7 +30,10 @@ def main() -> None:
     sin_clasificar: list[tuple[str, str]] = []
 
     for artista in artistas:
-        nuevo = clasificar_genero_dominante(artista.slug, artista.generos)
+        nuevo = (
+            artista.genero_dominante_manual
+            or clasificar_genero_dominante(artista.slug, artista.generos)
+        )
         if nuevo:
             conteo[nuevo] += 1
         else:
