@@ -701,38 +701,44 @@ TEXTO_PATRON_CONSUMO = {
 # ── Géneros dominantes (clasificación interna) ──────────────────────────
 
 GENEROS_DOMINANTES = [
-    "Regional Mexicano",
+    "Regional",
     "Rock",
     "Metal",
     "Urbano",
     "EDM",
     "Dark",
     "Pop",
-    "Cumbia y Tropical",
-    "Raíces",
+    "Cumbia",
+    "Roots",
+    "Experimental",
 ]
 
 # Mapeo de subgéneros conocidos → género dominante.
 # Se busca el token más largo primero (ej. "hip hop" antes de "hop") para
 # que nombres compuestos matcheen correctamente.
 _CLASIFICACION_SUBGENERO: dict[str, str] = {
-    # Regional Mexicano
-    "norteño": "Regional Mexicano",
-    "banda": "Regional Mexicano",
-    "sierreño": "Regional Mexicano",
-    "corridos tumbados": "Regional Mexicano",
-    "corridos tropicales": "Regional Mexicano",
-    "corridos": "Regional Mexicano",
-    "tejano": "Regional Mexicano",
-    "tex-mex": "Regional Mexicano",
-    "grupero": "Regional Mexicano",
-    "regional mexicano": "Regional Mexicano",
-    "regional": "Regional Mexicano",
+    # Regional
+    "norteño": "Regional",
+    "banda": "Regional",
+    "sierreño": "Regional",
+    "corridos tumbados": "Regional",
+    "corridos tropicales": "Regional",
+    "corridos": "Regional",
+    "tejano": "Regional",
+    "tex-mex": "Regional",
+    "grupero": "Regional",
+    "regional mexicano": "Regional",
+    "regional": "Regional",
     # Híbridos cumbia-regional: se tocan en formato norteño/regional y
-    # pertenecen a la familia Regional Mexicano (no a Cumbia y Tropical pura).
-    "cumbia norteña": "Regional Mexicano",
-    "cumbias bélicas": "Regional Mexicano",
-    "cumbia bélica": "Regional Mexicano",
+    # pertenecen a la familia Regional (no a Cumbia pura).
+    "cumbia norteña": "Regional",
+    "cumbias bélicas": "Regional",
+    "cumbia bélica": "Regional",
+    # Tradiciones nucleares del regional: mariachi y la herencia europea
+    # del norteño (conjunto de acordeón y polka alemana).
+    "mariachi": "Regional",
+    "conjunto": "Regional",
+    "polka": "Regional",
     # Rock
     "rock alternativo": "Rock",
     "rock en español": "Rock",
@@ -758,6 +764,9 @@ _CLASIFICACION_SUBGENERO: dict[str, str] = {
     "indie": "Rock",
     "alternative": "Rock",
     "alternativa": "Rock",
+    "alternativo": "Rock",
+    "psychedelic": "Rock",
+    "psicodélico": "Rock",
     "emo": "Rock",
     "rock": "Rock",
     # Metal
@@ -788,8 +797,8 @@ _CLASIFICACION_SUBGENERO: dict[str, str] = {
     "trap": "Urbano",
     "rap": "Urbano",
     "r&b": "Urbano",
+    "urbano": "Urbano",
     # EDM
-    "electronic drone": "EDM",
     "progressive house": "EDM",
     "drum and bass": "EDM",
     "deep house": "EDM",
@@ -817,8 +826,12 @@ _CLASIFICACION_SUBGENERO: dict[str, str] = {
     "cold wave": "Dark",
     "industrial": "Dark",
     "dark electro": "Dark",
+    "techno dark": "Dark",
+    "tecnodark": "Dark",
     "cybercore": "Dark",
     "goth rock": "Dark",
+    "gothic rock": "Dark",
+    "synthwave": "Dark",
     "synthpop": "Dark",
     "synth pop": "Dark",
     "new wave": "Dark",
@@ -828,24 +841,40 @@ _CLASIFICACION_SUBGENERO: dict[str, str] = {
     "pop romantico": "Pop",
     "pop rock": "Pop",
     "pop": "Pop",
-    # Cumbia y Tropical
-    "cumbia tropical": "Cumbia y Tropical",
-    "cumbia villera": "Cumbia y Tropical",
-    "world music": "Cumbia y Tropical",
-    "afrobeat": "Cumbia y Tropical",
-    "tropical": "Cumbia y Tropical",
-    "cumbia": "Cumbia y Tropical",
-    "reggae": "Cumbia y Tropical",
-    "salsa": "Cumbia y Tropical",
-    "ska": "Cumbia y Tropical",
-    # Raíces
-    "jazz": "Raíces",
-    "blues": "Raíces",
-    "soul": "Raíces",
-    "funk": "Raíces",
-    "folk": "Raíces",
-    "trova": "Raíces",
-    "country": "Raíces",
+    # Cumbia
+    "cumbia tropical": "Cumbia",
+    "cumbia villera": "Cumbia",
+    "world music": "Cumbia",
+    "afrobeat": "Cumbia",
+    "tropical": "Cumbia",
+    "cumbia": "Cumbia",
+    "reggae": "Cumbia",
+    "salsa": "Cumbia",
+    "ska": "Cumbia",
+    # Roots: géneros fundacionales que dieron origen al resto de la música
+    # popular (familia Americana/raíz: blues, country, folk, jazz y sus cruces).
+    "jazz": "Roots",
+    "blues": "Roots",
+    "soul": "Roots",
+    "funk": "Roots",
+    "folk": "Roots",
+    "trova": "Roots",
+    "country": "Roots",
+    "americana": "Roots",
+    "bluegrass": "Roots",
+    # Experimental (avanzada sonora): vanguardia, noise, drones y mezclas
+    # que no apuntan a un formato bailable ni a una familia estilística clara.
+    # "noise rock" y "electronic drone" matchean antes por ser más largos.
+    "avant-garde": "Experimental",
+    "avant garde": "Experimental",
+    "vanguardia": "Experimental",
+    "experimental": "Experimental",
+    "electronic drone": "Experimental",
+    "noise": "Experimental",
+    "triphop": "Experimental",
+    "trip hop": "Experimental",
+    "ambient": "Experimental",
+    "progresivo": "Experimental",
 }
 
 # Orden de búsqueda: tokens más largos primero para que "hip hop" matchee
@@ -861,7 +890,7 @@ EXCEPCIONES_GENERO_DOMINANTE: dict[str, str] = {
     "apex_ultra": "Dark",
     "angelic_oz": "Urbano",
     "de_regreso_a_nocheosfera": "Dark",
-    "anidonia": "Dark",
+    "distraught": "Dark",
 }
 
 

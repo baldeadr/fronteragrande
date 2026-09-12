@@ -41,6 +41,81 @@ const limites = [
   "No inventa datos: seguidores, vistas, fechas y logros siempre tienen fuente verificada.",
 ];
 
+// Matriz de los 10 géneros dominantes con sus familias de subgéneros.
+// Fuente de verdad del mapeo: `lib/helpers.py::GENEROS_DOMINANTES`.
+const generos = [
+  {
+    nombre: "Regional",
+    color: "#4fa3e8",
+    subgeneros:
+      "norteño, banda, sierreño, corridos (incl. tumbados y bélicos), tejano/tex-mex, grupero, mariachi, cumbia norteña",
+    nota: "polka y conjunto son su herencia europea",
+  },
+  {
+    nombre: "Rock",
+    color: "#e4572e",
+    subgeneros:
+      "alternativo, punk, pop punk, emo, indie, shoegaze, garage, hard rock, progresivo, psicodélico",
+    nota: null,
+  },
+  {
+    nombre: "Metal",
+    color: "#7d9bb5",
+    subgeneros:
+      "death, nu metal, industrial, metalcore, hardcore, stoner/doom/sludge, progresivo, post-metal",
+    nota: "donde viven muchos covers y tributos",
+  },
+  {
+    nombre: "Urbano",
+    color: "#f5a623",
+    subgeneros:
+      "hip-hop, rap, trap, reggaetón, narco rap, freestyle, R&B",
+    nota: null,
+  },
+  {
+    nombre: "EDM",
+    color: "#36d6d9",
+    subgeneros:
+      "house, techno, trance, drum and bass, dubstep, bass house, electrónica",
+    nota: null,
+  },
+  {
+    nombre: "Dark",
+    color: "#9d4edd",
+    subgeneros:
+      "post-punk, darkwave, coldwave, gothic rock, synthpop/synthwave, industrial",
+    nota: null,
+  },
+  {
+    nombre: "Pop",
+    color: "#ff6384",
+    subgeneros:
+      "pop, latin pop, balada romántica, pop rock",
+    nota: null,
+  },
+  {
+    nombre: "Cumbia",
+    color: "#1db954",
+    subgeneros:
+      "cumbia (tropical, villera, sonidera), afrobeat, salsa, reggae, ska, world music",
+    nota: null,
+  },
+  {
+    nombre: "Roots",
+    color: "#b57edc",
+    subgeneros:
+      "blues, country, jazz, folk, soul, funk, trova, americana, bluegrass",
+    nota: "los géneros que dieron origen al resto",
+  },
+  {
+    nombre: "Experimental",
+    color: "#f2c94c",
+    subgeneros:
+      "noise, drone, ambient, avant-garde/vanguardia, triphop, hyperpop industrial",
+    nota: "para el sonido que no cabe en una sola familia",
+  },
+];
+
 const paginas = [
   {
     href: "/",
@@ -383,6 +458,50 @@ export default function AcercaDePage() {
             <b>Leyenda de la Frontera</b> — por curaduría, no por métricas:
             retirado/a o fallecido/a con legado regional (flag{" "}
             <code>es_leyenda</code> en BD, editable en el panel admin).
+          </p>
+        </div>
+      </details>
+
+      <details className="group rounded-xl border border-line bg-surface">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 font-bold sm:p-5">
+          Cómo se clasifican los géneros
+          <span className="shrink-0 text-lg leading-none text-accent transition-transform duration-200 group-open:rotate-45">
+            +
+          </span>
+        </summary>
+        <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
+          <p>
+            Cada proyecto tiene un <b>género dominante</b> que resume su sonido.
+            Sale automáticamente de los subgéneros que el proyecto declara y se
+            agrupan en <b>10 familias</b>. Los casos ambiguos se resuelven por
+            curaduría editorial. Algunos géneros colindan de verdad (norteño y
+            tex-mex con el country; techno con el industrial), así que se
+            adscriben según su familia dominante:
+          </p>
+
+          <div className="flex flex-col gap-2">
+            {generos.map((g) => (
+              <div
+                key={g.nombre}
+                className="flex items-start gap-2.5 rounded-lg bg-surface-2 px-3 py-2"
+              >
+                <span
+                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: g.color }}
+                />
+                <div className="text-sm leading-relaxed">
+                  <b>{g.nombre}</b>
+                  <span className="text-muted"> — {g.subgeneros}
+                    {g.nota ? ` (${g.nota})` : ""}.
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p>
+            Estas familias alimentan el <b>filtro de género</b> del directorio,
+            las stats y las insignias del tipo <b>N.º 1 del género</b>.
           </p>
         </div>
       </details>

@@ -12,18 +12,19 @@ import { ciudadBase } from "@/lib/ciudades";
 
 const GRUPO_COLOR = { audiencia: "var(--accent)", consumo: "#f5a623" };
 
-// Orden estable de los 9 géneros dominantes del catálogo (coincide con la
+// Orden estable de los 10 géneros dominantes del catálogo (coincide con la
 // taxonomía de `lib.helpers.GENEROS_DOMINANTES` del backend).
 const GENEROS_DOMINANTES = [
-  "Regional Mexicano",
+  "Regional",
   "Rock",
   "Metal",
   "Urbano",
   "EDM",
   "Dark",
   "Pop",
-  "Cumbia y Tropical",
-  "Raíces",
+  "Cumbia",
+  "Roots",
+  "Experimental",
 ];
 
 const COLOR_NIVEL: Record<string, string> = {

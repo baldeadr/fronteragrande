@@ -39,18 +39,19 @@ export const NIVEL_COLOR: Record<string, string> = {
   "Leyenda de la Frontera": "#aab4c8",
 };
 
-/** Paleta estable de los 9 géneros dominantes del catálogo (mismo orden que
+/** Paleta estable de los 10 géneros dominantes del catálogo (mismo orden que
  * `lib.helpers.GENEROS_DOMINANTES`), para el desglose de género por ciudad. */
 export const GENERO_PALETA: Record<string, string> = {
-  "Regional Mexicano": "#4fa3e8",
+  Regional: "#4fa3e8",
   Rock: "#e4572e",
   Metal: "#7d9bb5",
   Urbano: "#f5a623",
   EDM: "#36d6d9",
   Dark: "#9d4edd",
   Pop: "#ff6384",
-  "Cumbia y Tropical": "#1db954",
-  Raíces: "#b57edc",
+  Cumbia: "#1db954",
+  Roots: "#b57edc",
+  Experimental: "#f2c94c",
 };
 
 export const OTRAS_COLOR = "var(--muted)";

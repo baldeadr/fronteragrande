@@ -5,8 +5,10 @@
  * (drill-down): por defecto muestra toda la escena y, si se elige una plaza,
  * la matriz es la de esa ciudad.
  *
- * El porcentaje de cada celda es dentro de su liga; solo se muestra cuando la
- * liga tiene suficientes proyectos para que no sea ruido (1 proyecto = 100%). */
+ * El porcentaje de cada celda es dentro de su liga y solo se muestra cuando
+ * la liga tiene suficientes proyectos (1 proyecto = 100% no aporta lectura).
+ * La columna y la fila de Total muestran la participación de cada liga /
+ * género sobre el total de la vista (escena completa o la ciudad elegida). */
 
 import { useState } from "react";
 import { NIVEL_COLOR } from "@/components/stats/colores";
@@ -41,6 +43,9 @@ export default function CruceLigasGeneros({
     generos.reduce((acc, g) => acc + (matriz[liga]?.[g] || 0), 0);
   const totalPorGenero = (genero: string) =>
     ligas.reduce((acc, l) => acc + (matriz[l]?.[genero] || 0), 0);
+  const granTotal = ligas.reduce((acc, l) => acc + totalPorLiga(l), 0);
+  const pctDeEscena = (n: number) =>
+    granTotal > 0 ? Math.round((n / granTotal) * 100) : 0;
 
   return (
     <div>
@@ -89,7 +94,7 @@ export default function CruceLigasGeneros({
           <tbody>
             {ligas.map((liga) => {
               const total = totalPorLiga(liga);
-              const mostrarPct = total >= MIN_PROYECTOS_PARA_PCT;
+              const mostrarTextoPct = total >= MIN_PROYECTOS_PARA_PCT;
               return (
                 <tr key={liga} className="border-t border-line">
                   <td className="sticky left-0 z-10 whitespace-nowrap bg-surface py-1.5 pr-3 font-medium">
@@ -103,12 +108,15 @@ export default function CruceLigasGeneros({
                   </td>
                   {generos.map((g) => {
                     const n = matriz[liga]?.[g] || 0;
-                    const pct = mostrarPct && total
+                    const pct = total
                       ? Math.round((n / total) * 100)
                       : 0;
+                    const mostrarPct =
+                      mostrarTextoPct && n > 0;
                     // Heatmap: intensidad del color de la liga según el % dentro
-                    // de esa liga (0 = celda vacía).
-                    const alfa = mostrarPct && n > 0
+                    // de esa liga (0 = celda vacía). Siempre se ilumina si hay
+                    // cantidad, aunque no se muestre el % para ligas pequeñas.
+                    const alfa = n > 0
                       ? 0.1 + 0.55 * (pct / 100)
                       : 0;
                     return (
@@ -127,7 +135,7 @@ export default function CruceLigasGeneros({
                         <div className="text-sm font-medium leading-tight">
                           {n}
                         </div>
-                        {mostrarPct && n > 0 && (
+                        {mostrarPct && (
                           <div className="text-[11px] leading-tight text-muted">
                             {pct}%
                           </div>
@@ -137,9 +145,9 @@ export default function CruceLigasGeneros({
                   })}
                   <td className="px-2 py-1.5 text-right font-bold tabular-nums">
                     {total}
-                    {mostrarPct && (
+                    {total > 0 && (
                       <div className="text-[11px] font-normal leading-tight text-muted">
-                        100%
+                        {pctDeEscena(total)}%
                       </div>
                     )}
                   </td>
@@ -162,11 +170,16 @@ export default function CruceLigasGeneros({
                     }`}
                   >
                     {n}
+                    {n > 0 && (
+                      <div className="text-[10px] font-normal leading-tight text-muted/70">
+                        {pctDeEscena(n)}%
+                      </div>
+                    )}
                   </td>
                 );
               })}
               <td className="px-2 py-1.5 text-right text-xs font-bold tabular-nums text-muted">
-                {ligas.reduce((acc, l) => acc + totalPorLiga(l), 0)}
+                {granTotal}
               </td>
             </tr>
           </tfoot>
