@@ -15,6 +15,7 @@ const enlaces = [
   { href: "/eventos", texto: "Eventos" },
   { href: "/stats", texto: "Stats" },
   { href: "/acerca-de", texto: "Acerca de" },
+  { href: "/ayuda-artistas", texto: "Ayuda" },
 ];
 
 function IconoBuscar({ className = "" }: { className?: string }) {

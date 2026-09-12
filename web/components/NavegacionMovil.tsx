@@ -9,6 +9,7 @@ const destinos = [
   { href: "/eventos", texto: "Eventos", icono: "eventos" },
   { href: "/stats", texto: "Stats", icono: "stats" },
   { href: "/acerca-de", texto: "Acerca", icono: "acerca" },
+  { href: "/ayuda-artistas", texto: "Ayuda", icono: "ayuda" },
 ] as const;
 
 function Icono({ tipo }: { tipo: (typeof destinos)[number]["icono"] }) {
@@ -33,6 +34,9 @@ function Icono({ tipo }: { tipo: (typeof destinos)[number]["icono"] }) {
   }
   if (tipo === "acerca") {
     return <svg {...props}><circle cx="12" cy="12" r="8" /><path d="M12 11v5m0-8h.01" /></svg>;
+  }
+  if (tipo === "ayuda") {
+    return <svg {...props}><circle cx="12" cy="12" r="8" /><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.1.9-1.1 1.8m.1 3h.01" /></svg>;
   }
   return <svg {...props}><path d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8V5" /></svg>;
 }
