@@ -62,13 +62,6 @@ const GRUPOS: {
     seleccionar: (a) => !a.catalogado,
   },
   {
-    clave: "ligas_mayores",
-    etiqueta: "Ligas Mayores",
-    color: COLOR_NIVEL["Ligas Mayores"],
-    icono: "Ligas Mayores",
-    seleccionar: (a) => a.nivel === "Ligas Mayores",
-  },
-  {
     clave: "emergente",
     etiqueta: "Emergente",
     color: COLOR_NIVEL["Emergente"],
@@ -76,8 +69,15 @@ const GRUPOS: {
     seleccionar: (a) => a.nivel === "Emergente",
   },
   {
+    clave: "ligas_mayores",
+    etiqueta: "Ligas Mayores",
+    color: COLOR_NIVEL["Ligas Mayores"],
+    icono: "Ligas Mayores",
+    seleccionar: (a) => a.nivel === "Ligas Mayores",
+  },
+  {
     clave: "leyenda",
-    etiqueta: "Leyenda",
+    etiqueta: "Leyenda de la Frontera",
     color: COLOR_NIVEL["Leyenda de la Frontera"],
     icono: "Leyenda de la Frontera",
     seleccionar: (a) => a.nivel === "Leyenda de la Frontera",

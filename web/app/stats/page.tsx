@@ -336,11 +336,9 @@ export default async function StatsPage() {
         <p className="mb-4 text-sm text-muted">
           Cuántos proyectos hay de cada liga según su género dominante (cada
           proyecto cuenta una sola vez). Elige una ciudad para ver su cruce; el
-          porcentaje de cada celda es dentro de su liga y solo se muestra
-          cuando la liga tiene suficientes proyectos (el color sí siempre
-          refleja la concentración). La fila y la columna de Total indican la
-          participación de cada liga/género sobre el total de la vista.
-          Desliza la tabla hacia los lados si es muy ancha.
+          porcentaje de cada celda es dentro de su liga. La fila y la columna de
+          Total indican la participación de cada liga/género sobre el total de
+          la vista. Desliza la tabla hacia los lados si es muy ancha.
         </p>
         <CruceLigasGeneros
           generos={generosOrden}

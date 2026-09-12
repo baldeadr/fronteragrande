@@ -5,15 +5,14 @@
  * (drill-down): por defecto muestra toda la escena y, si se elige una plaza,
  * la matriz es la de esa ciudad.
  *
- * El porcentaje de cada celda es dentro de su liga y solo se muestra cuando
- * la liga tiene suficientes proyectos (1 proyecto = 100% no aporta lectura).
- * La columna y la fila de Total muestran la participación de cada liga /
- * género sobre el total de la vista (escena completa o la ciudad elegida). */
+ * El porcentaje de cada celda es dentro de su liga y se muestra siempre que
+ * la celda tenga proyectos. La columna y la fila de Total muestran la
+ * participación de cada liga / género sobre el total de la vista (escena
+ * completa o la ciudad elegida). */
 
 import { useState } from "react";
 import { NIVEL_COLOR } from "@/components/stats/colores";
-
-const MIN_PROYECTOS_PARA_PCT = 5;
+import { IconoLiga } from "@/components/IconoLiga";
 
 type Matriz = Record<string, Record<string, number>>;
 
@@ -94,15 +93,13 @@ export default function CruceLigasGeneros({
           <tbody>
             {ligas.map((liga) => {
               const total = totalPorLiga(liga);
-              const mostrarTextoPct = total >= MIN_PROYECTOS_PARA_PCT;
               return (
                 <tr key={liga} className="border-t border-line">
                   <td className="sticky left-0 z-10 whitespace-nowrap bg-surface py-1.5 pr-3 font-medium">
                     <span className="inline-flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: NIVEL_COLOR[liga] }}
-                      />
+                      <span style={{ color: NIVEL_COLOR[liga] }}>
+                        <IconoLiga nivel={liga} className="h-3.5 w-3.5" />
+                      </span>
                       {liga}
                     </span>
                   </td>
@@ -111,11 +108,10 @@ export default function CruceLigasGeneros({
                     const pct = total
                       ? Math.round((n / total) * 100)
                       : 0;
-                    const mostrarPct =
-                      mostrarTextoPct && n > 0;
+                    const mostrarPct = n > 0;
                     // Heatmap: intensidad del color de la liga según el % dentro
-                    // de esa liga (0 = celda vacía). Siempre se ilumina si hay
-                    // cantidad, aunque no se muestre el % para ligas pequeñas.
+                    // de esa liga (0 = celda vacía). El % se muestra siempre que
+                    // la celda tenga proyectos.
                     const alfa = n > 0
                       ? 0.1 + 0.55 * (pct / 100)
                       : 0;
