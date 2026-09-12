@@ -1093,7 +1093,7 @@ PESO_COBERTURA = 0.3
 
 # Umbrales fijos de clasificación (documentados en AGENTS.md y en la web):
 UMBRAL_LIGAS_MAYORES = 60.0   # ≥ 60 = Ligas Mayores
-UMBRAL_EN_ASCENSO = 50.0      # ≥ 50 = En Ascenso
+UMBRAL_EMERGENTE = 50.0      # ≥ 50 = Emergente
 
 
 def _ratio_frente_techo(valor: float, techo: float) -> float:
@@ -1156,17 +1156,17 @@ def calcular_indice_universal(
 def clasificar_por_indice(
     indice_universal: dict[str, float],
     umbral_ligas: float = UMBRAL_LIGAS_MAYORES,
-    umbral_ascenso: float = UMBRAL_EN_ASCENSO,
+    umbral_emergente: float = UMBRAL_EMERGENTE,
 ) -> dict[str, str]:
     """Clasifica artistas en tres niveles según umbrales fijos del índice.
 
     Args:
         indice_universal: {slug: índice 0-100} calculado contra techos fijos.
         umbral_ligas: Índice mínimo para Ligas Mayores (≥ 60).
-        umbral_ascenso: Índice mínimo para En Ascenso (≥ 50).
+        umbral_emergente: Índice mínimo para Emergente (≥ 50).
 
     Returns:
-        {slug: "Ligas Mayores" | "En Ascenso" | ""}
+        {slug: "Ligas Mayores" | "Emergente" | ""}
 
     Los umbrales son absolutos y no dependen de la distribución de la escena:
     quien supera el umbral lo supera aunque la escena crezca. Nota: "Leyenda de
@@ -1176,8 +1176,8 @@ def clasificar_por_indice(
     for slug, idx in indice_universal.items():
         if idx >= umbral_ligas:
             resultado[slug] = "Ligas Mayores"
-        elif idx >= umbral_ascenso:
-            resultado[slug] = "En Ascenso"
+        elif idx >= umbral_emergente:
+            resultado[slug] = "Emergente"
         else:
             resultado[slug] = ""
     return resultado

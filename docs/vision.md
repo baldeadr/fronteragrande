@@ -141,14 +141,23 @@ y lo clasifica en dos grupos separados para una competición justa.
 ### Clasificación automática (on-the-fly)
 Umbrales **fijos y documentados** (no dependen de la composición de la escena):
 - **Ligas Mayores**: índice universal **≥ 60**.
-- **En Ascenso**: índice universal **≥ 50** (y < 60).
+- **Emergente**: índice universal **≥ 50** (y < 60).
 - **Leyenda de la Frontera**: **manual/editorial** (flag `es_leyenda` en BD + fuente en `notas`).
 - **Escena (base)**: índice < 50 (sin nivel calculado).
 
 ### Rankings visibles (independientes por grupo)
-- **Ranking de Ligas**: normaliza 0-100 solo entre catalogados (Ligas Mayores + En Ascenso + Leyenda).
+- **Ranking de Ligas**: normaliza 0-100 solo entre catalogados (Ligas Mayores + Emergente + Leyenda).
 - **Ranking de la escena**: normaliza 0-100 solo entre la escena base.
 - Cada grupo tiene su #1 con índice 100 (descubrimiento justo dentro del grupo).
+
+### Criterio editorial de las Ligas (interno y público)
+Las Ligas describen **reconocimiento**, no sostenibilidad económica. Un proyecto
+**Emergente** se distingue de la base con audiencia y actividad reales, pero eso
+no implica que viva de su música (ni se mide ni se promete); la sostenibilidad
+suele llegar recién en **Ligas Mayores**. El índice mide **alcance verificable**
+(audiencia, consumo y actividad), nunca ingresos ni fama del momento. Este matiz
+está en la página Acerca de y guía la curaduría: un emergente puede frenarse
+temporalmente y seguir siendo emergente — es una cualidad, no un titular.
 
 ### Techos de referencia (documentados)
 ```

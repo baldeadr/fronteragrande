@@ -38,7 +38,6 @@ function esMencionFronteraGrande(mencion: string): boolean {
 function ligaCorta(liga: string): string {
   if (liga === "Leyenda de la Frontera") return "Leyenda";
   if (liga === "Ligas Mayores") return "Ligas May.";
-  if (liga === "En Ascenso") return "En Ascenso";
   return liga || "Escena";
 }
 
@@ -287,7 +286,7 @@ export default async function PerfilPage({
               const insigniasFiltradas = artist.menciones;
 
               // Todos muestran sus insignias competitivas (dentro de su liga).
-              // Quien tiene Liga (En Ascenso, Ligas Mayores, Leyenda) además
+              // Quien tiene Liga (Emergente, Ligas Mayores, Leyenda) además
               // lleva un badge de identificación de su liga.
               if (insigniasFiltradas.length === 0 && !tieneLiga) return null;
 
@@ -301,7 +300,7 @@ export default async function PerfilPage({
                     </h2>
                     <span
                       className="relative inline-flex h-5 w-5 items-center justify-center rounded-full border border-line bg-surface text-muted hover:text-accent cursor-help"
-                      title="Cada proyecto compite por insignias dentro de su liga: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Las Ligas (En Ascenso, Ligas Mayores, Leyenda) muestran además su badge de liga."
+                      title="Cada proyecto compite por insignias dentro de su liga: categoría, género, ciudad y 'Nº X de la Frontera Grande'. Las Ligas (Emergente, Ligas Mayores, Leyenda) muestran además su badge de liga."
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                         <circle cx="12" cy="12" r="10"/>

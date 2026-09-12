@@ -399,7 +399,7 @@ export default function AcercaDePage() {
         <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
           <p>
             La escena se organiza en <b>cuatro ligas</b>: <b>Escena</b> (la
-            base, todos los proyectos), <b>En Ascenso</b>, <b>Ligas Mayores</b>{" "}
+            base, todos los proyectos), <b>Emergente</b>, <b>Ligas Mayores</b>{" "}
             y <b>Leyenda de la Frontera</b>. Cada una tiene su propia
             clasificación y, aparte, un <b>ranking universal</b> que las mide a
             todas a la vez.
@@ -438,9 +438,10 @@ export default function AcercaDePage() {
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#2fb8a6" }}>
-              <IconoLiga nivel="En Ascenso" className="h-3.5 w-3.5 shrink-0" />
+              <IconoLiga nivel="Emergente" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>En Ascenso</b> — índice <b>≥ 50</b> (y menor a 60).
+            <b>Emergente</b> — índice <b>≥ 50</b> (y menor a 60): se distingue
+            de la base con audiencia y presencia reales.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#f5b301" }}>
@@ -555,10 +556,14 @@ export default function AcercaDePage() {
           </div>
 
           <p className="text-sm leading-relaxed text-muted">
-            Los proyectos de <b>En Ascenso</b>, <b>Ligas Mayores</b> y{" "}
+            Los proyectos de <b>Emergente</b>, <b>Ligas Mayores</b> y{" "}
             <b>Leyenda de la Frontera</b> compiten dentro de su liga y muestran
             además su badge de liga. La <b>Escena</b> (la base) compite entre
             todos sus proyectos.
+          </p>
+          <p className="text-sm leading-relaxed text-muted">
+            Las Ligas se clasifican por <b>alcance verificable</b> (audiencia,
+            consumo y actividad), no por ingresos ni por fama del momento.
           </p>
         </div>
       </details>

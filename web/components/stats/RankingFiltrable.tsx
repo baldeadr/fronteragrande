@@ -29,7 +29,7 @@ const GENEROS_DOMINANTES = [
 
 const COLOR_NIVEL: Record<string, string> = {
   "Ligas Mayores": "#f5b301",
-  "En Ascenso": "#2fb8a6",
+  Emergente: "#2fb8a6",
   "Leyenda de la Frontera": "#aab4c8",
 };
 
@@ -37,7 +37,7 @@ type ClaveGrupo =
   | "todos"
   | "escena"
   | "ligas_mayores"
-  | "en_ascenso"
+  | "emergente"
   | "leyenda";
 
 const GRUPOS: {
@@ -69,11 +69,11 @@ const GRUPOS: {
     seleccionar: (a) => a.nivel === "Ligas Mayores",
   },
   {
-    clave: "en_ascenso",
-    etiqueta: "En Ascenso",
-    color: COLOR_NIVEL["En Ascenso"],
-    icono: "En Ascenso",
-    seleccionar: (a) => a.nivel === "En Ascenso",
+    clave: "emergente",
+    etiqueta: "Emergente",
+    color: COLOR_NIVEL["Emergente"],
+    icono: "Emergente",
+    seleccionar: (a) => a.nivel === "Emergente",
   },
   {
     clave: "leyenda",

@@ -37,7 +37,7 @@ SEGMENTOS = [
 # catalogados se muestran en el ranking de Ligas aparte.
 NIVELES = [
     "Ligas Mayores",
-    "En Ascenso",
+    "Emergente",
     "Leyenda de la Frontera",
 ]
 

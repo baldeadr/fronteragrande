@@ -25,7 +25,7 @@ export default function Directorio({
     [artistas],
   );
   // Las 4 ligas: la Escena es la base (nivel vacío).
-  const LIGAS = ["Escena", "En Ascenso", "Ligas Mayores", "Leyenda de la Frontera"];
+  const LIGAS = ["Escena", "Emergente", "Ligas Mayores", "Leyenda de la Frontera"];
   const ligasPresentes = LIGAS.filter((l) =>
     artistas.some((a) => (l === "Escena" ? !a.nivel : a.nivel === l)),
   );

@@ -1,7 +1,7 @@
 export const INFO_LIGAS: Record<string, string> = {
   Escena: "#9d4edd",
   "Ligas Mayores": "#f5b301",
-  "En Ascenso": "#2fb8a6",
+  Emergente: "#2fb8a6",
   "Leyenda de la Frontera": "#aab4c8",
 };
 
@@ -19,10 +19,10 @@ export function IconoLiga({
       </svg>
     );
   }
-  if (nivel === "En Ascenso") {
+  if (nivel === "Emergente") {
     return (
       <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z" />
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
       </svg>
     );
   }

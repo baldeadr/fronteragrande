@@ -34,7 +34,7 @@ export const CIUDAD_PALETA: string[] = [
 /** Colores de las 4 ligas (Escena incluida), estables para las gráficas por ciudad. */
 export const NIVEL_COLOR: Record<string, string> = {
   Escena: "#9d4edd",
-  "En Ascenso": "#2fb8a6",
+  Emergente: "#2fb8a6",
   "Ligas Mayores": "#f5b301",
   "Leyenda de la Frontera": "#aab4c8",
 };

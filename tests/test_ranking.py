@@ -104,14 +104,14 @@ def test_indices_consumo_spotify_usa_oyentes():
 def test_clasificacion_por_indice_tres_niveles():
     from lib.helpers import clasificar_por_indice
 
-    # Umbrales fijos documentados: ≥ 60 Ligas Mayores, ≥ 50 En Ascenso.
+    # Umbrales fijos documentados: ≥ 60 Ligas Mayores, ≥ 50 Emergente.
     indice = {
         "rookie_1": 0.0,
         "rookie_2": 20.0,
         "comun": 45.0,
-        "ascenso_1": 49.9,
-        "ascenso_2": 50.0,
-        "ascenso_3": 59.9,
+        "emergente_1": 49.9,
+        "emergente_2": 50.0,
+        "emergente_3": 59.9,
         "ligas_1": 60.0,
         "ligas_2": 70.0,
         "ligas_3": 100.0,
@@ -121,9 +121,9 @@ def test_clasificacion_por_indice_tres_niveles():
     assert resultado["rookie_1"] == ""
     assert resultado["rookie_2"] == ""
     assert resultado["comun"] == ""
-    assert resultado["ascenso_1"] == ""  # 49.9 < 50
-    assert resultado["ascenso_2"] == "En Ascenso"  # 50 >= 50
-    assert resultado["ascenso_3"] == "En Ascenso"  # 59.9 < 60
+    assert resultado["emergente_1"] == ""  # 49.9 < 50
+    assert resultado["emergente_2"] == "Emergente"  # 50 >= 50
+    assert resultado["emergente_3"] == "Emergente"  # 59.9 < 60
     assert resultado["ligas_1"] == "Ligas Mayores"  # 60 >= 60
     assert resultado["ligas_2"] == "Ligas Mayores"
     assert resultado["ligas_3"] == "Ligas Mayores"
@@ -138,7 +138,7 @@ def test_clasificacion_umbrales_absolutos_no_dependen_de_la_escena():
     resultado = clasificar_por_indice(indice)
     assert resultado["a"] == ""
     assert resultado["b"] == ""
-    assert resultado["c"] == "En Ascenso"
+    assert resultado["c"] == "Emergente"
 
 
 def test_clasificacion_vacio():
@@ -147,13 +147,13 @@ def test_clasificacion_vacio():
     assert clasificar_por_indice({}) == {}
 
 
-def test_clasificacion_ascenso_mejor_que_rookie_peor_que_ligas():
+def test_clasificacion_emergente_mejor_que_rookie_peor_que_ligas():
     from lib.helpers import clasificar_por_indice
 
     indice = {"a": 0.0, "b": 55.0, "c": 65.0}
     resultado = clasificar_por_indice(indice)
     # Los niveles tienen orden estricto
-    orden = {"Ligas Mayores": 2, "En Ascenso": 1, "": 0}
+    orden = {"Ligas Mayores": 2, "Emergente": 1, "": 0}
     assert orden[resultado["c"]] > orden[resultado["b"]] > orden[resultado["a"]]
 
 

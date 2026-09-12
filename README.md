@@ -40,6 +40,7 @@ Base de datos interactiva de los **proyectos musicales de la frontera grande de 
 Desplegado **gratis** con Vercel (web) + Render (API) + Neon (PostgreSQL);
 paso a paso y arquitectura: [docs/despliegue.md](docs/despliegue.md).
 La configuración de notificaciones Web Push está en [docs/push.md](docs/push.md).
+El correo oficial `@fronteragrande.mx` (Email Routing en Cloudflare) está en [docs/email.md](docs/email.md).
 El **dominio** público es **`fronteragrande.mx`**, registrado en Cloudflare por
 $30.70 USD durante un año, con vencimiento el 2027-08-20. Metadatos, sitemap y
 robots ya lo usan por defecto.
@@ -150,7 +151,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
 
 ## Modelo de datos
 
-- **artists** — nombre, categoría de proyecto (Banda / Solista / DJ / Colectivo / Covers / Tributo; MC y Productor como Solista por ahora), ciudad, géneros, estado de registro, métricas por red (seguidores y reproducciones/vistas: `followers_*` —incluye `followers_soundcloud`—, `vistas_yt`, `vistas_tt`, `reproducciones_spotify`, `reproducciones_bandcamp`, `reproducciones_soundcloud`), fechas de último lanzamiento/evento, estado de actividad, foto de perfil (`imagen_perfil` + `imagen_origen` + `imagen_actualizada`, obtenidas como URL desde las redes sin descargar). El campo interno sigue llamándose `segmento` (nombre de etiqueta de UI: **categoría**); `es_propio` (proyecto del propio universo) es un flag booleano derivado de la columna CSV del mismo nombre. `nivel` (nombre de etiqueta de UI: **Liga**) es un flag de catálogo ortogonal a categoría: vacío = escena local base, o **Liga Mayor / En Ascenso / Leyenda de la Frontera** (estos salen en un ranking de Ligas aparte).
+- **artists** — nombre, categoría de proyecto (Banda / Solista / DJ / Colectivo / Covers / Tributo; MC y Productor como Solista por ahora), ciudad, géneros, estado de registro, métricas por red (seguidores y reproducciones/vistas: `followers_*` —incluye `followers_soundcloud`—, `vistas_yt`, `vistas_tt`, `reproducciones_spotify`, `reproducciones_bandcamp`, `reproducciones_soundcloud`), fechas de último lanzamiento/evento, estado de actividad, foto de perfil (`imagen_perfil` + `imagen_origen` + `imagen_actualizada`, obtenidas como URL desde las redes sin descargar). El campo interno sigue llamándose `segmento` (nombre de etiqueta de UI: **categoría**); `es_propio` (proyecto del propio universo) es un flag booleano derivado de la columna CSV del mismo nombre. `nivel` (nombre de etiqueta de UI: **Liga**) es un flag de catálogo ortogonal a categoría: vacío = escena local base, o **Liga Mayor / Emergente / Leyenda de la Frontera** (estos salen en un ranking de Ligas aparte).
 - **artist_links** — enlaces por plataforma (`ig`, `fb`, `yt`, `tt`, `x`, `spotify`, `bandcamp`, `soundcloud`, `beatport`, `mixcloud`, `apple`, `linktree`, `deezer`, `web`, `email`…); marca si es un enlace de búsqueda y no la página oficial. Los correos se guardan como `mailto:` con plataforma `email`.
 - **events** — eventos de la escena: fecha, lugar, ciudad, cartel y qué demuestran.
 - **activity_checks** — historial de chequeos del scraper (snapshots).

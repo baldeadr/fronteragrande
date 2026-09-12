@@ -49,7 +49,7 @@ def test_artists_ranking_grupos(client):
     consecutivos dentro de cada grupo (no conviven la escena local y las Ligas).
     """
     datos = client.get("/api/artists").json()
-    # El ranking ahora es por liga: Escena, En Ascenso, Ligas Mayores, Leyenda.
+    # El ranking ahora es por liga: Escena, Emergente, Ligas Mayores, Leyenda.
     por_liga: dict[str, list] = {}
     for a in datos:
         por_liga.setdefault(a["ranking"]["liga"], []).append(a)

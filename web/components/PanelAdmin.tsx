@@ -25,7 +25,7 @@ import { GENERO_PALETA } from "@/components/stats/colores";
 import type { AdminArtist, ArtistaPendiente, LinkAdmin } from "@/lib/types";
 
 const CATEGORIAS = ["Banda", "Solista", "DJ", "Colectivo", "Covers", "Tributo"];
-const NIVELES = ["", "Ligas Mayores", "En Ascenso", "Leyenda de la Frontera"];
+const NIVELES = ["", "Ligas Mayores", "Emergente", "Leyenda de la Frontera"];
 const GENEROS_DOMINANTES = Object.keys(GENERO_PALETA);
 
 const PLATAFORMAS: { valor: string; texto: string }[] = [

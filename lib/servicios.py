@@ -512,7 +512,7 @@ def menciones_ranking(df: pd.DataFrame, indices: dict[str, float]) -> dict[str, 
 
 
 # Las 4 ligas de la escena: la Escena (base) es una liga más.
-LIGAS_ORDEN = ["Escena", "En Ascenso", "Ligas Mayores", "Leyenda de la Frontera"]
+LIGAS_ORDEN = ["Escena", "Emergente", "Ligas Mayores", "Leyenda de la Frontera"]
 
 
 def liga_de_nivel(nivel_calculado: str) -> str:
@@ -644,7 +644,7 @@ def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[st
     """Ranking de alcance y menciones de la escena local (Escena).
 
     Solo participan los artistas sin nivel calculado (`nivel_calculado == ""`).
-    Los catalogados (Ligas Mayores / En Ascenso / Leyenda de la Frontera) van
+    Los catalogados (Ligas Mayores / Emergente / Leyenda de la Frontera) van
     al ranking de Ligas.
     """
     base = df[df["nivel_calculado"].fillna("") == ""]
@@ -654,7 +654,7 @@ def ranking_global(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[st
 def ranking_ligas(df: pd.DataFrame) -> tuple[dict[str, dict], dict[str, list[str]]]:
     """Ranking de alcance de los artistas catalogados en Ligas.
 
-    Agrupa juntos a Ligas Mayores, En Ascenso y Leyenda de la Frontera en una
+    Agrupa juntos a Ligas Mayores, Emergente y Leyenda de la Frontera en una
     gráfica aparte (no se subdividen por ahora). Devuelve el ranking y las
     menciones normalizados solo entre ellos.
     """
