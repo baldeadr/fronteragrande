@@ -1,4 +1,4 @@
-const CACHE = "fronteragrande-v2";
+const CACHE = "fronteragrande-v3";
 const PRECACHE = [
   "/",
   "/manifest.webmanifest",
