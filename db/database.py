@@ -151,6 +151,15 @@ def _asegurar_columnas_extra():
                         "genero_dominante_manual VARCHAR(40)"
                     )
                 )
+                # 2026-09-12: renombrado de la liga "En Ascenso" → "Emergente".
+                # Migración de datos idempotente: normaliza la columna `nivel`
+                # (valores guardados a mano desde el admin antes del rename).
+                conn.execute(
+                    text(
+                        "UPDATE artists SET nivel = 'Emergente' "
+                        "WHERE nivel = 'En Ascenso'"
+                    )
+                )
         if "promo_posts" in inspector.get_table_names():
             # La playlist semanal registra posts sin artista ligado: permitir NULL.
             with engine.begin() as conn:
@@ -240,6 +249,14 @@ def _asegurar_columnas_extra():
                 conn.execute(
                     text("ALTER TABLE artists ADD COLUMN genero_dominante_manual VARCHAR(40)")
                 )
+        # 2026-09-12: migración de datos — normalizar "En Ascenso" → "Emergente"
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "UPDATE artists SET nivel = 'Emergente' "
+                    "WHERE nivel = 'En Ascenso'"
+                )
+            )
 
 
 _asegurar_columnas_extra()
