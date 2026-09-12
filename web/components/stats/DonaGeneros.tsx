@@ -18,6 +18,7 @@ export default function DonaGeneros({
   artistas: ArtistCard[];
 }) {
   const [sel, setSel] = useState<string | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
 
   const conteo = new Map<string, number>();
   for (const a of artistas) {
@@ -58,6 +59,8 @@ export default function DonaGeneros({
           <g transform={`rotate(-90 ${RADIO} ${RADIO})`}>
             {cortes.map((corte) => {
               const activa = sel === corte.k;
+              const atenuada =
+                hover !== null && hover !== corte.k && !activa;
               return (
                 <circle
                   key={corte.k}
@@ -69,9 +72,9 @@ export default function DonaGeneros({
                   strokeWidth={GROSOR}
                   strokeDasharray={`${corte.fraccion * c} ${c - corte.fraccion * c}`}
                   strokeDashoffset={-(corte.inicio - corte.fraccion) * c}
-                  opacity={sel === null || activa ? 1 : 0.3}
-                  onMouseEnter={() => setSel(corte.k)}
-                  onMouseLeave={() => setSel(null)}
+                  opacity={atenuada ? 0.35 : 1}
+                  onMouseEnter={() => setHover(corte.k)}
+                  onMouseLeave={() => setHover(null)}
                   onClick={() => setSel(activa ? null : corte.k)}
                   className="cursor-pointer"
                   style={{ transition: "opacity 120ms" }}
@@ -103,12 +106,12 @@ export default function DonaGeneros({
           {datos.map((d) => (
             <button
               key={d.k}
-              onMouseEnter={() => setSel(d.k)}
-              onMouseLeave={() => setSel(null)}
+              onMouseEnter={() => setHover(d.k)}
+              onMouseLeave={() => setHover(null)}
               onClick={() => setSel(sel === d.k ? null : d.k)}
               className={`flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors ${
                 sel === d.k ? "bg-surface-2" : ""
-              }`}
+              } ${hover === d.k ? "bg-surface-2/50" : ""}`}
             >
               <span
                 className="h-2.5 w-2.5 rounded-full"
