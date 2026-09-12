@@ -72,6 +72,18 @@ export default function AyudaArtistasPage() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6">
+        <h2 className="text-lg font-bold">
+          ¿Por qué una página profesional y no tu perfil personal?
+        </h2>
+        <ul className="flex flex-col gap-2 text-sm leading-relaxed text-muted">
+          <li>✓ La verificación y la sincronización funcionan <b className="text-text">solo con páginas o cuentas profesionales</b>: Facebook con la página de tu proyecto; Instagram y TikTok con cuentas de negocio o creador. Con un perfil personal no se puede conectar tu contenido.</li>
+          <li>✓ Una página es <b className="text-text">tu vitrina</b>: foto, portada, enlaces, información y varios administradores. Separa tu identidad artística de tu vida personal.</li>
+          <li>✓ <b className="text-text">Venues, promotores y patrocinadores buscan proyectos con cara y con datos.</b> Una página bien armada dice “esto es un proyecto serio” — parte de formalizar la escena.</li>
+          <li>✓ Al verificarla <b className="text-text">tomas el control</b> de tu ficha en Frontera Grande: badge, edición propia y posts que llegan solos.</li>
+        </ul>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 sm:p-6">
         <h2 className="text-lg font-bold">Antes de conectar Facebook</h2>
         <ul className="flex flex-col gap-2 text-sm leading-relaxed text-muted">
           <li>• Usa la cuenta personal de Facebook que administra la página del proyecto.</li>

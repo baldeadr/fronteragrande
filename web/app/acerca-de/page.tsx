@@ -33,6 +33,7 @@ const que_es = [
   "Cada proyecto se descubre, se escucha y se ve en sus redes: previews y enlaces directos (el puente).",
   "Stats de la escena: categorías, ciudades, actividad real y huella digital por plataforma.",
   "Diseñada para crecer: a otras regiones y a otras disciplinas artísticas.",
+  "Un impulso a la profesionalización de la escena: la verificación funciona con páginas y cuentas profesionales, y recomendamos a cada proyecto operar con cara de proyecto en redes — no con su perfil personal.",
 ];
 
 const limites = [

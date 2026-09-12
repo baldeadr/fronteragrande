@@ -40,6 +40,12 @@ mejores oportunidades para artistas, venues, promotores, medios y marcas.
 
 Esta aspiración se desarrollará gradualmente mediante:
 
+- **Estándar de presencia profesional:** la verificación y la sincronización
+  de contenido funcionan únicamente con páginas (Facebook) y cuentas
+  profesionales (Instagram/TikTok); se recomienda que cada proyecto opere con
+  cara de proyecto en redes y no con su perfil personal. Este estándar se
+  comunica en el formulario de alta, la ayuda para artistas y la página
+  Acerca de.
 - **Datos confiables:** perfiles verificados, estado de actividad, fuentes y
   estadísticas con fechas claras.
 - **Presentación profesional:** perfiles, materiales, eventos y contenido que

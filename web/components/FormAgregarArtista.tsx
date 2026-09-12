@@ -354,6 +354,14 @@ export default function FormAgregarArtista({ onAgregado }: { onAgregado?: () => 
                     pero sin verificar.{" "}
                     <b>Los proyectos sin verificar pueden ser eliminados.</b>
                   </p>
+                  <div className="rounded-lg border border-accent/40 bg-accent-soft/40 px-3 py-2 text-xs leading-relaxed text-accent">
+                    <b>Consejo:</b> si quieres que tu proyecto se tome en
+                    serio, ven con una página profesional de Facebook o
+                    Instagram (o cuenta profesional de TikTok) — no tu perfil
+                    personal. Es la única vía para verificar el perfil,
+                    sincronizar tus publicaciones y presentar tu proyecto con
+                    cara ante venues, promotores y patrocinadores.
+                  </div>
                   {redes.map((r, i) => (
                     <div key={i} className="flex gap-2">
                       <select
