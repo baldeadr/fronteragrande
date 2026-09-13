@@ -44,7 +44,7 @@ export default function BotonCompartir({
     [],
   );
 
-  const url = `${window.location.origin}/artistas/${slug}`;
+  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/artistas/${slug}`;
   const texto = `Mira el perfil de ${nombre} en Frontera Grande`;
 
   async function compartir() {
