@@ -247,6 +247,13 @@ La web usa `https://fronteragrande.mx` como URL pública principal; el dominio
 gratuito `fronteragrande.vercel.app` continúa disponible como dirección
 alternativa.
 
+## 10. Correo oficial `@fronteragrande.mx`
+
+Se usa el dominio del propio Cloudflare (Email Routing) para recibir correos:
+`info@fronteragrande.mx` reenvía a `dhadaniel@gmail.com` (sin costo).
+El envío como `@fronteragrande.mx` sigue pendiente (SMTP de Zoho gratis).
+Guía completa: [docs/email.md](docs/email.md).
+
 ---
 
 ## Verificación tras desplegar

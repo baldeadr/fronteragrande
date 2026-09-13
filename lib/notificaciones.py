@@ -17,7 +17,7 @@ from lib.repository import PushSubscriptionRepository
 logger = logging.getLogger(__name__)
 
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
-VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:hola@fronteragrande.mx")
+VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:info@fronteragrande.mx")
 
 NOTIFICACION_PREDETERMINADA = {
     "title": "Frontera Grande",

@@ -111,5 +111,5 @@ def config_vapid():
         "configurado": bool(clave),
         "public_key": clave,
         "valida": valida,
-        "subject": os.getenv("VAPID_SUBJECT", "mailto:hola@fronteragrande.mx"),
+        "subject": os.getenv("VAPID_SUBJECT", "mailto:info@fronteragrande.mx"),
     }

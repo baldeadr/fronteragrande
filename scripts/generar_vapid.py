@@ -5,7 +5,7 @@ Render/GitHub Actions):
 
     VAPID_PUBLIC_KEY=<clave pública para el navegador (base64url)>
     VAPID_PRIVATE_KEY=<clave privada para firmar (base64url)>
-    VAPID_SUBJECT=mailto:hola@fronteragrande.mx
+    VAPID_SUBJECT=mailto:info@fronteragrande.mx
 
 Uso:
     .venv/bin/python scripts/generar_vapid.py
@@ -32,7 +32,7 @@ def main() -> None:
 
     print("VAPID_PUBLIC_KEY=" + pub_b64)
     print("VAPID_PRIVATE_KEY=" + priv_b64)
-    print("VAPID_SUBJECT=mailto:hola@fronteragrande.mx")
+    print("VAPID_SUBJECT=mailto:info@fronteragrande.mx")
 
 
 if __name__ == "__main__":
