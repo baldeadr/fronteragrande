@@ -21,17 +21,15 @@ export default function ConexionMeta({
   if (!conectado) {
     return (
       <div className="flex flex-col items-start gap-2">
-        <button
-          type="button"
-          disabled
-          title="La conexión de Meta está pausada temporalmente"
-          className="mt-1 inline-flex w-36 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg opacity-50"
+        <a
+          href={`${API_URL}/api/feed/igfb/login?slug=${slug}`}
+          className="mt-1 inline-flex w-36 items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-bg transition-colors hover:opacity-90"
         >
           Conectar Meta
-        </button>
+        </a>
         <p className="text-xs text-muted max-w-xs">
-          La conexión con Meta está pausada temporalmente. Pronto podrá
-          vincular su perfil para verificarlo y recibir visibilidad.
+          Al conectar tu página, Frontera Grande podrá compartir tu proyecto
+          en sus redes sociales etiquetándote para darte visibilidad.
         </p>
       </div>
     );
