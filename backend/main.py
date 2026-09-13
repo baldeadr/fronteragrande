@@ -46,7 +46,9 @@ from lib.servicios import (
     editar_artista,
     eventos_de_artista,
     feed_df,
+    hitos_artista,
     metricas_artista,
+    metricas_mensuales,
     onboarding_artista,
     ranking_por_ligas,
     recalcular_actividad,
@@ -617,6 +619,38 @@ def artist_detail(
     if x_admin_token and ADMIN_PASSWORD and x_admin_token == ADMIN_PASSWORD:
         perfil["indice_universal"] = round(fila.get("indice_universal", 0.0), 1) if fila is not None else 0.0
     resultado = _json_safe(perfil)
+    cache.set(cache_key, resultado, ttl=300)
+    return resultado
+
+
+@app.get("/api/artists/{slug}/metricas")
+def artist_metricas(
+    slug: str,
+    db: Session = Depends(get_db),
+    artistas: ArtistRepository = Depends(get_artist_repo),
+    cache: MemoryCache = Depends(get_cache_dependency),
+):
+    """Historial mensual de métricas de un artista + hitos anotados.
+
+    Devuelve la serie por plataforma/métrica (último valor de cada mes con
+    relleno del valor previo) y los hitos con fecha (lanzamiento, videoclip,
+    toquín) para anotar la gráfica de evolución del perfil. El registro vive
+    en `metric_snapshots`; aquí solo se agrega por mes.
+    """
+    cache_key = f"artists:metricas:{slug}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    artist = artistas.por_slug(slug)
+    if artist is None:
+        raise HTTPException(status_code=404, detail="Artista no encontrado")
+    resultado = _json_safe(
+        {
+            "slug": artist.slug,
+            "historial": metricas_mensuales(db, artist.id),
+            "hitos": hitos_artista(db, artist),
+        }
+    )
     cache.set(cache_key, resultado, ttl=300)
     return resultado
 

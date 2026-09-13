@@ -156,6 +156,7 @@ Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite 
 - **events** — eventos de la escena: fecha, lugar, ciudad, cartel y qué demuestran.
 - **activity_checks** — historial de chequeos del scraper (snapshots).
 - **feed_items** — contenido reciente de los proyectos (videos, posts), sincronizado del artista conectado (Meta Graph API) o del feed de YouTube (onboarding).
+- **metric_snapshots** — **historial mensual de métricas** (registro de los números por mes): una fila por captura × plataforma × métrica (`valor` + `fuente`). Se llena con cada sync (dedupe consecutivo: solo cuando el valor cambia) y con una **fila-ancla forzada** al inicio de cada mes (`scripts/capturar_metricas_mensuales.py` + workflow `metricas-mensual.yml`). El perfil del artista lo agrega por mes (último valor, relleno del valor previo) en la tarjeta "Números · evolución mes a mes" (`GET /api/artists/{slug}/metricas`, componente `web/components/EvolucionMetricas.tsx`); respaldo en `data/metricas_mensuales.csv`.
 
 ## Regla de actividad
 

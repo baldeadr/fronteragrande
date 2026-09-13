@@ -18,9 +18,11 @@ import IconoMencion from "@/components/IconoMencion";
 import BotonEditarAdmin from "@/components/BotonEditarAdmin";
 import BotonCompartir from "@/components/BotonCompartir";
 import ConsumoAnalisis from "@/components/ConsumoAnalisis";
+import EvolucionMetricas from "@/components/EvolucionMetricas";
 import { fechaCorta, fechaCaptura, numeroGrande, tipoStat } from "@/lib/formato";
 import { abreviaturaDeCiudad, ciudadBase } from "@/lib/ciudades";
 import { FACEBOOK_FRONTERA_GRANDE } from "@/lib/contacto";
+import type { EvolucionMetricas as EvolucionMetricasData } from "@/lib/types";
 
 function tipoMencion(
   mencion: string,
@@ -140,6 +142,13 @@ export default async function PerfilPage({
     artist = await api.artist(slug);
   } catch {
     notFound();
+  }
+
+  let evolucion: EvolucionMetricasData | null = null;
+  try {
+    evolucion = await api.metricas(slug);
+  } catch {
+    evolucion = null;
   }
 
   const redes = artist.links.filter((l) => l.url);
@@ -453,6 +462,8 @@ export default async function PerfilPage({
         )}
         </div>
       </header>
+
+      {evolucion && <EvolucionMetricas datos={evolucion} />}
 
       {igfb === "ok" && (
         <p className="rounded-lg border border-activo/40 bg-surface px-3 py-2 text-sm text-activo">

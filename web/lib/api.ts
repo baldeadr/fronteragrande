@@ -1,4 +1,4 @@
-import type { AdminArtist, ArtistaPendiente, ArtistCard, ArtistDetail, Evento, FeedItem, ResultadoAlta, Stats } from "./types";
+import type { AdminArtist, ArtistaPendiente, ArtistCard, ArtistDetail, Evento, EvolucionMetricas, FeedItem, ResultadoAlta, Stats } from "./types";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -243,6 +243,8 @@ export async function adminPutSettings(
 export const api = {
   artists: () => get<ArtistCard[]>("/api/artists"),
   artist: (slug: string) => get<ArtistDetail>(`/api/artists/${slug}`),
+  metricas: (slug: string) =>
+    get<EvolucionMetricas>(`/api/artists/${slug}/metricas`),
   feed: () => get<FeedItem[]>("/api/feed"),
   eventos: () => get<Evento[]>("/api/events"),
   stats: () => get<Stats>("/api/stats"),

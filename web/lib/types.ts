@@ -293,3 +293,25 @@ export interface ArtistaPendiente {
   dias_sin_verificar: number;
   links: LinkAdmin[];
 }
+
+/** Un punto de la serie mensual de una métrica (historial por mes). */
+export interface PuntoMetrica {
+  mes: string; // "YYYY-MM"
+  valor: number;
+  primera_captura: boolean;
+}
+
+export type HistorialMetricas = Record<string, Record<string, PuntoMetrica[]>>;
+
+export interface Hito {
+  tipo: "lanzamiento" | "videoclip" | "toquín";
+  titulo: string;
+  fecha: string; // YYYY-MM-DD
+  url: string | null;
+}
+
+export interface EvolucionMetricas {
+  slug: string;
+  historial: HistorialMetricas;
+  hitos: Hito[];
+}

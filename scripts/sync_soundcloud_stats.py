@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from db.database import SessionLocal
 from lib.repository import ArtistRepository
+from lib.servicios import registrar_snapshots
 from scraper.adapters.soundcloud import reproducciones, seguidores
 
 
@@ -40,6 +41,24 @@ def sincronizar() -> tuple[int, int]:
                 artista.reproducciones_soundcloud = total_repros
                 artista.followers_soundcloud = seguidores(enlaces[0].url)
                 artista.fecha_captura = date.today()
+                registrar_snapshots(
+                    session,
+                    artista.id,
+                    [
+                        {
+                            "plataforma": "soundcloud",
+                            "metrica": "reproducciones",
+                            "valor": total_repros,
+                            "fuente": "api_v2",
+                        },
+                        {
+                            "plataforma": "soundcloud",
+                            "metrica": "seguidores",
+                            "valor": artista.followers_soundcloud,
+                            "fuente": "api_v2",
+                        },
+                    ],
+                )
                 session.commit()
                 actualizados += 1
                 print(

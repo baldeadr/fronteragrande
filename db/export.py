@@ -19,6 +19,7 @@ _RAIZ = Path(__file__).resolve().parent.parent
 
 EXPORT_ARTISTAS = str(_RAIZ / "data/escena_local.csv")
 EXPORT_EVENTOS = str(_RAIZ / "data/eventos.csv")
+EXPORT_METRICAS_MENSUALES = str(_RAIZ / "data/metricas_mensuales.csv")
 
 COLUMNAS_ARTISTA = [
     "id",
@@ -235,8 +236,55 @@ def exportar_eventos(
     return len(eventos)
 
 
+def exportar_metricas_mensuales(
+    session: Session,
+    csv_path: str = EXPORT_METRICAS_MENSUALES,
+    respaldo: bool = True,
+) -> int:
+    """Exporta el historial mensual de métricas a `data/metricas_mensuales.csv`.
+
+    Una fila por serie mensual y métrica (`mes, slug, plataforma, metrica,
+    valor`), con el valor del último de cada mes (el mismo que ve la web).
+    Solo exporta artistas con `metric_snapshots`; el resto no pinta filas.
+    """
+    from lib.repository import ArtistRepository
+    from lib.servicios import metricas_mensuales
+
+    if respaldo:
+        _respaldo(csv_path)
+    periodos = 0
+    with open(csv_path, "w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=["mes", "slug", "plataforma", "metrica", "valor"],
+            lineterminator="\n",
+        )
+        writer.writeheader()
+        for artista in ArtistRepository(session).todos():
+            historial = metricas_mensuales(session, artista.id)
+            for plataforma, metricas in historial.items():
+                for metrica, puntos in metricas.items():
+                    for punto in puntos:
+                        writer.writerow(
+                            {
+                                "mes": punto["mes"],
+                                "slug": artista.slug,
+                                "plataforma": plataforma,
+                                "metrica": metrica,
+                                "valor": punto["valor"],
+                            }
+                        )
+                        periodos += 1
+    return periodos
+
+
 def exportar(session: Session, respaldo: bool = True) -> dict:
-    """Regenera ambos CSV desde la BD. Devuelve conteos."""
+    """Regenera los CSV de respaldo desde la BD. Devuelve conteos."""
     artistas = exportar_artistas(session, respaldo=respaldo)
     eventos = exportar_eventos(session, respaldo=respaldo)
-    return {"artistas": artistas, "eventos": eventos}
+    periodos = exportar_metricas_mensuales(session, respaldo=respaldo)
+    return {
+        "artistas": artistas,
+        "eventos": eventos,
+        "meses_metricas": periodos,
+    }

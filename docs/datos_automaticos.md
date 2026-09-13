@@ -30,6 +30,7 @@ A partir de los datos anteriores, el sistema calcula sin intervención manual:
 | **Ranking de alcance** | Índice 0-100 ponderado por plataforma: IG, FB, Spotify, YT, TikTok, Bandcamp, SoundCloud, Beatport, Mixcloud. | `lib/helpers.py`. |
 | **Estadísticas de la escena** | Actividad temporal, altas por mes, cobertura por ciudad/categoría, posts en 90 días, eventos próximos. | `GET /api/stats` + componentes SVG. |
 | **Snapshots históricos** | Serie temporal de presencia de artistas en Spotify. | `scripts/escena_local_snapshot.py`. |
+| **Historial mensual de métricas** | Serie por plataforma/métrica (`metric_snapshots`): último valor de cada mes con relleno del valor previo, para la gráfica de evolución del perfil. Captura en cada sync (dedupe consecutivo) + fila-ancla mensual forzada (workflow `metricas-mensual.yml`). | `lib/servicios.py` (`registrar_snapshots`/`metricas_mensuales`) + `GET /api/artists/{slug}/metricas` + `scripts/capturar_metricas_mensuales.py` + `scripts/backfill_metricas.py`. |
 | **Hábitos de consumo** | Dominancia por plataforma, ratios de viralidad (YT) y engagement (Spotify), gap social→música, benchmarks por género. | `lib/helpers.py` + `lib/servicios.py` (ver `docs/habitos_consumo.md`). |
 
 ## 3. Datos que aún no se obtienen automáticamente

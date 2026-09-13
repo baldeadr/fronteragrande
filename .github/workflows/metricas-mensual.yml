@@ -1,0 +1,33 @@
+name: Ancla mensual de métricas
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 1 * *"
+
+jobs:
+  anclar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-prod.txt
+
+      - name: Registrar snapshot mensual de todos los artistas
+        run: python scripts/capturar_metricas_mensuales.py
+
+      - name: Invalidar caché de la API
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: bash scripts/invalidar_cache_api.sh

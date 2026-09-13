@@ -21,6 +21,7 @@ from backend.feed_tiktok import refrescar, user_info, video_list
 from db.database import SessionLocal
 from lib.notificaciones import notificar_todos
 from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository, SettingsRepository
+from lib.servicios import registrar_snapshots
 
 try:
     MAX_ITEMS = max(1, int(os.getenv("TIKTOK_SYNC_LIMIT", "20")))
@@ -49,6 +50,18 @@ def main():
                 info = user_info(tokens["access_token"])
                 if info["follower_count"]:
                     artista.followers_tt = info["follower_count"]
+                    registrar_snapshots(
+                        session,
+                        artista.id,
+                        [
+                            {
+                                "plataforma": "tt",
+                                "metrica": "seguidores",
+                                "valor": info["follower_count"],
+                                "fuente": "tiktok_business_api",
+                            },
+                        ],
+                    )
                 if info["avatar_url"]:
                     artista.imagen_perfil = info["avatar_url"]
                     artista.imagen_origen = "tt"

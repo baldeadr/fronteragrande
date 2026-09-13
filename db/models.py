@@ -143,6 +143,9 @@ class Artist(Base):
     checks: Mapped[list["ActivityCheck"]] = relationship(
         back_populates="artist", cascade="all, delete-orphan"
     )
+    snapshots: Mapped[list["MetricSnapshot"]] = relationship(
+        back_populates="artist", cascade="all, delete-orphan"
+    )
 
 
 class ArtistLink(Base):
@@ -171,6 +174,31 @@ class SpotifyListenerSnapshot(Base):
     fuente: Mapped[str] = mapped_column(String(80), default="spotify_public_profile")
     estado: Mapped[str] = mapped_column(String(20), default="ok")
     detalle: Mapped[str] = mapped_column(Text, default="")
+
+
+class MetricSnapshot(Base):
+    """Captura histórica del valor de una métrica de un artista.
+
+    Es el registro temporal de "los números": una fila por captura × métrica
+    (p. ej. un sync de YouTube escribe 2 filas: suscriptores y vistas). Los
+    syncs insertan con dedupe consecutivo (solo si el valor cambió) y el
+    workflow mensual fuerza una fila-ancla por mes; la API agrega por mes
+    (último valor del mes, con relleno del valor previo) para el perfil.
+    """
+
+    __tablename__ = "metric_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"), index=True)
+    plataforma: Mapped[str] = mapped_column(String(30), index=True)
+    metrica: Mapped[str] = mapped_column(String(30), index=True)
+    valor: Mapped[int] = mapped_column(BigInteger)
+    fuente: Mapped[str] = mapped_column(String(80), default="")
+    capturado_en: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, index=True
+    )
+
+    artist: Mapped["Artist"] = relationship(back_populates="snapshots")
 
 
 class Event(Base):

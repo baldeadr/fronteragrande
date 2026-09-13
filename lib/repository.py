@@ -17,6 +17,7 @@ from db.models import (
     ArtistLink,
     Event,
     FeedItem,
+    MetricSnapshot,
     PushSubscription,
     Setting,
     SpotifyListenerSnapshot,
@@ -465,6 +466,60 @@ class SpotifySnapshotRepository:
         )
         self.session.add(snapshot)
         return snapshot
+
+
+class MetricSnapshotRepository:
+    """Acceso a capturas históricas de métricas (`metric_snapshots`).
+
+    Cada fila es una captura × métrica. El dedupe consecutivo se resuelve en
+    `lib.servicios.registrar_snapshots` comparando con `ultimo`.
+    """
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def ultimo(
+        self, artist_id: int, plataforma: str, metrica: str
+    ) -> MetricSnapshot | None:
+        """Última captura de una métrica (para decidir si hubo cambio)."""
+        return self.session.execute(
+            select(MetricSnapshot)
+            .where(
+                MetricSnapshot.artist_id == artist_id,
+                MetricSnapshot.plataforma == plataforma,
+                MetricSnapshot.metrica == metrica,
+            )
+            .order_by(MetricSnapshot.capturado_en.desc(), MetricSnapshot.id.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+    def crear(
+        self,
+        artist_id: int,
+        plataforma: str,
+        metrica: str,
+        valor: int,
+        fuente: str = "",
+        capturado_en: datetime | None = None,
+    ) -> MetricSnapshot:
+        snapshot = MetricSnapshot(
+            artist_id=artist_id,
+            plataforma=plataforma,
+            metrica=metrica,
+            valor=valor,
+            fuente=fuente,
+            capturado_en=capturado_en or datetime.utcnow(),
+        )
+        self.session.add(snapshot)
+        return snapshot
+
+    def serie(self, artist_id: int) -> list[MetricSnapshot]:
+        """Todas las capturas de un artista, cronológicas."""
+        return self.session.execute(
+            select(MetricSnapshot)
+            .where(MetricSnapshot.artist_id == artist_id)
+            .order_by(MetricSnapshot.capturado_en.asc(), MetricSnapshot.id.asc())
+        ).scalars().all()
 
 
 class ChecksRepository:

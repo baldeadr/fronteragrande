@@ -26,7 +26,8 @@ def main() -> int:
         session.close()
     print(
         f"Export completado: {resultado['artistas']} artistas, "
-        f"{resultado['eventos']} eventos."
+        f"{resultado['eventos']} eventos, "
+        f"{resultado['meses_metricas']} series mensuales de métricas."
     )
     return 0
 

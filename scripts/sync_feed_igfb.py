@@ -28,6 +28,7 @@ from db.database import SessionLocal
 from lib.helpers import es_bio_clara
 from lib.notificaciones import notificar_todos
 from lib.repository import ArtistRepository, FeedRepository, PushSubscriptionRepository, SettingsRepository
+from lib.servicios import registrar_snapshots
 
 try:
     MAX_ITEMS = max(1, int(os.getenv("META_SYNC_LIMIT", "10")))
@@ -58,7 +59,7 @@ def main():
                             nuevos += 1
                 if not artista.bio:
                     _escribir_bio_meta(artista)
-                _actualizar_seguidores_meta(artista)
+                _actualizar_seguidores_meta(artista, session)
                 session.commit()
             except Exception as e:
                 session.rollback()
@@ -113,19 +114,30 @@ def _escribir_bio_meta(artista) -> None:
         print(f"Bio de Meta no disponible para {artista.nombre}: {e}")
 
 
-def _actualizar_seguidores_meta(artista) -> None:
+def _actualizar_seguidores_meta(artista, session=None) -> None:
     """Actualiza `followers_fb`/`followers_ig` desde la Graph API.
 
     Solo escribe cuando la API devuelve un valor: si la página oculta sus
     seguidores o el campo falta, se conserva el valor anterior (no se
-    inventa un cero), igual que en `sync_youtube_stats`.
+    inventa un cero), igual que en `sync_youtube_stats`. Cuando hay sesión y
+    el artista está persistido (`id`), cada valor leído se registra además en
+    `metric_snapshots` (el registro mensual).
     """
     actualizado = False
+    medidas: list[dict] = []
     if artista.fb_page_id:
         try:
             seguidores = pagina_seguidores(artista.fb_page_id, artista.fb_page_token)
             if seguidores is not None:
                 artista.followers_fb = seguidores
+                medidas.append(
+                    {
+                        "plataforma": "fb",
+                        "metrica": "seguidores",
+                        "valor": seguidores,
+                        "fuente": "meta_graph",
+                    }
+                )
                 actualizado = True
         except Exception as e:
             print(f"Seguidores FB no disponibles para {artista.nombre}: {e}")
@@ -134,9 +146,19 @@ def _actualizar_seguidores_meta(artista) -> None:
             seguidores = ig_seguidores(artista.ig_user_id, artista.fb_page_token)
             if seguidores is not None:
                 artista.followers_ig = seguidores
+                medidas.append(
+                    {
+                        "plataforma": "ig",
+                        "metrica": "seguidores",
+                        "valor": seguidores,
+                        "fuente": "meta_graph",
+                    }
+                )
                 actualizado = True
         except Exception as e:
             print(f"Seguidores IG no disponibles para {artista.nombre}: {e}")
+    if medidas and session is not None and getattr(artista, "id", None) is not None:
+        registrar_snapshots(session, artista.id, medidas)
     if actualizado:
         artista.fecha_captura = date.today()
 

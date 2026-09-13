@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from db.database import SessionLocal
 from lib.repository import ArtistRepository, SpotifySnapshotRepository
+from lib.servicios import registrar_snapshots
 from scraper.adapters.spotify_public import SpotifyPublicError, obtener_oyentes
 
 
@@ -72,6 +73,18 @@ def main() -> int:
                 artista.oyentes_mensuales_spotify = suma
                 artista.fecha_oyentes_spotify = datetime.utcnow()
                 artista.fuente_oyentes_spotify = "spotify_public_profile"
+                registrar_snapshots(
+                    session,
+                    artista.id,
+                    [
+                        {
+                            "plataforma": "spotify",
+                            "metrica": "oyentes_mensuales",
+                            "valor": suma,
+                            "fuente": "spotify_public_profile",
+                        },
+                    ],
+                )
                 total += 1
                 plural = "perfiles" if len(urls) > 1 else "perfil"
                 print(

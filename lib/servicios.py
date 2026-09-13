@@ -36,6 +36,7 @@ from lib.repository import (
     EventRepository,
     FeedRepository,
     LinkRepository,
+    MetricSnapshotRepository,
     SpotifySnapshotRepository,
 )
 
@@ -309,6 +310,179 @@ def metricas_artista(fila) -> dict:
         metricas["spotify"]["oyentes_mensuales"] = oyentes
         metricas["spotify"]["fecha_captura"] = fila["fecha_oyentes_spotify"]
     return metricas
+
+
+def medidas_actuales(artista) -> list[dict]:
+    """Las medidas registrables del estado actual de un artista.
+
+    Solo se incluyen métricas con valor presente (no `None`), con la misma
+    taxonomía `plataforma`/`metrica` que `metricas_artista`. La `fuente`
+    distingue la API que la produjo cuando se conoce. La usa el workflow
+    mensual para forzar la fila-ancla y el sync puntual para registrar lo
+    que acaba de medir.
+    """
+    medidas = [
+        ("ig", "seguidores", artista.followers_ig, "meta_graph"),
+        ("fb", "seguidores", artista.followers_fb, "meta_graph"),
+        ("yt", "seguidores", artista.followers_yt, "channel_statistics"),
+        ("yt", "vistas", artista.vistas_yt, "channel_statistics"),
+        ("tt", "seguidores", artista.followers_tt, "tiktok_business_api"),
+        ("tt", "vistas", artista.vistas_tt, ""),
+        ("spotify", "seguidores", artista.followers_spotify, ""),
+        (
+            "spotify",
+            "oyentes_mensuales",
+            artista.oyentes_mensuales_spotify,
+            "spotify_public_profile",
+        ),
+        ("bandcamp", "reproducciones", artista.reproducciones_bandcamp, ""),
+        ("soundcloud", "seguidores", artista.followers_soundcloud, "api_v2"),
+        ("soundcloud", "reproducciones", artista.reproducciones_soundcloud, "api_v2"),
+        ("beatport", "seguidores", artista.followers_beatport, ""),
+        ("mixcloud", "seguidores", artista.followers_mixcloud, "mixcloud_api"),
+    ]
+    return [
+        {"plataforma": p, "metrica": m, "valor": v, "fuente": f}
+        for (p, m, v, f) in medidas
+        if v is not None
+    ]
+
+
+def registrar_snapshots(
+    session: Session,
+    artist_id: int,
+    medidas: list[dict],
+    forzar: bool = False,
+) -> int:
+    """Registra capturas históricas de métricas (sin commit).
+
+    `medidas` es una lista de dicts con `plataforma`, `metrica`, `valor`
+    (`int`) y opcional `fuente`. Por defecto aplica dedupe consecutivo: si el
+    valor es igual al de la última captura de esa métrica se omite (evita
+    filas idénticas en los syncs de 6 h). Con `forzar=True` se escribe una
+    fila aunque no cambió el valor (el ancla mensual del workflow, para que
+    el mes quede registrado en plataformas sin sync frecuente). Devuelve
+    cuántas filas creó.
+    """
+    repo = MetricSnapshotRepository(session)
+    creadas = 0
+    for medida in medidas:
+        valor = medida.get("valor")
+        if valor is None:
+            continue
+        plataforma = medida["plataforma"]
+        metrica = medida["metrica"]
+        if not forzar:
+            ultimo = repo.ultimo(artist_id, plataforma, metrica)
+            if ultimo is not None and ultimo.valor == valor:
+                continue
+        repo.crear(
+            artist_id=artist_id,
+            plataforma=plataforma,
+            metrica=metrica,
+            valor=valor,
+            fuente=medida.get("fuente", ""),
+        )
+        creadas += 1
+    return creadas
+
+
+def metricas_mensuales(
+    session: Session, artist_id: int
+) -> dict[str, dict[str, list[dict]]]:
+    """Serie mensual por plataforma/métrica de un artista.
+
+    El valor de cada mes es el de la última captura dentro del mes (el
+    registro es "por mes": el número que tenía al cerrar ese mes). Los meses
+    sin captura se rellenan con el valor previo (carry-forward), desde la
+    primera captura hasta el mes en curso. Cada punto marca `primera_captura`
+    en el primer mes con captura real (útil para IG/FB/TikTok, cuyo registro
+    nace al conectar la cuenta).
+
+    Devuelve `{plataforma: {metrica: [{"mes": "YYYY-MM", "valor", "primera_captura"}]}}`.
+    """
+    snapshots = MetricSnapshotRepository(session).serie(artist_id)
+    if not snapshots:
+        return {}
+    por_metrica: dict[tuple[str, str], list] = {}
+    for s in snapshots:
+        por_metrica.setdefault((s.plataforma, s.metrica), []).append(s)
+    hoy = datetime.utcnow()
+    resultado: dict[str, dict[str, list[dict]]] = {}
+    for (plataforma, metrica), filas in por_metrica.items():
+        ultimo_del_mes: dict[str, int] = {}
+        for s in filas:
+            ultimo_del_mes[s.capturado_en.strftime("%Y-%m")] = s.valor
+        anio, mes = filas[0].capturado_en.year, filas[0].capturado_en.month
+        puntos: list[dict] = []
+        ultimo_valor: int | None = None
+        visto = False
+        while (anio, mes) <= (hoy.year, hoy.month):
+            clave = f"{anio:04d}-{mes:02d}"
+            if clave in ultimo_del_mes:
+                ultimo_valor = ultimo_del_mes[clave]
+                primera = not visto
+                visto = True
+            else:
+                primera = False
+            if ultimo_valor is not None:
+                puntos.append(
+                    {"mes": clave, "valor": ultimo_valor, "primera_captura": primera}
+                )
+            mes += 1
+            if mes > 12:
+                mes = 1
+                anio += 1
+        resultado.setdefault(plataforma, {})[metrica] = puntos
+    return resultado
+
+
+def hitos_artista(session: Session, artista) -> list[dict]:
+    """Hitos con fecha de un artista para anotar la evolución mensual.
+
+    Toma los lanzamientos y videos registrados en el feed (`feed_items`) y
+    los toquines donde aparece en el cartel (`events`). Solo se marcan hitos
+    conocidos: la cobertura depende de lo que llegó por sync, no se inventan
+    fechas. Ordenados cronológicamente ascendente.
+    """
+    hitos: list[dict] = []
+    feed = FeedRepository(session).de_artista_desc(artista.id, limite=500)
+    for item in feed:
+        if not item.fecha:
+            continue
+        fecha = item.fecha.date()
+        if item.tipo == "lanzamiento":
+            hitos.append(
+                {
+                    "tipo": "lanzamiento",
+                    "titulo": item.titulo,
+                    "fecha": fecha.isoformat(),
+                    "url": item.url or None,
+                }
+            )
+        elif item.tipo == "video":
+            hitos.append(
+                {
+                    "tipo": "videoclip",
+                    "titulo": item.titulo,
+                    "fecha": fecha.isoformat(),
+                    "url": item.url or None,
+                }
+            )
+    for evento in EventRepository(session).de_artista(artista.nombre):
+        if not evento.fecha:
+            continue
+        titulo = evento.nombre or (f"Evento en {evento.ciudad}" if evento.ciudad else "Toquín")
+        hitos.append(
+            {
+                "tipo": "toquín",
+                "titulo": titulo,
+                "fecha": evento.fecha.isoformat(),
+                "url": None,
+            }
+        )
+    hitos.sort(key=lambda h: h["fecha"])
+    return hitos
 
 
 def analisis_artista(metricas: dict, actualizado=None) -> dict:
@@ -1193,6 +1367,27 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
                 resultado["yt_suscriptores"] = sum(suscriptores)
             if vistas:
                 artista.vistas_yt = sum(vistas)
+            medidas_yt: list[dict] = []
+            if suscriptores:
+                medidas_yt.append(
+                    {
+                        "plataforma": "yt",
+                        "metrica": "seguidores",
+                        "valor": sum(suscriptores),
+                        "fuente": "channel_statistics",
+                    }
+                )
+            if vistas:
+                medidas_yt.append(
+                    {
+                        "plataforma": "yt",
+                        "metrica": "vistas",
+                        "valor": sum(vistas),
+                        "fuente": "channel_statistics",
+                    }
+                )
+            if medidas_yt:
+                registrar_snapshots(session, artista.id, medidas_yt)
 
     # Oyentes mensuales desde los perfiles públicos de Spotify. Si hay varios
     # perfiles oficiales (cuentas duplicadas), se suma cada lectura y se guarda
@@ -1222,6 +1417,18 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
             artista.fecha_oyentes_spotify = datetime.utcnow()
             artista.fuente_oyentes_spotify = "spotify_public_profile"
             resultado["spotify_oyentes"] = suma
+            registrar_snapshots(
+                session,
+                artista.id,
+                [
+                    {
+                        "plataforma": "spotify",
+                        "metrica": "oyentes_mensuales",
+                        "valor": suma,
+                        "fuente": "spotify_public_profile",
+                    },
+                ],
+            )
 
     # Seguidores de SoundCloud (api-v2, una llamada por perfil).
     soundcloud_links = [
@@ -1240,6 +1447,18 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
         if suma_sc > 0:
             artista.followers_soundcloud = suma_sc
             resultado["soundcloud_seguidores"] = suma_sc
+            registrar_snapshots(
+                session,
+                artista.id,
+                [
+                    {
+                        "plataforma": "soundcloud",
+                        "metrica": "seguidores",
+                        "valor": suma_sc,
+                        "fuente": "api_v2",
+                    },
+                ],
+            )
 
     # Seguidores de Mixcloud (API REST pública, una llamada por perfil).
     mixcloud_links = [
@@ -1258,6 +1477,18 @@ def onboarding_artista(session: Session, artista: Artist) -> dict:
         if suma_mx > 0:
             artista.followers_mixcloud = suma_mx
             resultado["mixcloud_seguidores"] = suma_mx
+            registrar_snapshots(
+                session,
+                artista.id,
+                [
+                    {
+                        "plataforma": "mixcloud",
+                        "metrica": "seguidores",
+                        "valor": suma_mx,
+                        "fuente": "mixcloud_api",
+                    },
+                ],
+            )
 
     # Recalcular actividad con la señal más reciente (feed incluido).
     ultimo_feed = ultimo_feed_de_artista(session, artista)

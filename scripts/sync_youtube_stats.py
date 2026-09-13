@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from db.database import SessionLocal
 from lib.repository import ArtistRepository
+from lib.servicios import registrar_snapshots
 from scraper.adapters.youtube import channel_id_from_url, channel_statistics
 from scraper.errors import ScraperError
 
@@ -69,6 +70,26 @@ def sincronizar(api_key: str) -> tuple[int, int]:
             if vistas:
                 artista.vistas_yt = sum(vistas)
             artista.fecha_captura = date.today()
+            medidas: list[dict] = []
+            if suscriptores:
+                medidas.append(
+                    {
+                        "plataforma": "yt",
+                        "metrica": "seguidores",
+                        "valor": sum(suscriptores),
+                        "fuente": "channel_statistics",
+                    }
+                )
+            if vistas:
+                medidas.append(
+                    {
+                        "plataforma": "yt",
+                        "metrica": "vistas",
+                        "valor": sum(vistas),
+                        "fuente": "channel_statistics",
+                    }
+                )
+            registrar_snapshots(session, artista.id, medidas)
             session.commit()
             actualizados += 1
             n_canales = f" · {len(canales)} canales" if len(canales) > 1 else ""
