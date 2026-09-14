@@ -204,8 +204,11 @@ puente_musical, descubrimiento, presencia_distribuida).
 
 ### 4.2 Ranking de alcance
 
-**Hoy:** el ranking separa audiencia (55%) de consumo (45%) pero no
-captura la calidad del consumo.
+**Hoy:** el desglose informativo de audiencia/consumo (40% / 60% desde el
+ajuste de 2026-08) ya no decide el orden: el ranking real lo determina el
+**índice universal** (techos fijos contra el nivel mundial en escala log10,
+70% la mejor señal + 30% cobertura de todas) — pero tampoco captura la
+calidad del consumo.
 
 **Propuesto:** considerar:
 - El **tipo de consumo** (vistas pasivas vs. streams activos) puede

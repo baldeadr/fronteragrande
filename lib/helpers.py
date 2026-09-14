@@ -365,7 +365,10 @@ def indices_audiencia_consumo(
     aporta parte de su peso a suscriptores y a vistas (las vistas se descuentan
     con `FACTOR_CAPACIDAD_VISTAS_YT` por el inflado de Shorts); Spotify reparte
     su peso entre seguidores y señales de escucha. Los índices de grupo quedan
-    en 0-100 y el índice global combina audiencia (55%) y consumo (45%).
+    en 0-100 y el índice global combina audiencia (40%) y consumo (60%).
+    Nota: este índice solo alimenta el desglose informativo A/C de tarjetas
+    y perfil; el orden real del ranking lo decide `calcular_indice_universal`
+    (techos fijos, 70/30), sin pesos por plataforma.
     """
 
     grupos = {
@@ -1044,13 +1047,20 @@ def normalizar_ciudad(ciudad: str | None) -> str:
 # Clasificación por índice universal (techos de referencia fijos)
 # Cada señal se normaliza contra un techo mundial absoluto (no contra el máximo
 # local de la escena, que inflaba números semilla como seguidores de FB):
-# IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M · Spotify
+# IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 20M · Spotify
 # seguidores 20M · SoundCloud 1B · Bandcamp 1M · Beatport 100K · Mixcloud 50K
 # (techo de SoundCloud subido el 2026-09-05 de 10M a 100M, y el 2026-09-05 de
 # 100M a 1B: las reproducciones de SoundCloud seguían siendo demasiado baratas
 # frente a los techos de YT/Spotify —es más fácil acumularlas que oyentes o
 # vistas— y ponían a artistas con métricas medias por encima de otros con
-# señal real mucho mayor).
+# señal real mucho mayor.
+# Techo de Spotify oyentes bajado el 2026-09-14 de 50M a 20M: un oyente
+# mensual es consumo intencional (te busca en la app, playlist) y no se
+# acumula con autoplay como las vistas de YT ni con scroll como los
+# seguidores sociales; el techo de 50M lo subvaloraba frente a señales
+# pasivas. Simulado antes del cambio: 3 artistas ascienden de liga
+# (Twin Tribes, Big Los, Big Sempa) y 39 reposiciones suaves; los índices
+# de los catalogados históricos se mantienen).
 TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("ig", "seguidores"): 50_000_000,
     ("fb", "seguidores"): 50_000_000,
@@ -1058,7 +1068,7 @@ TECHOS_REFERENCIA: dict[tuple[str, str], float] = {
     ("yt", "seguidores"): 50_000_000,
     ("yt", "vistas"): 10_000_000_000,
     ("spotify", "seguidores"): 20_000_000,
-    ("spotify", "oyentes_mensuales"): 50_000_000,
+    ("spotify", "oyentes_mensuales"): 20_000_000,
     ("soundcloud", "reproducciones"): 1_000_000_000,
     ("bandcamp", "reproducciones"): 1_000_000,
     ("beatport", "seguidores"): 100_000,

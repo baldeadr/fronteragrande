@@ -151,10 +151,14 @@ Umbrales **fijos y documentados** (no dependen de la composición de la escena):
 - **Leyenda de la Frontera**: **manual/editorial** (flag `es_leyenda` en BD + fuente en `notas`).
 - **Escena (base)**: índice < 50 (sin nivel calculado).
 
-### Rankings visibles (independientes por grupo)
-- **Ranking de Ligas**: normaliza 0-100 solo entre catalogados (Ligas Mayores + Emergente + Leyenda).
-- **Ranking de la escena**: normaliza 0-100 solo entre la escena base.
-- Cada grupo tiene su #1 con índice 100 (descubrimiento justo dentro del grupo).
+### Rankings visibles (ordenados por el índice universal)
+- Desde 2026-08-30 **no se re-normaliza por liga**: las posiciones
+  (`rank_liga` y `rank_universal`) se derivan todas del **índice universal**
+  (techos fijos, comparable entre todas las ligas; `lib/servicios.ranking_por_ligas`).
+- Cada liga mantiene su propia lista (Escena, Emergente, Ligas Mayores,
+  Leyenda de la Frontera) y un ranking universal que las mide a todas a la vez.
+- El desglose A (audiencia) / C (consumo) de tarjetas y perfil es **solo
+  informativo** (`indices_audiencia_consumo`, 40%/60%); nunca decide el orden.
 
 ### Criterio editorial de las Ligas (interno y público)
 Las Ligas describen **reconocimiento**, no sostenibilidad económica. Un proyecto
@@ -167,7 +171,7 @@ temporalmente y seguir siendo emergente — es una cualidad, no un titular.
 
 ### Techos de referencia (documentados)
 ```
-IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 50M ·
+IG/FB/TT/YT seguidores 50M · YT vistas 10B · Spotify oyentes 20M ·
 Spotify seguidores 20M · SoundCloud 1B ·
 Bandcamp 1M · Beatport 100K · Mixcloud 50K
 ```
@@ -178,7 +182,11 @@ Bandcamp 1M · Beatport 100K · Mixcloud 50K
 > SoundCloud resultaban demasiado baratas de acumular frente a los techos de
 > YT/Spotify (es más fácil acumularlas que oyentes o vistas) y podían colocar
 > a un artista con métricas medias por encima de artistas con oyentes/vistas
-> mucho mayores.
+> mucho mayores. El techo de Spotify oyentes se bajó el 2026-09-14 de 50M a
+> 20M: un oyente mensual es consumo intencional y no se acumula con autoplay
+> (YT) ni scroll (social), así que el techo de 50M lo subvaloraba frente a
+> señales pasivas (simulado antes del cambio: 3 ascensos de liga y
+> reposiciones suaves, sin cambios de índice en los catalogados históricos).
 
 ### Persistencia
 - La clasificación se computa **on-the-fly** en cada request (columna `nivel_calculada` en DataFrame).
