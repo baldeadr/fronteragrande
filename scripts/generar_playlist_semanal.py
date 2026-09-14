@@ -2,14 +2,22 @@
 """Genera y actualiza la playlist semanal "Frontera Grande: Descubrimiento Semanal".
 
 Lee de la BD (fuente de verdad) los artistas con enlace oficial de Spotify,
-toma el top track de cada uno vía la Web API (client credentials) y arma una
-selección aleatoria para rellenar la playlist pública. Cada corrida cambia el
-contenido (rotación semanal).
+recolecta sus canciones candidatas vía la Web API (client credentials) y arma
+una selección aleatoria para rellenar la playlist pública. Cada corrida cambia
+el contenido (rotación semanal).
 
-Selección: cada artista entra al menos con una canción y la lista se rellena
-hasta `PLAYLIST_TAMANIO` (por defecto 24) con una segunda canción de algunos
-artistas. `PLAYLIST_CANCIONES_POR_ARTISTA` (por defecto 2) limita cuántas
-canciones por artista pueden entrar.
+Rotación y memoria:
+- Por artista se recolectan varias canciones candidatas (`PLAYLIST_CANDIDATOS_POR_ARTISTA`,
+  por defecto 5) y el guion elige UNA al azar de su catálogo (no siempre el top
+  track), así un artista que entra no repite siempre el mismo tema.
+- La selección lee el contenido ACTUAL de la playlist (que siempre es la
+  rotación anterior, pues se rellena en cada corrida) como "memoria": evita los
+  artistas y la canción exacta de la semana pasada cuando alcanza, y solo
+  reutiliza lo visto si no hay suficiente catálogo fresco.
+
+Relleno: una canción por artista primero y se completa hasta `PLAYLIST_TAMANIO`
+(por defecto 24) con canciones extra. `PLAYLIST_CANCIONES_POR_ARTISTA` (por
+defecto 2) limita cuántas canciones por artista pueden entrar.
 
 La playlist es estable entre corridas: se guarda su ID en
 `data/playlist_semanal.json` (versionado) para actualizar la misma lista cada
@@ -255,25 +263,67 @@ def _canciones_artista(
     return [], errores
 
 
-def seleccionar(canciones_por_artista, tamanio, por_artista) -> list[dict]:
-    """Selección aleatoria: una canción por artista primero, luego rellena."""
-    nombres = [n for n, canciones in canciones_por_artista.items() if canciones]
+def seleccionar(canciones_por_artista, artistas_vistos, uris_vistos, tamanio, por_artista):
+    """Selección con rotación y memoria.
+
+    - Memoria: evita los artistas de la semana anterior (`artistas_vistos`) y la
+      canción exacta repetida (`uris_vistos`) cuando hay otras opciones.
+    - Rotación: por cada artista elige una canción ALEATORIA de sus candidatas
+      (no siempre la primera del catálogo).
+    - Primera pasada: una canción por artista distinto (los no vistos primero;
+      los vistos solo entran si no alcanza). Si falta, rellena con canciones
+      extras hasta `por_artista` por artista.
+    """
+    nombres = [n for n, data in canciones_por_artista.items() if data["canciones"]]
+    uris_mes = set(uris_vistos)
+
+    def _elegir(data):
+        opciones = [c for c in data["canciones"] if c["uri"] not in uris_mes]
+        return random.choice(opciones or data["canciones"])
+
     random.shuffle(nombres)
+    frescos = [
+        n for n in nombres
+        if canciones_por_artista[n]["artist_id"] not in artistas_vistos
+    ]
+    pasados = [
+        n for n in nombres
+        if canciones_por_artista[n]["artist_id"] in artistas_vistos
+    ]
+
     seleccion = []
-    for nombre in nombres:
+    usadas = set()
+    por_artista_elegido = {}
+
+    def _tomar(nombre, cancion):
+        cancion["artist_id"] = canciones_por_artista[nombre]["artist_id"]
+        seleccion.append(cancion)
+        usadas.add(cancion["uri"])
+        por_artista_elegido[nombre] = por_artista_elegido.get(nombre, 0) + 1
+
+    for nombre in frescos + pasados:
         if len(seleccion) >= tamanio:
             break
-        seleccion.append(canciones_por_artista[nombre][0])
+        _tomar(nombre, _elegir(canciones_por_artista[nombre]))
+
     if len(seleccion) < tamanio:
         random.shuffle(nombres)
         for nombre in nombres:
-            extras = canciones_por_artista[nombre][1:por_artista]
-            for cancion in extras:
+            ya = por_artista_elegido.get(nombre, 0)
+            if ya >= por_artista:
+                continue
+            for cancion in canciones_por_artista[nombre]["canciones"]:
+                if cancion["uri"] in usadas or cancion["uri"] in uris_mes:
+                    continue
                 if len(seleccion) >= tamanio:
                     break
-                seleccion.append(cancion)
+                _tomar(nombre, cancion)
+                ya += 1
+                if ya >= por_artista:
+                    break
             if len(seleccion) >= tamanio:
                 break
+
     return seleccion
 
 
@@ -356,6 +406,37 @@ def _playlist_id(token_usuario: str) -> str:
     return playlist_id
 
 
+def _playlist_id_existente() -> str:
+    """ID de una playlist ya existente (env o archivo), sin crear ni llamar al API."""
+    fija = os.environ.get("SPOTIFY_PLAYLIST_ID", "").strip()
+    if fija:
+        return fija
+    if PLAYLIST_FILE.exists():
+        guardado = json.loads(PLAYLIST_FILE.read_text(encoding="utf-8"))
+        return guardado.get("playlist_id") or ""
+    return ""
+
+
+def _memoria_desde_json(datos) -> tuple[set[str], set[str]]:
+    """Memoria desde la selección guardada: IDs de artista y URIs de tracks.
+
+    La selección de cada corrida se guarda en `data/playlist_seleccion_semanal.json`
+    y el workflow la commitea de vuelta al repo; la corrida siguiente la lee
+    como "memoria" de la semana anterior. Spotify en modo desarrollo no permite
+    LEER el contenido de la playlist vía API (403; solo permite escribirlo), por
+    eso la memoria viaja en el JSON versionado y no en la playlist.
+    """
+    artistas, uris = set(), set()
+    for t in datos.get("tracks", []):
+        uri = t.get("uri")
+        if uri:
+            uris.add(uri)
+        artist_id = t.get("artist_id")
+        if artist_id:
+            artistas.add(artist_id)
+    return artistas, uris
+
+
 def _rellenar(token_usuario: str, playlist_id: str, uris: list[str]) -> None:
     """Reemplaza el contenido de la playlist con las canciones seleccionadas."""
     import requests
@@ -414,6 +495,7 @@ def _guardar_seleccion_json(seleccion: list[dict], playlist_id: str, output_path
                 "titulo": c["titulo"],
                 "artista": c["artistas"],
                 "uri": c["uri"],
+                "artist_id": c.get("artist_id", ""),
             }
             for i, c in enumerate(seleccion)
         ],
@@ -473,6 +555,7 @@ def main() -> int:
 
     por_artista = _env_int("PLAYLIST_CANCIONES_POR_ARTISTA", 2)
     tamanio = _env_int("PLAYLIST_TAMANIO", 24)
+    candidatos = _env_int("PLAYLIST_CANDIDATOS_POR_ARTISTA", 5)
 
     escena = [(a, url) for a, url in artistas_con_spotify() if url]
     if not escena:
@@ -490,7 +573,7 @@ def main() -> int:
 
     from scraper.adapters.spotify import artist_id_from_url
 
-    print("Canciones top por artista (mercado MX):")
+    print("Canciones candidatas por artista:")
     canciones_por_artista = {}
     for artista, url in escena:
         artist_id = artist_id_from_url(url)
@@ -500,12 +583,15 @@ def main() -> int:
         try:
             if token_cliente:
                 canciones, errores = _canciones_artista(
-                    token_cliente, artist_id, artista.nombre, por_artista
+                    token_cliente, artist_id, artista.nombre, candidatos
                 )
             else:
-                print(f"  [--] {artista.nombre}: sin credenciales (dry-run sin top tracks)")
+                print(f"  [--] {artista.nombre}: sin credenciales (dry-run sin catálogo)")
                 canciones, errores = [], []
-            canciones_por_artista[artista.nombre] = canciones
+            canciones_por_artista[artista.nombre] = {
+                "artist_id": artist_id,
+                "canciones": canciones,
+            }
             if canciones:
                 print(f"  [ok] {artista.nombre}: {', '.join(c['titulo'] for c in canciones)}")
             else:
@@ -513,10 +599,33 @@ def main() -> int:
                 print(f"  [warn] {artista.nombre}: {motivo}")
         except Exception as exc:
             print(f"  [warn] {artista.nombre}: {exc}")
-            canciones_por_artista[artista.nombre] = []
+            canciones_por_artista[artista.nombre] = {"artist_id": artist_id, "canciones": []}
 
-    canciones_por_artista = {n: c for n, c in canciones_por_artista.items() if c}
-    seleccion = seleccionar(canciones_por_artista, tamanio, por_artista)
+    canciones_por_artista = {
+        n: data for n, data in canciones_por_artista.items() if data["canciones"]
+    }
+
+    # Memoria: leer la selección anterior desde el JSON commiteado en el repo.
+    # Spotify en modo desarrollo no permite LEER los tracks de una playlist vía
+    # API (403; solo puede escribirlos), así que la memoria viaja en
+    # data/playlist_seleccion_semanal.json, que el workflow vuelve a commitear
+    # al repo cada semana. Leerla evita repetir artistas/canciones sin guardar
+    # historial en la BD.
+    artistas_vistos, uris_vistos = set(), set()
+    seleccion_json = Path(args.output_json)
+    if seleccion_json.exists():
+        try:
+            previa = json.loads(seleccion_json.read_text(encoding="utf-8"))
+            artistas_vistos, uris_vistos = _memoria_desde_json(previa)
+            if artistas_vistos or uris_vistos:
+                print(f"\nMemoria (selección anterior): {len(artistas_vistos)} artistas, "
+                      f"{len(uris_vistos)} canciones — se evitarán si alcanza.")
+        except Exception as exc:
+            print(f"  [warn] no se pudo leer la memoria: {exc}")
+
+    seleccion = seleccionar(
+        canciones_por_artista, artistas_vistos, uris_vistos, tamanio, por_artista
+    )
 
     print(f"\nSelección ({len(seleccion)} canciones):")
     for i, cancion in enumerate(seleccion, 1):

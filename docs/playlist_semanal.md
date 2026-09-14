@@ -12,18 +12,22 @@ Una **playlist pública de Spotify** curada de forma **automática y semanal** c
 - **Portada:** `web/public/portada-playlist.png` (3000×3000, fuente `portada-playlist.svg`; composición documentada en `docs/identidad.md`)
 - **Owner:** cuenta del artista (Adrián Balderas)
 - **Se actualiza:** cada lunes 06:00 (workflow `sync-playlist.yml` de GitHub Actions, con disparo manual disponible)
-- **Tamaño:** por defecto 24 canciones (`PLAYLIST_TAMANIO`), 2 por artista (`PLAYLIST_CANCIONES_POR_ARTISTA`)
+- **Tamaño:** por defecto 24 canciones (`PLAYLIST_TAMANIO`), 2 por artista (`PLAYLIST_CANCIONES_POR_ARTISTA`), con memoria semanal y canción rotada del catálogo (5 candidatas por artista, `PLAYLIST_CANDIDATOS_POR_ARTISTA`)
 
 ## 2. Cómo se genera
 
 `scripts/generar_playlist_semanal.py` (ver también la entrada en AGENTS.md):
 
 1. Toma los artistas del directorio que tienen perfil de Spotify (**BD = fuente de verdad**).
-2. Por artista, busca sus canciones en cadena de fuentes:
+2. Por artista, busca sus canciones candidatas en cadena de fuentes:
    - **top-tracks** (endpoint oficial, preferido);
    - si la app no los recibe (modo desarrollo), **primer tema de sus lanzamientos** (álbumes/sencillos);
    - último recurso, **búsqueda por nombre filtrada por ID exacto** del artista (evita homónimos).
-3. Selección **aleatoria**: 1ª canción por artista y relleno hasta `PLAYLIST_TAMANIO` con una segunda de algunos.
+   Son hasta `PLAYLIST_CANDIDATOS_POR_ARTISTA` (5) candidatas por artista.
+3. Selección **aleatoria con rotación y memoria**:
+   - por cada artista elige **una canción al azar de su catálogo** (no siempre el top track);
+   - lee la selección anterior de `data/playlist_seleccion_semanal.json` (commiteada al repo cada semana) como "memoria" y evita los artistas y la canción exacta de la semana pasada cuando alcanza. *Nota:* Spotify en modo desarrollo no permite **leer** los tracks de una playlist vía API (403), solo escribirlos; por eso la memoria viaja en el JSON versionado y no en la playlist.
+   - 1ª canción por artista y relleno hasta `PLAYLIST_TAMANIO` con canciones extra.
 4. Rellena la playlist existente con `PUT /playlists/{id}/items` (endpoint `/items`, migración de marzo 2026 — `/tracks` está deprecado).
 
 **Limitación 2026:** las apps de Spotify en **modo desarrollo** no pueden **crear** playlists vía API (403) ni reciben followers/popularity/top-tracks (403/0). La playlist se creó **manualmente** en Spotify y el script solo la rellena. Para levantar esos límites hace falta **Extended Quota** en el dashboard.
@@ -41,7 +45,7 @@ La playlist es un activo público y periódico: **algo nuevo cada lunes**. Ideas
 
 ## 4. Operación
 
-- **Cambiar tamaño/rotación:** variables `PLAYLIST_TAMANIO`, `PLAYLIST_CANCIONES_POR_ARTISTA`, `PLAYLIST_NOMBRE` (env, ver `.env.example`).
+- **Cambiar tamaño/rotación:** variables `PLAYLIST_TAMANIO`, `PLAYLIST_CANDIDATOS_POR_ARTISTA`, `PLAYLIST_CANCIONES_POR_ARTISTA`, `PLAYLIST_NOMBRE` (env, ver `.env.example`). La "memoria" de la semana pasada se lee de `data/playlist_seleccion_semanal.json`.
 - **Forzar una corrida:** GitHub → Actions → "Actualizar playlist semanal" → **Run workflow**.
 - **Corrida manual local:** `python scripts/generar_playlist_semanal.py` (necesita `.env` con credenciales y refresh token; `--dry-run` muestra la selección sin tocar la playlist).
 - **Regenerar refresh token:** `python scripts/generar_playlist_semanal.py --auth` (borrar antes `scripts/.spotify_playlist_cache.json` para que reabra el navegador), guardar el token nuevo como secreto `SPOTIFY_PLAYLIST_REFRESH_TOKEN`.
