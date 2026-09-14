@@ -9,13 +9,14 @@ post y el botón "Abrir en {red}" lleva al origen).
 > investigación (sin contenido sincronizado de FB/IG). La sincronización es
 > la forma de que el **propio artista** mantenga su perfil y su contenido.
 
-> **Estado actual (agosto 2026):** la app de Meta está configurada en
+> **Estado actual (septiembre 2026):** la app está configurada en
 > producción, el OAuth ya fue probado, **Apex Ultra quedó verificado** y sus
 > publicaciones de Facebook ya aparecen en el perfil. GitHub Actions ejecuta
 > la sincronización cada 6 horas. Falta conectar al resto de artistas.
-> **2026-08-29:** la app entró en **validación/registro** de Meta
-> (Business Verification); mientras Meta procesa ese estado, el **Facebook
-> Login queda temporalmente deshabilitado** para toda la app (ver § 10).
+> **2026-09-13:** Meta aprobó la **verificación de negocio**. Para que
+> cualquier artista (no solo roles de la app) pueda conectarse queda: solicitar
+> **acceso avanzado (App Review)** de `pages_read_engagement`, `instagram_basic`
+> y `pages_events`, y pasar la app a **modo Live** (ver § 11).
 
 ---
 
@@ -60,7 +61,8 @@ En **Facebook Login for Business** → **Configuración** (o "Use cases"):
        `https://github.com/cloudflare/cloudflared/releases`).
      - La URL del túnel es **temporal**: al cambiar, actualizar también
        `META_REDIRECT_URI` del `.env` y reiniciar la API.
-   - Producción: `https://tudominio.com/api/feed/igfb/callback`
+   - Producción: `https://fronteragrande-api.onrender.com/api/feed/igfb/callback`
+     (la URL real de la API de Render, no el túnel de desarrollo)
 3. Guarda.
 
 > El callback redirige a la web usando `WEB_URL` del `.env`
@@ -78,13 +80,15 @@ La app solicita estos permisos (ya configurados en
 | `pages_show_list` | listar las páginas que administra el usuario | verificado |
 | `pages_read_engagement` | leer los posts de la página | verificado |
 | `instagram_basic` | leer media y metadatos de la cuenta IG de negocio | verificado |
-| `pages_events` | leer eventos de la página (ingesta opcional) | **opcional — solo tras aprobación**: pedirlo sin aprobación bloquea a usuarios no-admin con `Invalid Scope: pages_events`. Por eso el login normal no lo pide; se usa `con_eventos=1` (`SCOPES_EVENTOS` en `backend/feed_meta.py`) solo tras App Review. |
+| `pages_events` | leer eventos de la página (ingesta opcional) | **tras aprobación de App Review**. Pedirlo sin aprobación bloquea a usuarios no-admin con `Invalid Scope: pages_events`. Por eso el login normal no lo pide; se usa `con_eventos=1` (`SCOPES_EVENTOS` en `backend/feed_meta.py`) o el toggle `META_CON_EVENTOS=true` una vez aprobado. |
 
 - **Modo desarrollo:** como **admin de la app**, puedes autorizar sin pasar
   revisión (por eso Apex Ultra sí conectó con `pages_events`).
 - **Producción:** para usarla con cualquier usuario necesitas solicitar la
-  **revisión de la app** (Business Verification) para estos permisos.
-  Hasta entonces, **no pedir `pages_events` en el login por defecto**.
+  **revisión de la app** (Business Verification ✔ 2026-09-13 + App Review de
+  acceso avanzado) para los permisos `pages_read_engagement`, `instagram_basic`
+  y `pages_events`. Hasta que la aprobación llegue, **no pedir `pages_events`
+  en el login por defecto** (`META_CON_EVENTOS` queda en `false`).
 
 ## 6. Configurar `.env`
 
@@ -92,6 +96,8 @@ La app solicita estos permisos (ya configurados en
 META_APP_ID=1234567890123456
 META_APP_SECRET=abcdef1234567890abcdef1234567890
 META_REDIRECT_URI=https://xxxx.trycloudflare.com/api/feed/igfb/callback
+# Tras aprobar pages_events en App Review, activar la ingesta de eventos en
+# el login por defecto (sin esperar a modificar el front): META_CON_EVENTOS=true
 WEB_URL=http://127.0.0.1:3000
 ```
 
@@ -182,6 +188,11 @@ En ambos casos, `FG_PAGE_ID` es el id de la página FG (p. ej.
 guarda el token obtenido; por defecto `data/fg_page_token.txt`.
 
 ## 11. Validación de la app y error "Feature Unavailable"
+
+> **Estado 2026-09-13:** la **verificación de negocio fue aprobada**, así que
+> el bloqueo temporal descrito abajo está levantado. La sección queda como
+> referencia si la app vuelve a entrar en validación (p. ej. durante la
+> revisión de permisos en App Review) o para el ciclo anual de verificación.
 
 Cuando la app de Meta entra en **validación/registro** (Business
 Verification / App Review en curso), Meta **desactiva temporalmente el

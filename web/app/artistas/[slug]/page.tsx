@@ -133,10 +133,10 @@ export default async function PerfilPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ igfb?: string; tiktok?: string }>;
+  searchParams: Promise<{ igfb?: string; tiktok?: string; razon?: string }>;
 }) {
   const { slug } = await params;
-  const { igfb, tiktok } = await searchParams;
+  const { igfb, tiktok, razon } = await searchParams;
   let artist;
   try {
     artist = await api.artist(slug);
@@ -483,6 +483,11 @@ export default async function PerfilPage({
             No se pudo conectar la cuenta. Asegúrate de autorizar con la cuenta
             que administra la página de Facebook registrada e intenta de nuevo.
           </p>
+          {razon && (
+            <p className="mt-2 border-t border-line/60 pt-2 text-xs break-words">
+              Detalle: {razon}
+            </p>
+          )}
           <Link href="/ayuda-artistas" className="mt-1 inline-block underline">
             Consulta la ayuda para artistas
           </Link>

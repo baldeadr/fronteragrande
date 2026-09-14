@@ -21,7 +21,7 @@ import hmac
 import time
 from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import requests
 from fastapi import APIRouter, Cookie, HTTPException, Header, Body
@@ -49,6 +49,10 @@ SCOPES = "pages_show_list,pages_read_engagement,instagram_basic"
 # la app ya tiene aprobación de Meta; pedirlo sin aprobación bloquea a
 # usuarios no-admin con "Invalid Scope: pages_events".
 SCOPES_EVENTOS = f"{SCOPES},pages_events"
+# Cuando `META_CON_EVENTOS=true`, el login de artistas pide además
+# `pages_events` sin depender del parámetro `con_eventos`. Activarlo solo
+# cuando Meta haya aprobado el permiso en App Review.
+CON_EVENTOS = os.getenv("META_CON_EVENTOS", "false").lower() == "true"
 GRAF_API = f"https://graph.facebook.com/{API_VERSION}"
 AUTH_URL = f"https://www.facebook.com/{API_VERSION}/dialog/oauth"
 
@@ -371,7 +375,7 @@ def login(slug: str, intencion: str = "conectar", con_eventos: bool = False):
     _get(slug)
     if intencion not in ("conectar", "desconectar"):
         raise HTTPException(status_code=400, detail="Intención no válida")
-    scope = SCOPES_EVENTOS if con_eventos else SCOPES
+    scope = SCOPES_EVENTOS if (con_eventos or CON_EVENTOS) else SCOPES
     params = urlencode(
         {
             "client_id": APP_ID,
@@ -666,6 +670,7 @@ def callback(code: str, state: str):
     session = SessionLocal()
     ok = False
     owner_cookie = None
+    razon = ""
     try:
         artista = ArtistRepository(session).por_slug(slug)
         if artista is not None and code:
@@ -702,6 +707,7 @@ def callback(code: str, state: str):
     except Exception as exc:
         session.rollback()
         logger.exception("Error al gestionar Meta para el artista %s: %s", slug, exc)
+        razon = str(exc).strip().replace("\n", " ")[:200]
     finally:
         session.close()
     resultado = "desconectado" if intencion == "desconectar" and ok else "ok"
@@ -710,6 +716,8 @@ def callback(code: str, state: str):
         destino = f"{WEB_URL}/artistas/{slug}/seleccionar-foto?igfb=ok&owner={owner_cookie}"
     else:
         destino = f"{WEB_URL}/artistas/{slug}?igfb={resultado if ok else 'error'}"
+    if not ok and razon:
+        destino += f"&razon={quote(razon)}"
     if owner_cookie:
         destino += f"&owner={owner_cookie}#meta_owner={owner_cookie}"
     respuesta = RedirectResponse(destino)
