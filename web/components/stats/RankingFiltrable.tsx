@@ -33,6 +33,12 @@ const COLOR_NIVEL: Record<string, string> = {
   "Leyenda de la Frontera": "#aab4c8",
 };
 
+const ESTADO_ACTIVIDAD: Record<string, { etiqueta: string; color: string }> = {
+  activo: { etiqueta: "Activo", color: "var(--activo)" },
+  en_duda: { etiqueta: "En duda", color: "var(--en-duda)" },
+  inactivo: { etiqueta: "Inactivo", color: "var(--inactivo)" },
+};
+
 type ClaveGrupo =
   | "todos"
   | "escena"
@@ -112,6 +118,7 @@ export default function RankingFiltrable({
   const [sel, setSel] = useState<string | null>(null);
   const [generoSel, setGeneroSel] = useState<string>("");
   const [ciudadSel, setCiudadSel] = useState<string>("");
+  const [estadoSel, setEstadoSel] = useState<string>("");
 
   const generosDisponibles = GENEROS_DOMINANTES.filter((g) =>
     artistas.some((a) => a.genero_dominante === g),
@@ -128,7 +135,8 @@ export default function RankingFiltrable({
   const miembros = artistas
     .filter(grupoActivo.seleccionar)
     .filter((a) => !generoSel || a.genero_dominante === generoSel)
-    .filter((a) => !ciudadSel || ciudadBase(a.ciudad) === ciudadSel);
+    .filter((a) => !ciudadSel || ciudadBase(a.ciudad) === ciudadSel)
+    .filter((a) => !estadoSel || a.estado_activo === estadoSel);
   // Se ordena por el índice universal (comparable entre todas las ligas) en
   // todos los grupos: así cada liga muestra su clasificación real derivada del
   // índice universal (coincide con `rank_liga` del perfil).
@@ -241,6 +249,17 @@ export default function RankingFiltrable({
             ))}
           </select>
         )}
+        <select
+          value={estadoSel}
+          onChange={(e) => setEstadoSel(e.target.value)}
+          className="rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs text-muted outline-none focus:border-accent"
+          aria-label="Filtrar por estado de actividad"
+        >
+          <option value="">Todos los estados</option>
+          <option value="activo">Activos</option>
+          <option value="en_duda">En duda</option>
+          <option value="inactivo">Inactivos</option>
+        </select>
         <span className="ml-auto flex gap-x-3 gap-y-1 text-xs text-muted">
           {["audiencia", "consumo"].map((clave) => (
             <span
@@ -288,6 +307,17 @@ export default function RankingFiltrable({
                     {tienenIndice ? `#${i + 1}` : "—"}
                   </span>
                   <div className="flex w-28 shrink-0 items-center gap-1 sm:w-40">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor:
+                          ESTADO_ACTIVIDAD[a.estado_activo]?.color ?? "#888",
+                      }}
+                      title={`Estado de actividad: ${
+                        ESTADO_ACTIVIDAD[a.estado_activo]?.etiqueta ??
+                        a.estado_activo
+                      }`}
+                    />
                     <Link
                       href={`/artistas/${a.slug}`}
                       onClick={(e) => e.stopPropagation()}
@@ -358,7 +388,9 @@ export default function RankingFiltrable({
           <span className="text-xs">
             Pasa el cursor o toca una fila para ver la proporción de audiencia
             y consumo · posiciones por índice universal (comparable entre todas
-            las ligas) · filtra por género dominante y ciudad si lo deseas.
+            las ligas) · el punto junto al nombre indica el estado de actividad
+            (verde activo, ámbar en duda, rojo inactivo) · filtra por género,
+            ciudad y estado si lo deseas.
           </span>
         )}
       </p>
