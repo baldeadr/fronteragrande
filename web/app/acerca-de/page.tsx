@@ -17,7 +17,7 @@ const que_es = [
   "Cada proyecto se descubre, se escucha y se ve en sus redes: previews y enlaces directos (el puente).",
   "Stats de la escena: categorías, ciudades, actividad real y huella digital por plataforma.",
   "Diseñada para crecer: a otras regiones y a otras disciplinas artísticas.",
-  "Un impulso a la profesionalización de la escena: la verificación funciona con páginas y cuentas profesionales, y recomendamos a cada proyecto operar con cara de proyecto en redes — no con su perfil personal.",
+  "Un empujón a la profesionalización: para verificar el perfil, cada proyecto usa página y cuenta profesional en redes — no su perfil personal.",
 ];
 
 const limites = [
@@ -107,7 +107,7 @@ const paginas = [
     icono: "feed",
     nombre: "Actividad",
     descripcion:
-      "la bitácora de la escena: los videos, lanzamientos y eventos que publican los proyectos, y sus números.",
+      "el historial de la escena: los videos, lanzamientos y eventos que publican los proyectos, y sus números.",
   },
   {
     href: "/artistas",
@@ -127,7 +127,7 @@ const paginas = [
     icono: "stats",
     nombre: "Stats",
     descripcion:
-      "métricas por plataforma, ranking de alcance y menciones de la escena.",
+      "los números de cada proyecto por red, el ranking y quién es el número uno en cada categoría, ciudad y género.",
   },
 ];
 
@@ -191,7 +191,7 @@ export default function AcercaDePage() {
         </span>
         <p className="text-sm leading-relaxed text-muted">
           Frontera Grande nació de la necesidad de investigar la competencia
-          local y entender cómo encajar en ella. Con el tiempo, esa idea pivotó
+          local y entender cómo encajar en ella. Con el tiempo, esa idea giró
           y tomó forma como base de datos interactiva abierta a todo el público.
           Hoy Frontera Grande forma parte del universo artístico de{" "}
           <b>Adrian Balderas</b> llamado{" "}
@@ -281,8 +281,8 @@ export default function AcercaDePage() {
         </summary>
         <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
           <p>
-            La señal sale de internet: sus publicaciones en redes, videos y
-            eventos, rastreados automáticamente.
+            La información sale de internet: sus publicaciones en redes, videos
+            y eventos, rastreados automáticamente.
           </p>
           <p className="flex items-center gap-2">
             <span
@@ -296,8 +296,8 @@ export default function AcercaDePage() {
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: "var(--en-duda)" }}
             />
-            <b>En duda</b> — actividad entre 6 y 18 meses, o sin señal
-            suficiente.
+            <b>En duda</b> — actividad entre 6 y 18 meses, o sin publicaciones
+            suficientes.
           </p>
           <p className="flex items-center gap-2">
             <span
@@ -435,12 +435,11 @@ export default function AcercaDePage() {
         </summary>
         <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
           <p>
-            Cada proyecto tiene un <b>género dominante</b> que resume su sonido.
-            Sale automáticamente de los subgéneros que el proyecto declara y se
-            agrupan en <b>10 familias</b>. Los casos ambiguos se resuelven por
-            curaduría editorial. Algunos géneros colindan de verdad (norteño y
-            tex-mex con el country; techno con el industrial), así que se
-            adscriben según su familia dominante:
+            Cada proyecto tiene un <b>género dominante</b> que resume su sonido,
+            en <b>10 grandes familias</b>. Sale automático de los subgéneros que
+            el proyecto declara; si hay duda, lo decide el equipo. Algunos
+            géneros se parecen mucho (norteño y tex-mex con el country; techno
+            con el industrial), así que se agrupan según su familia principal:
           </p>
 
           <div className="flex flex-col gap-2">
@@ -525,8 +524,8 @@ export default function AcercaDePage() {
             todos sus proyectos.
           </p>
           <p className="text-sm leading-relaxed text-muted">
-            Las Ligas se clasifican por <b>alcance verificable</b> (audiencia,
-            consumo y actividad), no por ingresos ni por fama del momento.
+            Las Ligas miden tu <b>alcance real</b> (audiencia, consumo y
+            actividad), no tus ingresos ni la fama del momento.
           </p>
         </div>
       </details>
