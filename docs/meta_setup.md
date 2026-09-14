@@ -183,9 +183,26 @@ Graph API Explorer → user token con pages_manage_posts →
 GET /{FG_PAGE_ID}?fields=access_token → exchange a long-lived (60 días)
 ```
 
-En ambos casos, `FG_PAGE_ID` es el id de la página FG (p. ej.
-`1567063665051085`). El valor `FG_PAGE_TOKEN_FILE` (opcional) cambia dónde se
-guarda el token obtenido; por defecto `data/fg_page_token.txt`.
+En ambos casos, `FG_PAGE_ID` es el id real de la página FG (en la app de Meta,
+Página → Acerca de → ID; **no es el App ID** de la aplicación: en este proyecto
+el App ID es `1567063665051085` y el page id de FG es `1310637315463189`).
+El valor `FG_PAGE_TOKEN_FILE` (opcional) cambia dónde se guarda el token
+obtenido; por defecto `data/fg_page_token.txt`.
+
+> **Guard anti página equivocada (2026-09-14):** el proyecto ya no publica
+> nunca en una página que no sea Frontera Grande.
+>
+> - La publicación (`lib/promo_fg.py`) resuelve `/me` con `FG_PAGE_TOKEN` antes
+>   de postear: solo publica si el id coincide con `FG_PAGE_ID` o el nombre de
+>   la página contiene "Frontera Grande". Si el token pertenece a otra página
+>   (p. ej. la de un artista como Apex Ultra) o está vencido, **no publica** y
+>   queda un error claro en el log en vez de un post en el lugar equivocado.
+> - El flujo OAuth de la página FG (`_pagina_por_id` con `preferir_nombre`)
+>   ya **no** se queda con la primera página administrada si no encuentra la
+>   de Frontera Grande: termina en `?fg_token=no_admin` y no guarda nada.
+> - `scripts/obtener_token_pagina.py` valida el token contra `/me` y **aborta**
+>   antes de fijar el secret `FG_PAGE_TOKEN` si la página resuelta no es la
+>   de Frontera Grande.
 
 ## 11. Validación de la app y error "Feature Unavailable"
 

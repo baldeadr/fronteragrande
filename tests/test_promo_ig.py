@@ -123,7 +123,7 @@ class TestIgDeFg:
 
     def setup_method(self):
         _IG_FG_CACHE.clear()
-        promo_mod._ID_PAGINA_CACHE = None
+        promo_mod._PAGINA_FG_INFO = None
 
     def test_cache_hit(self):
         """Una vez consultado, se cachea y no vuelve a llamar."""
@@ -191,10 +191,12 @@ class TestPublicarEnIg:
     def setup_method(self):
         _IG_FG_CACHE.clear()
 
+    @patch("lib.promo_fg._error_pagina_fg")
     @patch("lib.promo_fg._ig_de_fg")
-    def test_sin_ig_vinculada(self, mock_ig):
+    def test_sin_ig_vinculada(self, mock_ig, mock_guard):
         """Si no hay IG vinculada, falla graceful."""
         mock_ig.return_value = None
+        mock_guard.return_value = None
 
         result = publicar_en_ig("test caption", "https://example.com/img.jpg")
 
@@ -205,9 +207,11 @@ class TestPublicarEnIg:
     @patch("lib.promo_fg.requests.get")
     @patch("lib.promo_fg.requests.post")
     @patch("lib.promo_fg._ig_de_fg")
-    def test_flujo_exitoso(self, mock_ig, mock_post, mock_get, mock_sleep):
+    @patch("lib.promo_fg._error_pagina_fg")
+    def test_flujo_exitoso(self, mock_guard, mock_ig, mock_post, mock_get, mock_sleep):
         """Flujo completo: contenedor → poll → publicar."""
         mock_ig.return_value = "17841436889901689"
+        mock_guard.return_value = None
 
         # Mock para crear contenedor
         mock_resp_crear = MagicMock()
@@ -235,9 +239,11 @@ class TestPublicarEnIg:
     @patch("lib.promo_fg.requests.get")
     @patch("lib.promo_fg.requests.post")
     @patch("lib.promo_fg._ig_de_fg")
-    def test_contenedor_error(self, mock_ig, mock_post, mock_get, mock_sleep):
+    @patch("lib.promo_fg._error_pagina_fg")
+    def test_contenedor_error(self, mock_guard, mock_ig, mock_post, mock_get, mock_sleep):
         """Si el contenedor falla, reporta error."""
         mock_ig.return_value = "17841436889901689"
+        mock_guard.return_value = None
 
         mock_resp_crear = MagicMock()
         mock_resp_crear.json.return_value = {"id": "CONTAINER_123"}

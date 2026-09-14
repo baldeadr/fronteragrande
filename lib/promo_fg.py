@@ -54,18 +54,20 @@ def promo_configurado() -> bool:
 
 _IG_FG_CACHE: dict[str, str | None] = {}
 
-_ID_PAGINA_CACHE: str | None = None
+_PAGINA_FG_INFO: tuple[str, str] | None = None
 
 
-def _id_pagina_fg() -> str | None:
-    """ID real de la página FG a partir del token (un page token resuelve
-    `/me` a la propia página). Se cachea una vez por proceso."""
-    global _ID_PAGINA_CACHE
-    if _ID_PAGINA_CACHE is not None:
-        return _ID_PAGINA_CACHE
+def _info_pagina_fg() -> tuple[str, str] | None:
+    """Resuelve `/me` con FG_PAGE_TOKEN: `(id, nombre)` de la página dueña.
+
+    Solo se cachea un resultado exitoso; un fallo de red se reintenta en la
+    siguiente llamada. `None` si no hay token o la resolución no devuelve id.
+    """
+    global _PAGINA_FG_INFO
+    if _PAGINA_FG_INFO is not None:
+        return _PAGINA_FG_INFO
     if not FG_PAGE_TOKEN:
-        return FG_PAGE_ID or None
-    _ID_PAGINA_CACHE = FG_PAGE_ID
+        return None
     try:
         r = requests.get(
             f"{GRAF_API}/me",
@@ -73,12 +75,54 @@ def _id_pagina_fg() -> str | None:
             timeout=15,
         )
         if r.ok:
-            rid = r.json().get("id")
+            datos = r.json()
+            rid = datos.get("id")
             if rid:
-                _ID_PAGINA_CACHE = str(rid)
+                _PAGINA_FG_INFO = (str(rid), datos.get("name") or "")
+                return _PAGINA_FG_INFO
     except requests.RequestException:
         pass
-    return _ID_PAGINA_CACHE
+    return None
+
+
+def _id_pagina_fg() -> str | None:
+    """ID real de la página FG a partir del token (un page token resuelve
+    `/me` a la propia página). Se cachea una vez por proceso."""
+    info = _info_pagina_fg()
+    if info:
+        return info[0]
+    return FG_PAGE_ID or None
+
+
+def _es_pagina_fg(info: tuple[str, str]) -> bool:
+    """True si la página resuelta corresponde a Frontera Grande.
+
+    Criterio: el id coincide con `FG_PAGE_ID` o el nombre contiene
+    "Frontera Grande" (tolera que FG_PAGE_ID sea el App ID).
+    """
+    pid, nombre = info
+    if FG_PAGE_ID and str(pid) == str(FG_PAGE_ID):
+        return True
+    return "frontera grande" in nombre.casefold()
+
+
+def _error_pagina_fg() -> str | None:
+    """None si FG_PAGE_TOKEN pertenece a la página FG; si no, mensaje de error.
+
+    Es el guard de la publicación: nunca se debe publicar en una página que no
+    sea Frontera Grande (p. ej. la de Apex Ultra si el token quedó mal puesto).
+    """
+    info = _info_pagina_fg()
+    if info is None:
+        return ("FG_PAGE_TOKEN no resuelve a ninguna página (¿token vencido "
+                "o revocado?). Recupera el token con "
+                "scripts/obtener_token_pagina.py")
+    if _es_pagina_fg(info):
+        return None
+    pid, nombre = info
+    return (f"FG_PAGE_TOKEN pertenece a la página '{nombre}' ({pid}), no a "
+            "Frontera Grande. Recupera el token con "
+            "scripts/obtener_token_pagina.py")
 
 
 def _obtener_enlaces_artista(artista: Artist) -> dict[str, str]:
@@ -598,6 +642,9 @@ def publicar_en_fb(mensaje: str, imagen_url: str | None = None) -> dict:
     """
     if not promo_configurado():
         return {"ok": False, "error": "FG_PAGE_ID o FG_PAGE_TOKEN no configurados"}
+    error_fg = _error_pagina_fg()
+    if error_fg:
+        return {"ok": False, "error": error_fg}
     try:
         page_id = _id_pagina_fg()
         if not page_id:
@@ -710,6 +757,11 @@ def publicar_en_ig(mensaje: str, imagen_url: str) -> dict:
     `POST /{ig}/media_publish`. La API de IG no tiene borradores: publicar
     es inmediato. Returns dict con 'ok', 'post_id' o 'error'.
     """
+    if not promo_configurado():
+        return {"ok": False, "error": "FG_PAGE_ID o FG_PAGE_TOKEN no configurados"}
+    error_fg = _error_pagina_fg()
+    if error_fg:
+        return {"ok": False, "error": error_fg}
     ig_id = _ig_de_fg()
     if not ig_id:
         return {"ok": False, "error": "Página FG sin Instagram vinculado"}

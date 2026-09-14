@@ -248,6 +248,9 @@ def _pagina_por_id(
        FG no depende de que `FG_PAGE_ID` sea el Page ID real (a veces es el App
        ID, que no coincide con ninguna página).
     3. En último caso devuelve la primera página que administra la cuenta.
+       Esta vía queda reservada a flujos sin `preferir_nombre` (artistas): si
+       se pidió una página concreta por nombre y no aparece, devolvemos None
+       para NO quedarnos con el token de una página equivocada.
     """
     r = requests.get(
         f"{GRAF_API}/me/accounts",
@@ -276,6 +279,7 @@ def _pagina_por_id(
         for p in paginas:
             if objetivo in (p.get("name") or "").casefold():
                 return p
+        return None
     return paginas[0] if paginas else None
 
 

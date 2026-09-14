@@ -80,6 +80,40 @@ def obtener_token_por_api(api_base: str) -> str | None:
         return None
 
 
+def _verificar_pagina_token(token: str) -> bool:
+    """Valida que el token pertenezca a la página FG antes de fijar el secret.
+
+    Resuelve `/me` con el token e imprime la página resultante. Devuelve True
+    solo si el id coincide con FG_PAGE_ID o el nombre contiene "Frontera
+    Grande"; si es de otra página (p. ej. Apex Ultra) avisa y aborta.
+    """
+    import requests
+
+    page_id = os.environ.get("FG_PAGE_ID", "")
+    try:
+        r = requests.get(
+            "https://graph.facebook.com/v22.0/me",
+            params={"access_token": token, "fields": "id,name"},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        print(f"[error] No se pudo validar el token contra Meta: {exc}", file=sys.stderr)
+        return False
+    if not r.ok:
+        print(f"[error] El token no es válido: {r.text[:200]}", file=sys.stderr)
+        return False
+    datos = r.json()
+    pid, nombre = str(datos.get("id")), datos.get("name") or ""
+    print(f"\nPágina que resuelve el token: {nombre} ({pid})")
+    ok = bool(page_id and pid == str(page_id)) or "frontera grande" in nombre.casefold()
+    if not ok:
+        print(f"[error] La página '{nombre}' no es Frontera Grande. "
+              "NO se fija el secret. Autoriza con la cuenta que administra "
+              "la página Frontera Grande.", file=sys.stderr)
+        return False
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Obtiene el token permanente de la pagina FG")
     parser.add_argument(
@@ -136,6 +170,8 @@ def main():
         sys.exit(1)
 
     print(f"\nToken obtenido correctamente. (primeros 12 chars): {token[:12]}...")
+    if not _verificar_pagina_token(token):
+        sys.exit(1)
     cmd = ['gh', 'secret', 'set', 'FG_PAGE_TOKEN', '--body', token]
     print("Comando a ejecutar:\n  gh secret set FG_PAGE_TOKEN --body <token-oculto>")
     if args.no_set_secret:

@@ -35,8 +35,8 @@ def test_pagina_por_id_encontrada(monkeypatch):
 
 
 def test_pagina_por_id_no_admin_fallback(monkeypatch):
-    """Si la página FG específica no está administrada, devuelve la primera
-    página de la cuenta (fallback: no depende de un FG_PAGE_ID bien puesto)."""
+    """Sin `preferir_nombre` (flujo de artista) y sin el id pedido, devuelve
+    la primera página de la cuenta (fallback benigno para ese flujo)."""
     def fake_get(ruta, params, **kwargs):
         resp = type("R", (), {"ok": True})()
         resp.json = lambda: {"data": [{"id": "999", "name": "Otra",
@@ -48,6 +48,22 @@ def test_pagina_por_id_no_admin_fallback(monkeypatch):
     pagina = fm._pagina_por_id("user_tok", "1567063665051085")
     assert pagina is not None
     assert pagina["access_token"] == "tok"
+
+
+def test_pagina_por_id_nombre_sin_coincidencia(monkeypatch):
+    """Si se pide la página FG por nombre y no está administrada, devuelve
+    None (no la primera página): evita guardar el token de otra página."""
+    def fake_get(ruta, params, **kwargs):
+        resp = type("R", (), {"ok": True})()
+        resp.json = lambda: {"data": [
+            {"id": "999", "name": "Apex Ultra", "access_token": "tok_apex"},
+        ]}
+        resp.raise_for_status = lambda: None
+        return resp
+
+    monkeypatch.setattr(fm.requests, "get", fake_get)
+    pagina = fm._pagina_por_id("user_tok", None, preferir_nombre="Frontera Grande")
+    assert pagina is None
 
 
 def test_pagina_por_id_sin_paginas(monkeypatch):

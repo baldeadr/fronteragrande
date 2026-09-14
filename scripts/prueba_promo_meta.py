@@ -76,10 +76,16 @@ def main():
     from db.database import SessionLocal
     from lib.promo_fg import (
         _construir_mensaje,
+        _error_pagina_fg,
         _obtener_enlaces_artista,
         generar_imagen_promo,
     )
     from lib.repository import ArtistRepository
+
+    error_fg = _error_pagina_fg()
+    if error_fg:
+        print(f"[error] {error_fg}", file=sys.stderr)
+        sys.exit(1)
 
     variante = None
     if args.variante != "auto":
