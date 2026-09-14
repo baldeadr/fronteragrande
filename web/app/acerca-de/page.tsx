@@ -319,40 +319,54 @@ export default function AcercaDePage() {
         </summary>
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           <p className="text-sm leading-relaxed text-muted">
-            Mide el <b>alcance digital</b> de cada proyecto. Cada señal
-            (seguidores, oyentes, reproducciones o vistas) se compara contra un{" "}
-            <b>techo mundial fijo</b> en escala logarítmica
+            Mide el <b>alcance digital</b> de cada proyecto con números reales:
+            seguidores, oyentes, reproducciones y vistas. En simple:
+          </p>
+
+          <ul className="mt-3 flex flex-col gap-2">
+            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
+              <span className="text-accent">·</span>Tu <b>mejor número</b>{" "}
+              cuenta 70 de 100; tener dato en <b>más plataformas</b> completa
+              el 30 restante (cada plataforma sin dato baja un poco la nota).
+            </li>
+            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
+              <span className="text-accent">·</span>Todo se compara contra un{" "}
+              <b>tope mundial fijo</b> (nivel &quot;de estrellas&quot;), no
+              contra el resto de la escena: tu puntaje no depende de la
+              competencia, solo se reordena si otro proyecto te rebasa.
+            </li>
+            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
+              <span className="text-accent">·</span>Las vistas de YouTube
+              cuentan al <b>60 %</b> (el contador del canal incluye Shorts); la
+              cifra que muestra el perfil no cambia.
+            </li>
+            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
+              <span className="text-accent">·</span>Anti-trampa: si tus
+              seguidores de IG/FB/TikTok son muy altos frente a tu música
+              escuchada, se recortan a <b>consumo real × 3</b>: los seguidores
+              comprados no inflan el índice.
+            </li>
+          </ul>
+
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            La fórmula exacta (la letra chiquita): cada señal se normaliza
+            contra su tope mundial en escala logarítmica
           </p>
           <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
             <FormulaLatex tex="\text{ratio} = \frac{\log_{10}(v+1)}{\log_{10}(\text{techo}+1)}" />
           </div>
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            y el índice combina el <b>70 % de la señal dominante</b> (la mejor
-            ratio) con el <b>30 % de cobertura</b> (media de ratios: no tener
-            una plataforma baja la nota).
-          </p>
           <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
             <FormulaLatex tex="\text{índice} = 0.7 \cdot \max(\text{ratio}) + 0.3 \cdot \text{media}(\text{ratios})" />
           </div>
-          <ul className="mt-3 flex flex-col gap-2">
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Los techos son mundiales y
-              fijos (seguidores 50 millones, oyentes de Spotify 50 millones,
-              vistas de YouTube 10 000 millones…): el ranking no depende de con
-              quién te compares dentro de la escena.
-            </li>
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Las vistas de YouTube
-              cuentan al <b>60 %</b> en la clasificación (el contador del canal
-              incluye Shorts); la cifra que muestra el perfil no cambia.
-            </li>
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Regla anti-trampa: con
-              consumo registrado, la audiencia social (IG/FB/TikTok) no puede
-              superar <b>consumo real × 3</b>: los seguidores comprados no
-              inflan el índice.
-            </li>
-          </ul>
+
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            <b>¿Qué plataformas cuentan?</b> Instagram, Facebook y TikTok
+            (seguidores); YouTube (suscriptores y vistas); Spotify (oyentes
+            mensuales y seguidores); SoundCloud y Bandcamp (reproducciones);
+            Beatport y Mixcloud (seguidores). Solo aportan las que tienen dato
+            real y cada una se compara contra su tope mundial fijo.
+          </p>
+
           <p className="mt-4 text-sm leading-relaxed text-muted">
             La posición (el <b>#L</b> dentro de tu liga y el <b>#G</b> del
             ranking universal) sale de ese índice. La tarjeta del perfil añade
