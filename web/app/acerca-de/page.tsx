@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FormulaInline, FormulaLatex } from "@/components/Formula";
-import IconoRed from "@/components/IconoRed";
-import { infoPlataforma } from "@/components/Plataformas";
+import { FormulaLatex } from "@/components/Formula";
 import { IconoLiga } from "@/components/IconoLiga";
 import IconoMencion from "@/components/IconoMencion";
 
@@ -13,20 +11,6 @@ export const metadata: Metadata = {
   description:
     "Qué es Frontera Grande, la base de datos interactiva de los proyectos musicales de la frontera grande de Tamaulipas: propósito, alcance, límites y cómo se calcula el ranking.",
 };
-
-const pesos = [
-  { clave: "ig", plataforma: "Instagram · seguidores", peso: "0,18" },
-  { clave: "fb", plataforma: "Facebook · seguidores", peso: "0,12" },
-  { clave: "spotify", plataforma: "Spotify · seguidores", peso: "0,03" },
-  { clave: "spotify", plataforma: "Spotify · oyentes/consumo", peso: "0,25" },
-  { clave: "yt", plataforma: "YouTube · suscriptores", peso: "0,02" },
-  { clave: "yt", plataforma: "YouTube · vistas", peso: "0,12" },
-  { clave: "tt", plataforma: "TikTok · seguidores", peso: "0,08" },
-  { clave: "bandcamp", plataforma: "Bandcamp · reproducciones", peso: "0,03" },
-  { clave: "soundcloud", plataforma: "SoundCloud · reproducciones", peso: "0,03" },
-  { clave: "beatport", plataforma: "Beatport · seguidores", peso: "0,04" },
-  { clave: "mixcloud", plataforma: "Mixcloud · seguidores", peso: "0,04" },
-];
 
 const que_es = [
   "Una base de datos interactiva y pública de los proyectos musicales de la frontera grande de Tamaulipas: bandas, solistas, DJs, colectivos, covers y tributos.",
@@ -335,58 +319,48 @@ export default function AcercaDePage() {
         </summary>
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           <p className="text-sm leading-relaxed text-muted">
-            Mide el <b>alcance digital</b> de cada proyecto. Por cada plataforma
-            se usa su métrica de alcance (seguidores, reproducciones o vistas),
-            se transforma con <FormulaInline tex="\log_{10}(v+1)" /> y cada una
-            pesa distinto:
+            Mide el <b>alcance digital</b> de cada proyecto. Cada señal
+            (seguidores, oyentes, reproducciones o vistas) se compara contra un{" "}
+            <b>techo mundial fijo</b> en escala logarítmica
           </p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {pesos.map((p) => {
-              const icono = infoPlataforma(p.clave).icono;
-              return (
-                <span
-                  key={`${p.clave}-${p.peso}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-xs"
-                >
-                  <IconoRed src={icono} alt={p.plataforma} size={14} />
-                  <b>{p.plataforma}</b>{" "}
-                  <span className="tabular-nums text-muted">{p.peso}</span>
-                </span>
-              );
-            })}
+          <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+            <FormulaLatex tex="\text{ratio} = \frac{\log_{10}(v+1)}{\log_{10}(\text{techo}+1)}" />
           </div>
-
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            El ranking separa dos señales (0–100): <b>audiencia</b> para
-            seguidores y suscriptores, y <b>consumo</b> para oyentes,
-            reproducciones y vistas. Cada señal se transforma con logaritmo y se
-            normaliza frente al máximo de su métrica. El índice global combina
-            ambos: 55% audiencia y 45% consumo.
+            y el índice combina el <b>70 % de la señal dominante</b> (la mejor
+            ratio) con el <b>30 % de cobertura</b> (media de ratios: no tener
+            una plataforma baja la nota).
           </p>
-
-          <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-3">
-            <FormulaLatex
-              tex="I_s = 0.55 I_{audiencia} + 0.45 I_{consumo}"
-            />
+          <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+            <FormulaLatex tex="\text{índice} = 0.7 \cdot \max(\text{ratio}) + 0.3 \cdot \text{media}(\text{ratios})" />
           </div>
-
           <ul className="mt-3 flex flex-col gap-2">
             <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>En YouTube, el consumo pesa
-              70% de su componente y los suscriptores 30%.
+              <span className="text-accent">·</span>Los techos son mundiales y
+              fijos (seguidores 50 millones, oyentes de Spotify 50 millones,
+              vistas de YouTube 10 000 millones…): el ranking no depende de con
+              quién te compares dentro de la escena.
             </li>
             <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Si el máximo de una
-              plataforma es 0 (nadie la tiene), esa plataforma no aporta al
-              índice.
+              <span className="text-accent">·</span>Las vistas de YouTube
+              cuentan al <b>60 %</b> en la clasificación (el contador del canal
+              incluye Shorts); la cifra que muestra el perfil no cambia.
             </li>
             <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>El rango ordena de mayor a
-              menor, y la mención &quot;Nº 1&quot; destaca al máximo en cada
-              grupo (género, ciudad y categoría).
+              <span className="text-accent">·</span>Regla anti-trampa: con
+              consumo registrado, la audiencia social (IG/FB/TikTok) no puede
+              superar <b>consumo real × 3</b>: los seguidores comprados no
+              inflan el índice.
             </li>
           </ul>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            La posición (el <b>#L</b> dentro de tu liga y el <b>#G</b> del
+            ranking universal) sale de ese índice. La tarjeta del perfil añade
+            un desglose informativo: <b>A</b> (audiencia, seguidores y
+            suscriptores) y <b>C</b> (consumo, oyentes, reproducciones y
+            vistas), cada uno en 0-100; el orden siempre lo decide el índice
+            universal.
+          </p>
         </div>
       </details>
 
