@@ -317,63 +317,55 @@ export default function AcercaDePage() {
             +
           </span>
         </summary>
-        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-          <p className="text-sm leading-relaxed text-muted">
+        <div className="flex flex-col gap-2 px-4 pb-4 text-sm leading-relaxed text-muted sm:px-5 sm:pb-5">
+          <p>
             Mide el <b>alcance digital</b> de cada proyecto con números reales:
-            seguidores, oyentes, reproducciones y vistas. En simple:
+            seguidores, oyentes, reproducciones y vistas.
+          </p>
+          <p>
+            Lo que más pesa es tu <b>mejor plataforma</b> (70 % del puntaje);
+            tener presencia en <b>más redes</b> completa el 30 % restante
+            (cada plataforma sin dato baja un poco la nota).
+          </p>
+          <p>
+            No compites contra la escena local: todo se mide contra un{" "}
+            <b>nivel mundial fijo</b> (lo que logran los artistas grandes). Tu
+            puntaje es tuyo y no cambia porque otros crezcan; solo se mueve tu
+            lugar si alguien te rebasa.
+          </p>
+          <p>
+            Dos ajustes de la casa: las vistas de YouTube cuentan al{" "}
+            <b>60 %</b> (el contador del canal incluye Shorts; la cifra del
+            perfil no cambia), y si tus seguidores de IG/FB/TikTok son muy
+            altos frente a tu música escuchada, se recortan a{" "}
+            <b>consumo × 3</b>: los seguidores comprados no inflan la nota.
           </p>
 
-          <ul className="mt-3 flex flex-col gap-2">
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Tu <b>mejor número</b>{" "}
-              cuenta 70 de 100; tener dato en <b>más plataformas</b> completa
-              el 30 restante (cada plataforma sin dato baja un poco la nota).
-            </li>
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Todo se compara contra un{" "}
-              <b>tope mundial fijo</b> (nivel &quot;de estrellas&quot;), no
-              contra el resto de la escena: tu puntaje no depende de la
-              competencia, solo se reordena si otro proyecto te rebasa.
-            </li>
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Las vistas de YouTube
-              cuentan al <b>60 %</b> (el contador del canal incluye Shorts); la
-              cifra que muestra el perfil no cambia.
-            </li>
-            <li className="flex gap-2.5 text-sm leading-relaxed text-muted">
-              <span className="text-accent">·</span>Anti-trampa: si tus
-              seguidores de IG/FB/TikTok son muy altos frente a tu música
-              escuchada, se recortan a <b>consumo real × 3</b>: los seguidores
-              comprados no inflan el índice.
-            </li>
-          </ul>
-
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            La fórmula exacta (la letra chiquita): cada señal se normaliza
-            contra su tope mundial en escala logarítmica
+          <p className="mt-1">
+            La fórmula, solo para curiosos: cada número se compara contra su
+            tope mundial en escala logarítmica
           </p>
-          <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
             <FormulaLatex tex="\text{ratio} = \frac{\log_{10}(v+1)}{\log_{10}(\text{techo}+1)}" />
           </div>
-          <div className="mt-2 overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
+          <p>y el puntaje final junta el 70 % de tu mejor plataforma con el 30 % del conjunto:</p>
+          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
             <FormulaLatex tex="\text{índice} = 0.7 \cdot \max(\text{ratio}) + 0.3 \cdot \text{media}(\text{ratios})" />
           </div>
 
-          <p className="mt-4 text-sm leading-relaxed text-muted">
+          <p>
             <b>¿Qué plataformas cuentan?</b> Instagram, Facebook y TikTok
             (seguidores); YouTube (suscriptores y vistas); Spotify (oyentes
-            mensuales y seguidores); SoundCloud y Bandcamp (reproducciones);
-            Beatport y Mixcloud (seguidores). Solo aportan las que tienen dato
-            real y cada una se compara contra su tope mundial fijo.
+            mensuales); SoundCloud y Bandcamp (reproducciones);
+            Beatport y Mixcloud (seguidores). Solo suman las que tienen dato
+            real.
           </p>
-
-          <p className="mt-4 text-sm leading-relaxed text-muted">
-            La posición (el <b>#L</b> dentro de tu liga y el <b>#G</b> del
-            ranking universal) sale de ese índice. La tarjeta del perfil añade
-            un desglose informativo: <b>A</b> (audiencia, seguidores y
-            suscriptores) y <b>C</b> (consumo, oyentes, reproducciones y
-            vistas), cada uno en 0-100; el orden siempre lo decide el índice
-            universal.
+          <p>
+            Tu lugar sale de ese puntaje: el <b>#L</b> es tu puesto dentro de
+            tu liga y el <b>#G</b> tu puesto entre todos los proyectos. El
+            perfil muestra además un desglose <b>A</b> (audiencia) y <b>C</b>{" "}
+            (consumo), pero es solo informativo: el orden siempre lo decide el
+            puntaje completo.
           </p>
         </div>
       </details>
@@ -394,49 +386,27 @@ export default function AcercaDePage() {
             todas a la vez.
           </p>
           <p>
-            Se miden con un <b>índice universal 0-100</b>: cada señal
-            (seguidores, oyentes, vistas…) se normaliza contra un{" "}
-            <b>techo mundial fijo</b> en escala logarítmica
-          </p>
-          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
-            <FormulaLatex tex="\text{ratio} = \frac{\log_{10}(v+1)}{\log_{10}(\text{techo}+1)}" />
-          </div>
-          <p>
-            y el índice combina el <b>70 % de la señal dominante</b> (la mejor
-            ratio) con el <b>30 % de cobertura</b> (media de ratios: no tener
-            una plataforma baja la nota).
-          </p>
-          <div className="overflow-x-auto rounded-xl bg-surface-2 px-4 py-2">
-            <FormulaLatex tex="\text{índice} = 0.7 \cdot \max(\text{ratio}) + 0.3 \cdot \text{media}(\text{ratios})" />
-          </div>
-          <p>
-            Regla anti-trampa: con consumo registrado, la audiencia social
-            (IG/FB/TikTok) no puede superar <b>consumo real × 3</b> (un perfil
-            de seguidores comprados no infla el índice).
-          </p>
-          <p>
-            La posición de cada proyecto sale de su <b>índice universal</b>,
-            tanto dentro de su liga como en el ranking global: así la Escena y
-            las Ligas son siempre comparables.
+            Son cortes del puntaje explicado arriba (en &quot;Cómo se calcula
+            el ranking&quot;):
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#9d4edd" }}>
               <IconoLiga nivel="Escena" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>Escena</b> — la base de todos los proyectos registrados.
+            <b>Escena</b> — la base, todos los proyectos sin liga.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#2fb8a6" }}>
               <IconoLiga nivel="Emergente" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>Emergente</b> — índice <b>≥ 50</b> (y menor a 60): se distingue
-            de la base con audiencia y presencia reales.
+            <b>Emergente</b> — puntaje <b>entre 50 y 59</b>: se distingue de la
+            base con audiencia y presencia reales.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#f5b301" }}>
               <IconoLiga nivel="Ligas Mayores" className="h-3.5 w-3.5 shrink-0" />
             </span>
-            <b>Ligas Mayores</b> — índice <b>≥ 60</b>.
+            <b>Ligas Mayores</b> — puntaje <b>≥ 60</b>.
           </p>
           <p className="flex items-center gap-2">
             <span style={{ color: "#aab4c8" }}>
@@ -445,9 +415,13 @@ export default function AcercaDePage() {
                 className="h-3.5 w-3.5 shrink-0"
               />
             </span>
-            <b>Leyenda de la Frontera</b> — por curaduría, no por métricas:
-            retirado/a o fallecido/a con legado regional (flag{" "}
-            <code>es_leyenda</code> en BD, editable en el panel admin).
+            <b>Leyenda de la Frontera</b> — por curaduría, no por puntaje:
+            retirado/a o fallecido/a con legado regional.
+          </p>
+          <p>
+            La posición de cada proyecto sale del mismo puntaje, tanto dentro
+            de su liga como entre todos: así la Escena y las Ligas son siempre
+            comparables.
           </p>
         </div>
       </details>
