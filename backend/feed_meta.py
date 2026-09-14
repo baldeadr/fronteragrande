@@ -183,6 +183,11 @@ def _pagina_artista(artista: Artist, user_token: str) -> dict:
     )
     r.raise_for_status()
     datos = r.json()
+    if "error" in datos:
+        mensaje = datos["error"].get("message", "Error de Meta")
+        raise RuntimeError(
+            f"Meta rechazó listar páginas: {str(mensaje).strip()[:160]}"
+        )
     paginas = datos.get("data", [])
     if not paginas:
         raise RuntimeError("El usuario no administra ninguna página")
