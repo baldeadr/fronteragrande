@@ -77,7 +77,7 @@ El objetivo es construir un **ecosistema de playlists** que cubra distintas face
 - La portada seguiría la identidad visual (`docs/identidad.md`) con variante por tipo.
 - El script base (`generar_playlist_semanal.py`) ya es reutilizable: filtra artistas por criterio y aplica la misma lógica de selección/anti-duplicados.
 
-**`[PENDIENTE]` plantillas por playlist:** para que el feed de redes no se sienta monótono, se planea que **cada tipo de playlist** (género, época, novedades, ciudad, clásicos…) tenga su **diseño de tarjeta propio**: un selector de plantilla en `publicar_playlist_semanal.py` que cambie el motivo/composición del arte (p. ej. paleta, motivo de fondo, distribución del título) según el tipo, además de su propio banco de hooks. Hoy el arte y los hooks son uno solo para la playlist semanal.
+**`[PENDIENTE]` plantillas por playlist:** la semanal ya rota un **banco de 3 fondos** (`VARIANTES_BANCO`, ver §7.2), y quedaron **4 muestras reservadas** (afiche, boleto, vinilo, frontera) como candidatas directas a estas plantillas. Aún pendiente: que **cada tipo de playlist** futura (género, época, novedades, ciudad, clásicos…) tenga su **plantilla propia** (paleta, motivo y distribución del título propios), además de su propio banco de hooks.
 
 **`[PENDIENTE]` banco de hooks en BD:** los hooks del copy (`_hook_semana` con `HOOKS_FB`/`HOOKS_IG`) viven como arrays hardcodeados en el script. Con más de una playlist eso no escala: se planea migrarlos a una **tabla BD** (`hook_bank`: `plataforma`, tipo/playlist, `texto`, `emoji`, `activo`, `playlist`) y elegir por semana ISO desde ahí, manteniendo la deterministividad. El paso previo es tener el modelo de datos de playlists temáticas (cada playlist = ID manual + secreto + selector de plantilla).
 
@@ -85,31 +85,44 @@ El objetivo es construir un **ecosistema de playlists** que cubra distintas face
 
 ## 7. Tarjeta semanal (arte para redes)
 
-Cuando la playlist se anuncia en redes (fila **R** del calendario de publicaciones), el arte es la **tarjeta de "cartel de festival"** que genera `scripts/publicar_playlist_semanal.py`. Composición, estilo y decisiones documentadas aquí para mantener coherencia si se retoca o se extrapola a otros formatos.
+Cuando la playlist se anuncia en redes (fila **R** del calendario de publicaciones), el arte es la **tarjeta de "cartel de festival"** que genera `scripts/publicar_playlist_semanal.py`. Desde 2026-09 la tarjeta no tiene un único diseño: rota un **banco de 3 fondos** determinista por semana ISO (ver §7.2) para que el feed no se sienta repetitivo. Composición, estilo y decisiones documentadas aquí para mantener coherencia si se retoca o se extrapola a otros formatos.
 
 ### 7.1 Qué es
 
-- **Tamaño:** cuadrado **1080×1080** (feed IG/FB; se publica con el flujo estándar, sin formato vertical).
+- **Tamaño:** vertical **1080×1440** (3:4, estándar de posts de feed — llena la celda del grid de IG; se publica con el flujo estándar).
 - **Salida:** `instance/promos/playlist_semanal_<AAAAMMDD>.jpg`.
 - **Determinista:** mismo `hash` en cada corrida (mismo input ⇒ misma imagen), así es verificable de forma estable.
+- **Banco de diseños:** 3 fondos (`radar`, `ecualizador`, `doppler`) que rotan de forma **determinista por semana ISO** (`_variante_semana`: `week % 3`) — misma semana ⇒ mismo diseño, y los lunes siguientes tocan fondos distintos sin cambiar de plano.
 - **Run:** `python scripts/publicar_playlist_semanal.py` (`--dry-run` genera la tarjeta sin publicar).
 - **Publicación:** el workflow genera la tarjeta en el runner de CI, **no** en el servidor de la API. Como Meta necesita una URL pública, el script **sube** la tarjeta a la API vía `POST /api/admin/promos/upload` (`X-Admin-Token` = `ADMIN_PASSWORD`) antes de construir la URL (`API_PUBLIC_URL/api/promos/<slug>.jpg`). Sin esa subida, la URL devuelve 404 y Meta falla con 400 (`POST /{page}/photos`). Requiere el secret `ADMIN_PASSWORD` en GitHub Actions.
 
-### 7.2 Composición (de arriba abajo)
+### 7.2 Banco de diseños (3 fondos rotatorios)
 
-1. **Fondo radar de la frontera** — retícula GPS, anillos de sonar, barrido radial, cruz central y etiquetas de ciudades (REYNOSA, McALLEN, MATAMOROS, BROWNSVILLE, NUEVO LAREDO); centro del radar alineado al monograma.
+El bloque de contenido (titular, headliners, franja, botón, marca) es **común a las tres variantes** (`_generar_layout_cartel`); solo cambia el fondo. El banco vive en `VARIANTES_BANCO = ("radar", "ecualizador", "doppler")` y la rotación la decide `_variante_semana(fecha)` por **semana ISO** (`week % 3`, determinista): mismo input ⇒ mismo fondo; los lunes siguientes tocan diseños distintos sin tocar copy ni datos.
+
+- **Radar de la frontera** (`_fondo_radar_frontera`) — el diseño original "cartel de festival": retícula GPS, anillos de sonar, barrido radial, cruz central y etiquetas de ciudades (REYNOSA, McALLEN, MATAMOROS, BROWNSVILLE, NUEVO LAREDO).
+- **Ecualizador neón** (`_fondo_neon_eq`) — degradado diagonal violeta→negro (`_fondo_gradiente_neon`) + halo radial + barras de EQ tenues al pie. Es el motivo de las promos de artista (variante neón de `promo_fg`), re-escalado a la tarjeta 3:4.
+- **Doppler doble** (`_fondo_doppler`) — fondo oscuro casi negro con dos emisores y arcos de onda en la gama violeta (port de la variante 3 de `promo_fg`).
+
+Las tres usan la paleta identidad FG (ver §7.4): **solo gama violeta, sin cian**.
+
+**Muestras reservadas (C–F):** durante la definición del banco se prototiparon otros 4 conceptos (afiche, boleto, vinilo, frontera) que no entraron a la rotación semanal. Quedan **reservadas como plantillas** para futuros tipos de playlist (ver §6 "plantillas por playlist"); no se usan en la tarjeta semanal.
+
+### 7.3 Composición del bloque de contenido (de arriba abajo)
+
+1. **Fondo según variante de la semana** — el fondo del banco (ver §7.2), dibujado con supersampling y reducido a 1080; el bloque de contenido se pinta siempre encima.
 2. **Header:** titular **"DESCUBRIMIENTO SEMANAL"** (Archivo Black), subtítulo "nueva rotación de la escena" y, más sutil, la **semana** abreviada (`Semana del 31 AGO, 26`, formato `_formatear_semana`). *Sin* etiqueta "FRONTERA GRANDE · ESCENA" (se retiró por redundancia y para subir el titular).
 3. **3 headliners** en fila: foto circular con anillos neón, **nombre** (Archivo Black, display) y **canción** (Inter, acento claro). La tarjeta central va más grande (jerarquía visual).
 4. **Franja "TAMBIÉN SUENAN"** (cuadro con borde): hasta 14 artistas en 2 líneas, completado desde la BD (artistas de la escena con Spotify) cuando la selección no llena; cierre "…y más artistas" o "N tracks".
 5. **Botón "ESCUCHAR EN SPOTIFY"** (violeta, Inter) y al pie la **marca FG** (monograma + dominio `fronteragrande.mx`, centrados).
 
-### 7.3 Identidad visual
+### 7.4 Identidad visual
 
 - **Paleta (coherente con el sitio, `docs/identidad.md`):**
   - Acento violeta `#9d4edd` (`ACENTO`) = `--accent` de la web.
   - Acento claro `#e0aaff` (`ACENTO_CLARO`) para subtítulos/texto relevante.
   - Radar violeta `#ba55d3` (`RADAR`) + oscuro `#361e4a` (`RADAR_OSCURO`).
-  - Fondo profundo `#100a19` (`RADAR_FONDO`).
+  - Fondo profundo `#100a19` (`RADAR_FONDO`) / tope del degradado neón `#7b2cbf` (`VIOLETA`).
   - Todo en gama **violeta** (no cian) para cohesionar con la identidad Frontera Grande.
 - **Tipografía dual:**
   - **Archivo Black** (`_fuente`) = display: titular y nombres de artistas. Es la fuente de marca del sitio.
@@ -117,19 +130,20 @@ Cuando la playlist se anuncia en redes (fila **R** del calendario de publicacion
   - Archivo Black es ancha: los nombres usan un lazo que reduce el tamaño hasta caber en el ancho de cada tarjeta.
 - **Sombra y glow:** `_texto_glow` da sombra direccional + halo para separar el texto del radar.
 
-### 7.4 Decisiones técnicas clave
+### 7.5 Decisiones técnicas clave
 
-- **Radar con supersampling 2×:** se dibuja a 2160×2160 y se reduce con **LANCZOS** a 1080. Esto suaviza (antialias real) las líneas diagonales del barrido y los anillos elípticos, que rasterizados a 1080 quedaban dentados/pixelados.
+- **Radar con supersampling 2× (solo variante radar):** se dibuja a 2160×2160 y se reduce con **LANCZOS** a 1080. Esto suaviza (antialias real) las líneas diagonales del barrido y los anillos elípticos, que rasterizados a 1080 quedaban dentados/pixelados. El ecualizador y el doppler no lo necesitan (degradados y arcos suaves).
+- **Fondos deterministas sin aleatoriedad:** degradados, barras, arcos y halos se generan por parámetros fijos; los emisores del doppler (elipses/arcos) no dependen de shuffle, así la imagen es reproducible corrida a corrida.
 - **Radar visible pero no invasivo:** alphas subidos para que se vean todas las líneas, con una veladura muy ligera (`alpha 12`) para que el radar no compita con textos ni fotos circulares. Equilibrio: se ve la textura, no roba protagonismo.
 - **Fotos circulares con supersampling 3×** + máscara al tamaño de la foto: contorno suave (evita bordes dentados).
 - **Etiqueta y línea divisoria retiradas:** se eliminaron el kicker "FRONTERA GRANDE · ESCENA" y la línea horizontal que quedaba sobre la tangente superior de los círculos (eran decorativas, no de alineación) para dar aire al header.
 - **Semana abreviada** (`31 AGO, 26`): corta y de tamaño reducido (Inter 20, acento claro tenue) porque es contexto, no foco.
 
-### 7.5 No es un Reel ni una historia
+### 7.6 No es un Reel ni una historia
 
-La tarjeta es una **imagen de feed cuadrada**. Publicarla como historia 9:16 o Reel, o con audio del banco de IG, se hace **en la app** al momento de publicar (la API de IG publica el contenedor en el formato que se indique; el audio no se adjunta al archivo sino que se enlaza del banco al publicar). El catálogo del banco de IG no incluye las canciones de la escena de la frontera.
+La tarjeta es una **imagen de feed en 3:4**. Publicarla como historia 9:16 o Reel, o con audio del banco de IG, se hace **en la app** al momento de publicar (la API de IG publica el contenedor en el formato que se indique; el audio no se adjunta al archivo sino que se enlaza del banco al publicar). El catálogo del banco de IG no incluye las canciones de la escena de la frontera.
 
-### 7.6 Copy para Facebook e Instagram
+### 7.7 Copy para Facebook e Instagram
 
 El copy lo generan `construir_copy_fb(datos)` e `construir_copy_ig(datos)` en el mismo script (lee los datos de `data/playlist_seleccion_semanal.json`). Estructura común:
 
@@ -155,4 +169,4 @@ El copy lo generan `construir_copy_fb(datos)` e `construir_copy_ig(datos)` en el
 
 ---
 
-Última actualización: 2026-08-25.
+Última actualización: 2026-09-15.

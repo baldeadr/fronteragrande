@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera carruseles de presentación (cuadrado 1080x1080 y reel 1080x1920)
+"""Genera carruseles de presentación (post 1080x1440 y reel 1080x1920)
 con el sistema de diseño real de la web Frontera Grande.
 
 Texto medido en píxeles con PIL + TTF (Archivo Black / Arial): el word-wrap
@@ -679,7 +679,7 @@ for viejo in glob.glob(os.path.join(OUT, "*.svg")) + \
     os.remove(viejo)
 
 FORMATOS = {
-    "cuadrado": (1080, 1080),
+    "post": (1080, 1440),
     "reel": (1080, 1920),
 }
 BUILDERS = [s_portada, s_quesomos, s_fan, s_artista, s_links]

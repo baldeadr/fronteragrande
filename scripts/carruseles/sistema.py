@@ -94,7 +94,7 @@ LOGO_FG_INNER = _icon_svg.split("<svg", 1)[1].rsplit("</svg>", 1)[0].split(">", 
 FUENTES_DIR = os.path.join(ROOT, "carrousel/fuentes")
 
 FORMATOS = {
-    "cuadrado": (1080, 1080),
+    "post": (1080, 1440),
     "reel": (1080, 1920),
 }
 

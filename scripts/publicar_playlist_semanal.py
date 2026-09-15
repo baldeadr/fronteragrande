@@ -35,12 +35,16 @@ PROMOS_DIR = BASE_DIR / "instance" / "promos"
 ACENTO = (157, 78, 221)         # #9d4edd violeta
 ACENTO_CLARO = (224, 170, 255)  # #e0aaff lavanda
 TEXTO = "#ffffff"
-LIENZO = (1080, 1080)
+LIENZO = (1080, 1440)  # 3:4 — estándar de posts de feed (llena el grid de IG)
 
 # Paleta del fondo "radar de frontera" (violeta, coherente con la marca)
 RADAR = (186, 85, 211)          # #ba55d3 orquídea/violeta medio
 RADAR_OSCURO = (54, 30, 74)     # #361e4a violeta nocturno
 RADAR_FONDO = (16, 10, 25)      # #100a19 base violeta profundo
+VIOLETA = (123, 44, 191)        # #7b2cbf (tope del degradado neón)
+
+# Banco de diseños que rotan por semana ISO (0=radar, 1=ecualizador, 2=doppler)
+VARIANTES_BANCO = ("radar", "ecualizador", "doppler")
 
 
 def load_env():
@@ -197,7 +201,7 @@ def _fondo_radar_frontera() -> "Image.Image":
     """
     from PIL import Image, ImageDraw
 
-    # Supersampling 2x: se dibuja a 2160 y se reduce a 1080 para suavizar (antialiasing) líneas y anillos, y se oscurece para que resalte el contenido.
+    # Supersampling 2x: se dibuja a 2x y se reduce para suavizar (antialiasing) líneas y anillos, y se oscurece para que resalte el contenido.
     escala = 2
     ancho = LIENZO[0] * escala
     alto = LIENZO[1] * escala
@@ -212,8 +216,8 @@ def _fondo_radar_frontera() -> "Image.Image":
         draw.line([(0, y), (ancho, y)], fill=(*RADAR_OSCURO, 150), width=2)
 
     # Anillos de radar (sonar) alrededor del monograma
-    cx, cy = 540 * escala, 445 * escala
-    for i, radio in enumerate([170, 300, 430, 560, 690]):
+    cx, cy = 540 * escala, 560 * escala
+    for i, radio in enumerate([190, 350, 510, 670, 830]):
         radio *= escala
         alfa = max(16, 85 - i * 14)
         draw.ellipse(
@@ -224,7 +228,7 @@ def _fondo_radar_frontera() -> "Image.Image":
     # Línea de barrido del radar
     import math
     for ang in range(0, 360, 12):
-        r = 690 * escala
+        r = 830 * escala
         x1 = cx
         y1 = cy
         x2 = cx + int(r * math.cos(math.radians(ang)))
@@ -236,27 +240,101 @@ def _fondo_radar_frontera() -> "Image.Image":
     draw.line([(cx - 14 * escala, cy), (cx + 14 * escala, cy)], fill=(*RADAR, 190), width=4)
     draw.line([(cx, cy - 14 * escala), (cx, cy + 14 * escala)], fill=(*RADAR, 190), width=4)
 
-    # Coordenadas de las ciudades de la frontera como etiquetas de mapa
-    _fuente_peq = _fuente_texto(20 * escala)
-    for (ex, ey, etiqueta) in [
-        (130, 300, "REYNOSA"), (940, 300, "McALLEN"),
-        (120, 780, "MATAMOROS"), (930, 800, "BROWNSVILLE"),
-        (540, 800, "NUEVO LAREDO"),
-    ]:
-        ex *= escala
-        ey *= escala
-        l, t, r, b = draw.textbbox((0, 0), etiqueta, font=_fuente_peq)
-        w = r - l
-        h = b - t
-        draw.text((ex - w / 2, ey - h / 2), etiqueta, font=_fuente_peq, fill=(*RADAR, 130))
-
-    # Reducir a 1080 (antialiasing real de las líneas del radar)
+    # Reducir al lienzo final (antialiasing real de las líneas del radar)
     lienzo = lienzo.resize(LIENZO, Image.LANCZOS)
 
     # Veladura muy ligera: mantiene el radar visible pero sin competir con el contenido
     velo = Image.new("RGBA", LIENZO, (*RADAR_FONDO, 12))
     lienzo.alpha_composite(velo)
 
+    return lienzo
+
+
+def _fondo_neon_eq() -> "Image.Image":
+    """Fondo 'ecualizador': degradado neón violeta→negro + barras EQ al pie.
+
+    Port de la variante neón de `promo_fg` (aprobada en las promos de artista),
+    re-escalado a la tarjeta 3:4. Determinista.
+    """
+    from PIL import Image, ImageDraw
+
+    lienzo = _fondo_gradiente_neon()
+    lienzo.alpha_composite(
+        _brillo_radial((540, 530), 330, ACENTO, 150, 110)
+    )
+    # Barras tipo ecualizador al pie (señal musical, tenues)
+    capa = Image.new("RGBA", LIENZO, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(capa)
+    alturas = [46, 92, 60, 130, 84, 160, 70, 118, 52, 142,
+               88, 58, 126, 74, 156, 64, 108, 48, 134, 80]
+    ancho_barra, hueco = 18, 14
+    total = len(alturas) * (ancho_barra + hueco) - hueco
+    x = (LIENZO[0] - total) // 2
+    pie = LIENZO[1] - 4
+    for i, h in enumerate(alturas):
+        alpha = 34 if i % 2 else 52
+        draw.rounded_rectangle(
+            [x, pie - h, x + ancho_barra, pie],
+            radius=8, fill=(*ACENTO_CLARO, alpha),
+        )
+        x += ancho_barra + hueco
+    lienzo.alpha_composite(capa)
+    return lienzo
+
+
+def _fondo_gradiente_neon() -> "Image.Image":
+    """Degradado diagonal violeta→negro (identidad FG) paramétrico al lienzo."""
+    from PIL import Image
+
+    tope = Image.new("RGB", LIENZO, VIOLETA)
+    base = Image.new("RGB", LIENZO, "#0b0b10")
+    grad = Image.linear_gradient("L").rotate(135, expand=True).resize(LIENZO)
+    return Image.composite(tope, base, grad).convert("RGBA")
+
+
+def _brillo_radial(centro: tuple[int, int], radio: int, color, alpha: int, desenfoque: int):
+    """Halo suave (neón) sobre el lienzo; port del de promo_fg."""
+    from PIL import Image, ImageDraw, ImageFilter
+
+    capa = Image.new("RGBA", LIENZO, (0, 0, 0, 0))
+    ImageDraw.Draw(capa).ellipse(
+        (centro[0] - radio, centro[1] - radio,
+         centro[0] + radio, centro[1] + radio),
+        fill=(*color, alpha),
+    )
+    return capa.filter(ImageFilter.GaussianBlur(desenfoque))
+
+
+def _fondo_doppler() -> "Image.Image":
+    """Fondo 'doppler doble': oscuro con dos emisores y arcos de onda (port
+    de la variante 3 de promo_fg, re-escalada a 3:4). Determinista."""
+    from PIL import Image, ImageDraw
+
+    lienzo = Image.new("RGBA", LIENZO, "#070512")
+    ondas = ImageDraw.Draw(lienzo)
+
+    def _emisor(cx_e: int, cy_e: int, hacia: int) -> None:
+        ondas.ellipse(
+            (cx_e - 10, cy_e - 10, cx_e + 10, cy_e + 10),
+            fill=(255, 255, 255, 235),
+        )
+        for i, radio in enumerate([130, 165, 200, 235, 270]):
+            caja = (cx_e - radio, cy_e - radio, cx_e + radio, cy_e + radio)
+            base = 185 - i * 22
+            ondas.arc(caja, start=hacia - 75, end=hacia + 75,
+                      fill=(*ACENTO, max(30, base // 3)), width=8)
+            ondas.arc(caja, start=hacia - 75, end=hacia + 75,
+                      fill=(*ACENTO, base), width=4 if i == 0 else 3)
+        for i, radio in enumerate([105, 180]):
+            caja = (cx_e - radio, cy_e - radio, cx_e + radio, cy_e + radio)
+            base = 145 - i * 40
+            ondas.arc(caja, start=hacia + 125, end=hacia + 235,
+                      fill=(*ACENTO, max(24, base // 3)), width=6)
+            ondas.arc(caja, start=hacia + 125, end=hacia + 235,
+                      fill=(*ACENTO, base), width=3)
+
+    _emisor(150, 180, 40)
+    _emisor(930, 1240, 228)
     return lienzo
 
 
@@ -390,19 +468,17 @@ def _boton_spotify(lienzo, draw, btn_y):
 
 
 def _marca_fg(lienzo, y_texto: int, y_dominio: int):
-    """Marca Frontera Grande: monograma + dominio, centrados (sin repetir nombre)."""
+    """Marca Frontera Grande: icono completo (cuadrado negro + FG) + dominio."""
     from PIL import Image, ImageDraw
 
-    alto_mono = 58
-    ruta_mono = BASE_DIR / "web" / "public" / "assets" / "monograma_fg.png"
-    if ruta_mono.exists():
-        m = Image.open(ruta_mono)
-        w_mono = int(m.size[0] * alto_mono / m.size[1])
-    else:
-        w_mono = alto_mono
-    mono_x = (LIENZO[0] - w_mono) // 2
-    _pegar_monograma(lienzo, alto_mono, mono_x, y_texto - 2)
-
+    alto_icono = 64
+    ruta_icono = BASE_DIR / "web" / "public" / "assets" / "icono_fg.png"
+    if ruta_icono.exists():
+        ic = Image.open(ruta_icono).convert("RGBA")
+        w_icono = int(ic.size[0] * alto_icono / ic.size[1])
+        icono_x = (LIENZO[0] - w_icono) // 2
+        lienzo.alpha_composite(ic.resize((w_icono, alto_icono), Image.LANCZOS),
+                               (icono_x, y_texto - alto_icono // 2))
     dominio = "fronteragrande.mx"
     fuente = _fuente_texto(24)
     caja = ImageDraw.Draw(lienzo).textbbox((0, 0), dominio, font=fuente)
@@ -438,33 +514,32 @@ def _formatear_semana(fecha: str) -> str:
 
 
 def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None) -> Path:
-    """Layout 'cartel de festival': 3 headliners con foto y canción, franja de artistas y CTA.
+    """Bloque de contenido común a las 3 variantes del banco.
 
-    Diseño único de la tarjeta semanal: tres artistas protagonistas con foto
-    circular y su canción, una franja que nombra a más proyectos de la playlist
-    y un botón que lleva a abrirla en Spotify.
+    Titular + 3 headliners con foto circular y su canción, franja 'TAMBIÉN
+    SUENAN', botón de Spotify y marca FG: solo cambia el fondo que recibe.
     """
     from PIL import Image, ImageDraw
 
     draw = ImageDraw.Draw(lienzo)
 
     # Titular
-    _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(64), 24, LIENZO[0], TEXTO)
-    _centrar_texto(draw, "nueva rotación de la escena", _fuente_texto(28), 122, LIENZO[0], (*ACENTO_CLARO, 235))
+    _centrar_texto(draw, "DESCUBRIMIENTO SEMANAL", _fuente(64), 100, LIENZO[0], TEXTO)
+    _centrar_texto(draw, "nueva rotación de la escena", _fuente_texto(28), 200, LIENZO[0], (*ACENTO_CLARO, 235))
     # Semana: subtítulo sutil, no es el foco
-    _centrar_texto(draw, f"Semana del {_formatear_semana(fecha)}", _fuente_texto(20), 158, LIENZO[0], (*ACENTO_CLARO, 210))
+    _centrar_texto(draw, f"Semana del {_formatear_semana(fecha)}", _fuente_texto(20), 238, LIENZO[0], (*ACENTO_CLARO, 210))
 
     # 3 artistas headliner: foto grande + nombre + canción
     card_w = 340
     gap = 30
     start_x = 0
-    foto_y = 212
+    foto_y = 292
 
     for i, sel in enumerate(seleccionados_3):
         x = start_x + i * (card_w + gap)
         centro_x = x + card_w // 2
         headliner_central = i == 1
-        foto_size = 290 if headliner_central else 260
+        foto_size = 330 if headliner_central else 286
         nombre_tam = 42 if headliner_central else 38
         cancion_tam = 26 if headliner_central else 24
         foto_x = centro_x - foto_size // 2
@@ -481,7 +556,7 @@ def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: in
             if caja[2] - caja[0] <= maximo:
                 break
             tam -= 2
-        _centrar_texto_en_caja(draw, nombre, _fuente(tam), foto_y + foto_size + 20, x + 12, card_w - 24, TEXTO)
+        _centrar_texto_en_caja(draw, nombre, _fuente(tam), foto_y + foto_size + 28, x + 12, card_w - 24, TEXTO)
 
         # Canción (debajo, acento claro)
         cancion = sel["titulo"]
@@ -492,11 +567,11 @@ def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: in
             if caja[2] - caja[0] <= maximo:
                 break
             tamc -= 2
-        _centrar_texto_en_caja(draw, cancion, _fuente_texto(tamc), foto_y + foto_size + 68, x + 12, card_w - 24, (*ACENTO_CLARO, 235))
+        _centrar_texto_en_caja(draw, cancion, _fuente_texto(tamc), foto_y + foto_size + 80, x + 12, card_w - 24, (*ACENTO_CLARO, 235))
 
     # Franja "también suenan" (cuadro alto con 2 líneas de artistas)
-    franja_y = 632
-    franja_h = 196
+    franja_y = 850
+    franja_h = 240
     franja_margen = 50
     franja = Image.new("RGBA", (LIENZO[0] - 2 * franja_margen, franja_h), (5, 10, 20, 220))
     draw_f = ImageDraw.Draw(franja)
@@ -511,7 +586,7 @@ def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: in
 
     if adicionales:
         def _medir(lista_nombres):
-            caja = draw.textbbox((0, 0), "  ·  ".join(lista_nombres), font=_fuente_texto(22))
+            caja = draw.textbbox((0, 0), "  ·  ".join(lista_nombres), font=_fuente_texto(24))
             return caja[2] - caja[0]
 
         linea1 = []
@@ -525,30 +600,59 @@ def _generar_layout_cartel(lienzo, seleccionados_3: list[dict], total_tracks: in
                 linea2.append(nombre)
 
         if linea1:
-            _centrar_texto(draw, "  ·  ".join(linea1), _fuente_texto(22), franja_y + 52, LIENZO[0], TEXTO)
+            _centrar_texto(draw, "  ·  ".join(linea1), _fuente_texto(24), franja_y + 62, LIENZO[0], TEXTO)
         if linea2:
-            _centrar_texto(draw, "  ·  ".join(linea2), _fuente_texto(22), franja_y + 88, LIENZO[0], TEXTO)
+            _centrar_texto(draw, "  ·  ".join(linea2), _fuente_texto(24), franja_y + 100, LIENZO[0], TEXTO)
         vistos = len(linea1) + len(linea2)
         # Cierre: mientras haya más tracks que artistas ya mostrados, invita a descubrir
         if total_tracks > 3 + vistos:
-            _centrar_texto(draw, "…y más artistas", _fuente_texto(28), franja_y + 134, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, "…y más artistas", _fuente_texto(28), franja_y + 152, LIENZO[0], (*ACENTO_CLARO, 255))
         else:
-            _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(24), franja_y + 134, LIENZO[0], (*ACENTO_CLARO, 255))
+            _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(24), franja_y + 152, LIENZO[0], (*ACENTO_CLARO, 255))
     else:
-        _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(26), franja_y + 40, LIENZO[0], (*ACENTO_CLARO, 255))
+        _centrar_texto(draw, f"{total_tracks} tracks", _fuente_texto(26), franja_y + 50, LIENZO[0], (*ACENTO_CLARO, 255))
 
     # Botón Spotify
-    _boton_spotify(lienzo, draw, 848)
+    _boton_spotify(lienzo, draw, 1158)
 
     # Marca FG
-    _marca_fg(lienzo, 990, 1020)
+    _marca_fg(lienzo, 1300, 1338)
 
     return _guardar_tarjeta(lienzo, fecha)
 
 
-def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None) -> Path | None:
-    """Genera la tarjeta 1080x1080 con 3 artistas (diseño único 'cartel de festival')."""
-    lienzo = _fondo_radar_frontera()
+def _variante_semana(fecha: str) -> str:
+    """Diseño de la tarjeta de la semana: rotación determinista del banco.
+
+    Rotación por semana ISO del año (`iso.week % 3`): la misma fecha ⇒ el
+    mismo diseño, y los lunes siguientes tocan fondos distintos sin que el
+    copy ni los datos cambien de plano.
+    """
+    from datetime import date
+
+    try:
+        anio, mes, dia = (int(p) for p in fecha.split("-")[:3])
+        semana_iso = date(anio, mes, dia).isocalendar()
+    except (ValueError, AttributeError):
+        return VARIANTES_BANCO[0]
+    return VARIANTES_BANCO[semana_iso.week % len(VARIANTES_BANCO)]
+
+
+def generar_tarjeta_playlist(seleccionados_3: list[dict], total_tracks: int, fecha: str, playlist_url: str = "", datos: dict | None = None, variante: str | None = None) -> Path | None:
+    """Genera la tarjeta 1080x1440 (3:4) con 3 artistas.
+
+    Banco de 3 diseños que rotan por semana ISO (determinista): 'radar'
+    (cartel + sonido de frontera), 'ecualizador' (neón con barras) y
+    'doppler' (oscuro con emisores). El bloque de contenido es común a los
+    tres (titular, headliners, franja, botón, marca); solo cambia el fondo.
+    """
+    v = variante or _variante_semana(fecha)
+    if v == "ecualizador":
+        lienzo = _fondo_neon_eq()
+    elif v == "doppler":
+        lienzo = _fondo_doppler()
+    else:
+        lienzo = _fondo_radar_frontera()
     return _generar_layout_cartel(lienzo, seleccionados_3, total_tracks, fecha, playlist_url, datos)
 
 
@@ -765,7 +869,8 @@ def main() -> int:
         print(f'  - {s["artista"]}: {s["titulo"]} (IG: @{s.get("handle_ig", "?")})')
 
     # Generar tarjeta
-    print("\nGenerando tarjeta...")
+    variante = _variante_semana(datos["fecha"])
+    print(f"\nGenerando tarjeta (variante: {variante})...")
     ruta_tarjeta = generar_tarjeta_playlist(
         datos["seleccionados_3"], datos["total_tracks"], datos["fecha"], datos["playlist_url"], datos
     )

@@ -237,7 +237,7 @@ for paleta in PALETAS:
         os.remove(viejo)
     os.makedirs(out, exist_ok=True)
     generados=[]
-    for sufijo,(W,H) in [("cuadrado",(1080,1080)),("reel",(1080,1920))]:
+    for sufijo,(W,H) in [("post",(1080,1440)),("reel",(1080,1920))]:
         for builder,nombre in [(s_portada,"01-portada"),(s_quesomos,"02-quesomos")]:
             slide=builder(W,H, reel=(sufijo=="reel"), paleta=paleta)
             svg=slide.guardar(os.path.join(out, f"{nombre}-{sufijo}.svg"))

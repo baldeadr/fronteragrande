@@ -52,7 +52,7 @@ def slide_gancho(W, H):
     badge_text = "TIP PARA ARTISTAS"
     bw = badge_font.getlength(badge_text) + 40
     bx = (W - bw) / 2
-    by = 140
+    by = 220
     draw_rounded_rect(draw, (bx, by, bx + bw, by + 52), 26, ACCENT_SOFT)
     draw.text((bx + 20, by + 8), badge_text, font=badge_font, fill=ACCENT)
 
@@ -63,7 +63,7 @@ def slide_gancho(W, H):
     line3 = "ES PROFESIONAL?"
 
     # Centrar cada línea
-    for text, y_offset in [(line1, 260), (line2, 340), (line3, 420)]:
+    for text, y_offset in [(line1, 400), (line2, 500), (line3, 600)]:
         tw = title_font.getlength(text)
         draw.text(((W - tw) / 2, y_offset), text, font=title_font, fill=TEXT)
 
@@ -71,10 +71,10 @@ def slide_gancho(W, H):
     sub_font = font(TTF_SPACE, 34)
     sub = "Por qué importa para tu música"
     sw = sub_font.getlength(sub)
-    draw.text(((W - sw) / 2, 540), sub, font=sub_font, fill=MUTED)
+    draw.text(((W - sw) / 2, 740), sub, font=sub_font, fill=MUTED)
 
     # Línea decorativa
-    draw.rectangle([W // 2 - 40, 610, W // 2 + 40, 614], fill=ACCENT)
+    draw.rectangle([W // 2 - 40, 820, W // 2 + 40, 824], fill=ACCENT)
 
     # Logo FG (texto)
     logo_font = font(TTF_ARCHIVO, 36)
@@ -115,8 +115,8 @@ def slide_beneficios(W, H):
         ("🔍", "Aparecer en recommends", "El algoritmo favorece\ncuentas profesionales"),
     ]
 
-    y_start = 280
-    spacing = 170
+    y_start = 380
+    spacing = 240
     left_margin = 100
 
     num_font = font(TTF_ANTON, 48)
@@ -170,16 +170,16 @@ def main():
     parser = argparse.ArgumentParser(description="Genera tarjeta de tip para RRSS")
     parser.add_argument(
         "--formato",
-        choices=["cuadrado", "story"],
-        default="cuadrado",
-        help="Formato de salida (default: cuadrado 1080x1080)",
+        choices=["post", "story"],
+        default="post",
+        help="Formato de salida (default: post 1080x1440, 3:4)",
     )
     args = parser.parse_args()
 
     os.makedirs(OUT, exist_ok=True)
 
     formatos = {
-        "cuadrado": (1080, 1080),
+        "post": (1080, 1440),
         "story": (1080, 1920),
     }
     W, H = formatos[args.formato]

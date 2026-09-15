@@ -44,7 +44,7 @@ ACENTO_CLARO = (224, 170, 255)  # #e0aaff
 VIOLETA = (123, 44, 191)       # #7b2cbf (tope del degradado)
 TEXTO = "#ffffff"
 
-LIENZO = (1080, 1080)
+LIENZO = (1080, 1440)  # 3:4 — estándar de posts de feed (llena el grid de IG)
 
 
 def promo_configurado() -> bool:
@@ -284,10 +284,11 @@ def _ecualizador(lienzo: Image.Image) -> None:
     ancho_barra, hueco = 18, 14
     total = len(alturas) * (ancho_barra + hueco) - hueco
     x = (LIENZO[0] - total) // 2
+    pie = LIENZO[1] - 4
     for i, h in enumerate(alturas):
         alpha = 34 if i % 2 else 52
         draw.rounded_rectangle(
-            [x, 1078 - h, x + ancho_barra, 1078],
+            [x, pie - h, x + ancho_barra, pie],
             radius=8, fill=(*ACENTO_CLARO, alpha),
         )
         x += ancho_barra + hueco
@@ -322,24 +323,24 @@ def _fondo_variante(variante: int) -> Image.Image:
     if variante == 1:
         lienzo = Image.new("RGBA", LIENZO, "#100024")
         ImageDraw.Draw(lienzo).polygon(
-            [(0, 0), (1080, 0), (0, 1080)], fill=(*VIOLETA, 255)
+            [(0, 0), (1080, 0), (0, 1440)], fill=(*VIOLETA, 255)
         )
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (850, 850), 280, ACENTO_CLARO, 90, 120)
+            _brillo_radial(LIENZO, (850, 1150), 280, ACENTO_CLARO, 90, 120)
         )
     elif variante == 2:
         lienzo = Image.new("RGBA", LIENZO, "#15002e")
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (540, 480), 540, ACENTO_CLARO, 80, 180)
+            _brillo_radial(LIENZO, (540, 560), 540, ACENTO_CLARO, 80, 180)
         )
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (540, 470), 300, ACENTO, 130, 130)
+            _brillo_radial(LIENZO, (540, 550), 300, ACENTO, 130, 130)
         )
         # Ondas concéntricas alrededor de la foto: la firma gráfica de esta
         # variante (aura de sonido expandiéndose desde el artista).
         ondas = ImageDraw.Draw(lienzo)
-        cx_o, cy_o = 540, 455
-        for i, (radio, alfa) in enumerate([(318, 95), (376, 65), (434, 42), (496, 22)]):
+        cx_o, cy_o = 540, 530
+        for i, (radio, alfa) in enumerate([(390, 95), (457, 75), (524, 42), (600, 22)]):
             ondas.ellipse(
                 (cx_o - radio, cy_o - radio, cx_o + radio, cy_o + radio),
                 outline=(*ACENTO_CLARO, alfa),
@@ -380,31 +381,31 @@ def _fondo_variante(variante: int) -> Image.Image:
                 ondas.arc(caja, start=hacia + 125, end=hacia + 235,
                           fill=(*ACENTO, base), width=3)
 
-        _emisor(150, 150, 40, [130, 165, 200, 235, 270], [105, 180])
-        _emisor(930, 930, 228, [130, 165, 200, 235, 270], [105, 180])
+        _emisor(150, 180, 40, [130, 165, 200, 235, 270], [105, 180])
+        _emisor(930, 1240, 228, [130, 165, 200, 235, 270], [105, 180])
     else:
         lienzo = _fondo_gradiente(LIENZO)
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (540, 445), 330, ACENTO, 150, 110)
+            _brillo_radial(LIENZO, (540, 530), 330, ACENTO, 150, 110)
         )
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (760, 300), 170, ACENTO_CLARO, 70, 90)
+            _brillo_radial(LIENZO, (760, 260), 170, ACENTO_CLARO, 70, 90)
         )
         lienzo.alpha_composite(
-            _brillo_radial(LIENZO, (280, 640), 150, ACENTO_CLARO, 55, 90)
+            _brillo_radial(LIENZO, (280, 760), 150, ACENTO_CLARO, 55, 90)
         )
         _ecualizador(lienzo)
     return lienzo
 
 
 _DESTELLOS = {
-    0: [(180, 200, 16, 200), (905, 175, 12, 170), (875, 700, 18, 150),
-        (165, 640, 11, 170), (985, 430, 10, 140)],
-    1: [(950, 120, 14, 190), (120, 930, 12, 170), (985, 690, 10, 150),
-        (70, 420, 11, 160)],
-    2: [(215, 470, 15, 190), (865, 470, 15, 190), (540, 145, 13, 180),
-        (540, 795, 11, 150)],
-    3: [(1000, 95, 11, 150), (70, 720, 9, 120)],
+    0: [(180, 260, 16, 200), (905, 230, 12, 170), (875, 930, 18, 150),
+        (165, 850, 11, 170), (985, 570, 10, 140)],
+    1: [(950, 160, 14, 190), (120, 1240, 12, 170), (985, 920, 10, 150),
+        (70, 560, 11, 160)],
+    2: [(215, 630, 15, 190), (865, 630, 15, 190), (540, 190, 13, 180),
+        (540, 1060, 11, 150)],
+    3: [(1000, 130, 11, 150), (70, 960, 9, 120)],
 }
 
 
@@ -489,10 +490,10 @@ def _nombre_sublinea(draw: ImageDraw.ImageDraw, artista: Artist,
 # Composición por variante: foto SIEMPRE igual (fy, tam, y_nombre comunes);
 # cambia marco, posición del badge y tamaño máximo del nombre.
 _LAYOUTS = {
-    0: dict(fy=170, tam=570, doble=True, badge_y=62, inv=False, y_nom=775, tmax=100),
-    1: dict(fy=170, tam=570, doble=True, badge_y=62, inv=True, y_nom=775, tmax=100),
-    2: dict(fy=170, tam=570, doble=False, badge_y=62, inv=True, y_nom=775, tmax=100),
-    3: dict(fy=170, tam=570, doble=False, badge_y=62, inv=False, y_nom=775, tmax=100),
+    0: dict(fy=220, tam=620, doble=True, badge_y=80, inv=False, y_nom=940, tmax=100),
+    1: dict(fy=220, tam=620, doble=True, badge_y=80, inv=True, y_nom=940, tmax=100),
+    2: dict(fy=220, tam=620, doble=False, badge_y=80, inv=True, y_nom=940, tmax=100),
+    3: dict(fy=220, tam=620, doble=False, badge_y=80, inv=False, y_nom=940, tmax=100),
 }
 
 
@@ -539,7 +540,7 @@ def _barra_marca(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
     dominio = WEB_URL.replace("https://", "").replace("http://", "").rstrip("/")
     f_dom = _fuente(24)
     dw = draw.textlength(dominio, font=f_dom)
-    y_eje = 1022
+    y_eje = 1330
 
     if variante == 1:
         texto = f"FRONTERA GRANDE   ·   {dominio}"
@@ -568,7 +569,7 @@ def _barra_marca(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
         fg_w = _mono_ancho(54)
         alto_p = 72
         ancho_p = int(fg_w + 20 + tw + 68)
-        x0, y0 = (LIENZO[0] - ancho_p) // 2, 988
+        x0, y0 = (LIENZO[0] - ancho_p) // 2, 1294
         draw.rounded_rectangle(
             [x0, y0, x0 + ancho_p, y0 + alto_p],
             radius=alto_p // 2,
@@ -581,16 +582,16 @@ def _barra_marca(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
                   font=f_marca, fill=(255, 255, 255, 245), anchor="lm")
     else:
         mw = _mono_ancho(64)
-        _pegar_monograma(lienzo, 64, 56, 1016)
+        _pegar_monograma(lienzo, 64, 56, y_eje - 4)
         f_marca = _fuente(34)
-        draw.text((56 + mw + 24, 1006), "FRONTERA GRANDE",
+        draw.text((56 + mw + 24, y_eje - 10), "FRONTERA GRANDE",
                   font=f_marca, fill=(255, 255, 255, 255))
-        draw.text((LIENZO[0] - dw - 56, 1014), dominio,
+        draw.text((LIENZO[0] - dw - 56, y_eje - 2), dominio,
                   font=f_dom, fill=(*ACENTO_CLARO, 230))
 
 
 def generar_imagen_promo(artista: Artist, variante: int | None = None) -> Path | None:
-    """Genera la tarjeta promocional 1080×1080 del artista.
+    """Genera la tarjeta promocional 1080×1440 (3:4) del artista.
 
     Sistema de variantes para evitar monotonía en el feed: misma identidad
     (tipografía, badge, barra de marca) con cuatro composiciones de fondo,

@@ -6,8 +6,9 @@ vive en `carrousel/fuentes/` (prompts documentados en `prompt_images.txt`).
 
 ## Convenciones
 
-- Formato: carrusel cuadrado 1080×1080 (los verticales 1080×1920 quedan
-  reservados para historias).
+- Formato (estándar 2026-09): todos los posts de feed/carrusel en **3:4,
+  1080×1440** (llena la celda del grid de IG); los verticales 1080×1920 quedan
+  reservados para historias y reels.
 - Cadencia inicial: 2 publicaciones/semana (mar + jue/domingo), ajustar con
   métricas tras dos semanas.
 - Los posts de bienvenida a artistas verificados son automáticos
@@ -80,7 +81,7 @@ y nosotros te promovemos al verificarte. Gratis, sin algoritmo.
 
 ### #4 — Tip: pasa tu cuenta a profesional (mar 1 sep 2026)
 
-Arte en `carrousel/tips/` (2 tarjetas Pillow 1080×1080: gancho + beneficios).
+Arte en `carrousel/tips/` (2 tarjetas Pillow 1080×1440: gancho + beneficios).
 Script: `scripts/generar_tarjeta_tip.py`.
 
 **Instagram:**

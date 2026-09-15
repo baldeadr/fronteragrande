@@ -461,7 +461,7 @@ if __name__ == "__main__":
         os.remove(viejo)
 
     FORMATOS = {
-        "cuadrado": (1080, 1080),
+        "post": (1080, 1440),
         "reel": (1080, 1920),
     }
     BUILDERS = [s_portada, s_que_es, s_para_fans, s_para_artistas, s_cierre]

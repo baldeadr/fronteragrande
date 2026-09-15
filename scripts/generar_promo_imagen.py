@@ -5,7 +5,7 @@ Envoltorio de `lib.promo_fg.generar_imagen_promo` para pruebas manuales:
 
     .venv/bin/python scripts/generar_promo_imagen.py --slug oxte
 
-La imagen (1080×1080) se guarda en `instance/promos/{slug}.png`, la misma
+La imagen (1080×1440, 3:4) se guarda en `instance/promos/{slug}.png`, la misma
 que publica el post de bienvenida y sirve `GET /api/promos/{slug}.png`.
 """
 
