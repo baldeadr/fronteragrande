@@ -16,6 +16,23 @@ vive en `carrousel/fuentes/` (prompts documentados en `prompt_images.txt`).
   es directa en FB e IG cuando `PROMO_AUTO_PUBLISH=true` y `PROMO_IG=true`.
 - No mencionar TikTok en publicaciones hasta que salga del sandbox.
 
+## Plantillas de tarjeta automática
+
+Tarjetas 1080×1440 (3:4) que genera `lib/promo_fg.py::generar_imagen_promo`
+según el `tipo`; cada tipo escribe su propio archivo en `instance/promos/` y
+tiene su badge. No forman parte del calendario editorial.
+
+| Tipo | Composición | Badge | Franja blanca | Disparador | Estado |
+|------|-------------|-------|---------------|------------|--------|
+| `bienvenida` | sistema de 4 variantes (fondo/layout) | NUEVO ARTISTA VERIFICADO | — | verificación del perfil | ✔ activo |
+| `regreso` | **full-bleed** (la foto cubre todo) | ESTÁ DE VUELTA EN LA ESCENA | — | roadmap #29 | tarjeta lista |
+| `lanzamiento` | **polaroid** (`_polaroid_lanzamiento`) | NUEVO LANZAMIENTO | título del tema/videoclip | roadmap #27/#28 | propuesta |
+
+- `regreso`: se publica cuando un artista pasa de inactivo o en_duda a activo
+  (roadmap #29); la tarjeta ya existe, falta el disparador.
+- `lanzamiento`: la franja blanca del polaroid lleva el nombre de la canción o
+  videoclip nuevo (roadmap #27/#28); la plantilla ya existe, falta el disparador.
+
 ## Calendario
 
 | # | Fecha/hora propuesta | Publicación | Arte | Estado |

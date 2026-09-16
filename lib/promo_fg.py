@@ -223,12 +223,44 @@ def _esquinas_redondeadas(img: Image.Image, radio: int = 56) -> Image.Image:
     return salida
 
 
+FUENTE_BEBAS = RAIZ / "web/public/fonts/BebasNeue.ttf"
+
+
 def _fuente(tamano: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Carga Archivo Black (fallback a la fuente por defecto)."""
     try:
         return ImageFont.truetype(str(FUENTE_PATH), tamano)
     except Exception:
         return ImageFont.load_default()
+
+
+def _fuente_de(path: Path, tamano: int):
+    """Carga una fuente concreta (fallback a Archivo Black)."""
+    try:
+        return ImageFont.truetype(str(path), tamano)
+    except Exception:
+        return _fuente(tamano)
+
+
+def _caption_polaroid(carta: Image.Image, texto: str,
+                      franja: tuple[int, int, int, int],
+                      tam_max: int = 66) -> None:
+    """Escribe el texto centrado en la franja blanca del polaroid."""
+    x0, y0, x1, y1 = franja
+    ancho = x1 - x0
+    tam = tam_max
+    while tam > 22:
+        f = _fuente_de(FUENTE_BEBAS, tam)
+        caja = ImageDraw.Draw(carta).textbbox((0, 0), texto, font=f)
+        if caja[2] - caja[0] <= ancho - 70:
+            break
+        tam -= 2
+    f = _fuente_de(FUENTE_BEBAS, tam)
+    d = ImageDraw.Draw(carta)
+    caja = d.textbbox((0, 0), texto, font=f)
+    w, h = caja[2] - caja[0], caja[3] - caja[1]
+    d.text(((ancho - w) // 2 - caja[0], y0 + (y1 - y0 - h) // 2 - caja[1]),
+           texto, font=f, fill=(32, 29, 40, 255))
 
 
 def _centrar_texto(draw: ImageDraw.ImageDraw, texto: str, fuente, y: int,
@@ -442,10 +474,16 @@ def _poner_foto(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
         )
 
 
+_TEXTO_BADGE: dict[str, str] = {
+    "bienvenida": "NUEVO ARTISTA VERIFICADO",
+    "regreso": "ESTÁ DE VUELTA EN LA ESCENA",
+    "lanzamiento": "NUEVO LANZAMIENTO",
+}
+
+
 def _badge(draw: ImageDraw.ImageDraw, by_top: int = 62,
-           invertido: bool = False) -> None:
-    """Píldora 'NUEVO ARTISTA VERIFICADO'; en v2 va en blanco con texto FG."""
-    texto = "NUEVO ARTISTA VERIFICADO"
+           invertido: bool = False, texto: str = "NUEVO ARTISTA VERIFICADO") -> None:
+    """Píldora del estado de la promo; en v2 va en blanco con texto FG."""
     fuente = _fuente(30)
     caja = draw.textbbox((0, 0), texto, font=fuente)
     bw = caja[2] - caja[0]
@@ -590,13 +628,213 @@ def _barra_marca(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
                   font=f_dom, fill=(*ACENTO_CLARO, 230))
 
 
-def generar_imagen_promo(artista: Artist, variante: int | None = None) -> Path | None:
+def _recortar_cover(img: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Recorta cubriendo (cover) las medidas pedidas, centrado."""
+    w, h = img.size
+    tw, th = size
+    escala = max(tw / w, th / h)
+    nw, nh = int(w * escala + 0.5), int(h * escala + 0.5)
+    recorte = img.resize((nw, nh), Image.Resampling.LANCZOS)
+    x = (nw - tw) // 2
+    y = (nh - th) // 2
+    return recorte.crop((x, y, x + tw, y + th))
+
+
+def _degradado_vertical(size: tuple[int, int], color: tuple[int, int, int],
+                        a0: int, a1: int) -> Image.Image:
+    """Capa con degradado vertical de alfa `a0`→`a1` (para scrims de texto)."""
+    w, h = size
+    grad = Image.linear_gradient("L").resize((1, h))
+    grad = grad.point(lambda v: int(a0 + (a1 - a0) * v / 255))
+    capa = Image.new("RGBA", size, (*color, 0))
+    capa.putalpha(grad.resize(size))
+    return capa
+
+
+def _trama_puntos(lienzo: Image.Image, color: tuple[int, int, int],
+                  paso: int, radio: int, alpha: int) -> None:
+    """Retícula de puntos tenue (textura de fondo alternativa)."""
+    capa = Image.new("RGBA", LIENZO, (0, 0, 0, 0))
+    d = ImageDraw.Draw(capa)
+    for y in range(paso // 2, LIENZO[1], paso):
+        for x in range(paso // 2, LIENZO[0], paso):
+            d.ellipse((x - radio, y - radio, x + radio, y + radio),
+                      fill=(*color, alpha))
+    lienzo.alpha_composite(capa)
+
+
+def _texto_izq(draw: ImageDraw.ImageDraw, texto: str, x: int, y: int,
+               fuente, color, sombra: str = "#000000a0") -> tuple[int, int]:
+    """Texto alineado a la izquierda con sombra; devuelve (ancho, alto)."""
+    caja = draw.textbbox((0, 0), texto, font=fuente)
+    draw.text((x + 3, y + 3), texto, font=fuente, fill=sombra)
+    draw.text((x, y), texto, font=fuente, fill=color)
+    return caja[2] - caja[0], caja[3] - caja[1]
+
+
+def _pill(draw: ImageDraw.ImageDraw, texto: str, x: int, y: int,
+          tam: int = 30, invertido: bool = False) -> tuple[int, int]:
+    """Píldora de estado con esquina superior izquierda en (x, y)."""
+    fuente = _fuente(tam)
+    caja = draw.textbbox((0, 0), texto, font=fuente)
+    bw, bh = caja[2] - caja[0], caja[3] - caja[1]
+    pad_x, pad_y = 38, 20
+    w, h = bw + pad_x * 2, max(bh + pad_y * 2, 66)
+    if invertido:
+        relleno, borde, color = (255, 255, 255, 255), (*ACENTO, 255), (*ACENTO, 255)
+    else:
+        relleno, borde, color = (*ACENTO, 255), (255, 255, 255, 255), (255, 255, 255, 255)
+    draw.rounded_rectangle([x, y, x + w, y + h], radius=h // 2,
+                           fill=relleno, outline=borde, width=3)
+    draw.text((x + pad_x, y + (h - bh) // 2 - caja[1]), texto,
+              font=fuente, fill=color)
+    return w, h
+
+
+def _lineas_nombre(draw: ImageDraw.ImageDraw, nombre: str, tam: int,
+                   max_ancho: int, max_lineas: int = 2) -> list[str]:
+    """Parte el nombre en líneas que quepan en `max_ancho`."""
+    palabras = nombre.split()
+    lineas: list[str] = []
+    actual = ""
+    for p in palabras:
+        prueba = f"{actual} {p}".strip()
+        cabe = draw.textlength(prueba, font=_fuente(tam)) <= max_ancho
+        if cabe or not actual:
+            actual = prueba
+        else:
+            lineas.append(actual)
+            actual = p
+    if actual:
+        lineas.append(actual)
+    if len(lineas) > max_lineas:
+        lineas = lineas[:max_lineas - 1] + [" ".join(lineas[max_lineas - 1:])]
+    return lineas
+
+
+def _encajar_nombre(draw: ImageDraw.ImageDraw, nombre: str, tam_max: int,
+                    max_ancho: int, max_lineas: int = 2,
+                    tam_min: int = 56) -> tuple[list[str], int]:
+    """Nombre en 1-2 líneas, encogido hasta que la más larga quepa."""
+    tam = tam_max
+    while tam > tam_min:
+        lineas = _lineas_nombre(draw, nombre, tam, max_ancho, max_lineas)
+        ancho = max(draw.textlength(l, font=_fuente(tam)) for l in lineas)
+        if ancho <= max_ancho and len(lineas) <= max_lineas:
+            return lineas, tam
+        tam -= 4
+    return _lineas_nombre(draw, nombre, tam_min, max_ancho, max_lineas), tam_min
+
+
+def _sublinea_artista(artista: Artist) -> str:
+    """Línea 'ciudad · géneros' del perfil."""
+    return " · ".join(
+        p for p in (_dato_real(artista.ciudad), _generos_cortos(artista.generos))
+        if p
+    )
+
+
+def _regreso_full_bleed(lienzo: Image.Image, foto: Image.Image,
+                        artista: Artist) -> None:
+    """Tarjeta de regreso: la foto cubre todo el lienzo; texto sobre scrim abajo."""
+    fondo = _recortar_cover(foto, LIENZO).convert("RGBA")
+    fondo = Image.alpha_composite(fondo, Image.new("RGBA", LIENZO, (*VIOLETA, 46)))
+    fondo = Image.alpha_composite(fondo, Image.new("RGBA", LIENZO, (6, 3, 14, 78)))
+    lienzo.paste(fondo, (0, 0))
+    draw = ImageDraw.Draw(lienzo)
+
+    alto = 820
+    lienzo.alpha_composite(
+        _degradado_vertical((LIENZO[0], alto), (5, 2, 12), 0, 244),
+        (0, LIENZO[1] - alto),
+    )
+    lienzo.alpha_composite(
+        _degradado_vertical((LIENZO[0], 300), (5, 2, 12), 150, 0), (0, 0)
+    )
+
+    x = 76
+    _pill(draw, _TEXTO_BADGE["regreso"], x, 74)
+    lineas, tam = _encajar_nombre(draw, artista.nombre.upper(), 156,
+                                  LIENZO[0] - 2 * x, 2)
+    y = LIENZO[1] - 372
+    for linea in lineas:
+        _texto_izq(draw, linea, x, y, _fuente(tam), TEXTO)
+        y += tam + 4
+    sublinea = _sublinea_artista(artista)
+    if sublinea:
+        _texto_izq(draw, sublinea, x, y + 18, _fuente(36), (*ACENTO_CLARO, 240))
+    _barra_marca(lienzo, draw, 0)
+
+
+def _polaroid_lanzamiento(lienzo: Image.Image, draw: ImageDraw.ImageDraw,
+                          foto: Image.Image, artista: Artist,
+                          caption: str | None = None) -> None:
+    """Plantilla reservada para la tarjeta de lanzamiento (roadmap #27/#28).
+
+    Foto en marco polaroid girado sobre fondo de sala; el `caption` va en la
+    franja blanca inferior (nombre de la canción o videoclip). Aún no está
+    cableada a ningún `tipo`: se activará con el aviso de lanzamiento.
+    """
+    lienzo.paste(Image.new("RGBA", LIENZO, (9, 4, 20, 255)), (0, 0))
+    lienzo.alpha_composite(
+        _brillo_radial(LIENZO, (540, 430), 470, ACENTO, 140, 180)
+    )
+    lienzo.alpha_composite(
+        _brillo_radial(LIENZO, (540, 1200), 540, VIOLETA, 120, 210)
+    )
+    _trama_puntos(lienzo, ACENTO_CLARO, 76, 3, 26)
+    draw = ImageDraw.Draw(lienzo)
+    _pill(draw, _TEXTO_BADGE["lanzamiento"], 76, 74)
+
+    lado, marco, base = 520, 54, 148
+    sq = _recortar_cuadrado(foto, (lado, lado))
+    carta = Image.new("RGBA", (lado + marco * 2, lado + marco + base),
+                      (255, 255, 255, 255))
+    carta.paste(sq, (marco, marco))
+    if caption:
+        _caption_polaroid(carta, caption, (0, marco + lado, carta.width,
+                                           carta.height))
+    carta = carta.rotate(-6, expand=True, resample=Image.Resampling.BICUBIC)
+
+    sombra = Image.new("RGBA", carta.size, (0, 0, 0, 0))
+    sombra.paste((0, 0, 0, 130), (0, 0), carta.getchannel("A"))
+    sombra = sombra.filter(ImageFilter.GaussianBlur(24))
+    cx = (LIENZO[0] - carta.width) // 2
+    cy = 210
+    lienzo.alpha_composite(sombra, (cx + 18, cy + 30))
+    lienzo.alpha_composite(carta, (cx, cy))
+
+    x = 76
+    lineas, tam = _encajar_nombre(draw, artista.nombre.upper(), 138,
+                                  LIENZO[0] - 2 * x, 2)
+    y = LIENZO[1] - 372
+    draw.rectangle([x, y + 6, x + 12, y + (tam + 6) * len(lineas) - 22],
+                   fill=(*ACENTO, 255))
+    for linea in lineas:
+        _texto_izq(draw, linea, x + 42, y, _fuente(tam), TEXTO)
+        y += tam + 6
+    sublinea = _sublinea_artista(artista)
+    if sublinea:
+        _texto_izq(draw, sublinea, x + 42, y + 16, _fuente(36),
+                   (*ACENTO_CLARO, 240))
+    _barra_marca(lienzo, draw, 0)
+
+
+def generar_imagen_promo(artista: Artist, variante: int | None = None,
+                         tipo: str = "bienvenida") -> Path | None:
     """Genera la tarjeta promocional 1080×1440 (3:4) del artista.
 
-    Sistema de variantes para evitar monotonía en el feed: misma identidad
-    (tipografía, badge, barra de marca) con cuatro composiciones de fondo,
-    layout y firma inferior. La variante se elige por hash del slug si no
-    se fuerza. Devuelve la ruta del PNG o None si no hay foto descargable.
+    `tipo="bienvenida"` (por defecto) usa el sistema de variantes: misma
+    identidad (tipografía, badge, barra de marca) con cuatro composiciones de
+    fondo, layout y firma inferior; la variante se elige por hash del slug si
+    no se fuerza.
+
+    `tipo="regreso"` (el artista volvió a estar activo) usa siempre la
+    composición **full-bleed** (la foto cubre todo el lienzo) con el badge
+    "ESTÁ DE VUELTA EN LA ESCENA". Cada tipo escribe su propio archivo
+    (`{slug}.png` vs `{slug}-regreso.png`).
+
+    Devuelve la ruta del PNG o None si no hay foto descargable.
     """
     if not artista.imagen_perfil:
         return None
@@ -611,16 +849,21 @@ def generar_imagen_promo(artista: Artist, variante: int | None = None) -> Path |
     draw = ImageDraw.Draw(lienzo)
     _destellos(draw, v)
 
-    _poner_foto(lienzo, draw, foto, cfg["fy"], cfg["tam"], cfg["doble"])
-    _badge(draw, cfg["badge_y"], cfg["inv"])
-    _nombre_sublinea(draw, artista, cfg["y_nom"], cfg["tmax"])
-    _barra_marca(lienzo, draw, v)
+    if tipo == "regreso":
+        _regreso_full_bleed(lienzo, foto, artista)
+    else:
+        _poner_foto(lienzo, draw, foto, cfg["fy"], cfg["tam"], cfg["doble"])
+        _badge(draw, cfg["badge_y"], cfg["inv"],
+               texto=_TEXTO_BADGE.get(tipo, "NUEVO ARTISTA VERIFICADO"))
+        _nombre_sublinea(draw, artista, cfg["y_nom"], cfg["tmax"])
+        _barra_marca(lienzo, draw, v)
 
     PROMOS_DIR.mkdir(parents=True, exist_ok=True)
-    ruta = PROMOS_DIR / f"{artista.slug}.png"
+    sufijo = "" if tipo == "bienvenida" else f"-{tipo}"
+    ruta = PROMOS_DIR / f"{artista.slug}{sufijo}.png"
     lienzo.convert("RGB").save(ruta, "PNG", optimize=True)
     # Instagram exige JPEG para contenedores de imagen: se guarda gemelo.
-    ruta_jpg = PROMOS_DIR / f"{artista.slug}.jpg"
+    ruta_jpg = PROMOS_DIR / f"{artista.slug}{sufijo}.jpg"
     lienzo.convert("RGB").save(ruta_jpg, "JPEG", quality=90, optimize=True)
     return ruta
 
