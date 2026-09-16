@@ -7,7 +7,7 @@ directo: delegan en `lib.repository`.
 
 import hashlib
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 from sqlalchemy import select
