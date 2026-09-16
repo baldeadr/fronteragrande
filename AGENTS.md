@@ -59,6 +59,14 @@ curl -s http://127.0.0.1:8000/api/health
 1. `curl -s http://127.0.0.1:8000/api/health` y un muestreo de `/api/artists`, `/api/feed`, `/api/artists/{slug}`.
 2. `npm run lint` y `npm run build` dentro de `web/`.
 
+**Versión de Python: CI usa 3.12, no la del venv (lección aprendida 2026-09-16).**
+El workflow `.github/workflows/tests.yml` (pytest en Python 3.12, en cada push/PR
+a `main`) es la red de seguridad real: un `NameError` por una anotación sin
+importar (`def f() -> date | None`) pasaba en local porque el venv en 3.14
+difiere la evaluación de anotaciones (PEP 649), pero rompía todos los syncs en
+CI. Antes de dar por bueno un cambio de código, verificar con Python 3.12 (o
+confiar en el workflow) y no solo con `.venv/bin/pytest`.
+
 **Cuidado con el dev server de Next (lección aprendida 2026-08):** no correr
 `npm run build` (producción) mientras el `npm run dev` está en marcha: el build
 pisa el `.next/` del dev y este queda sirviendo bundles rotos (la página carga

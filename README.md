@@ -91,6 +91,8 @@ Para PostgreSQL (producción): crear la base, configurar `DATABASE_URL` en `.env
 
 Dependencias de test: `pytest` y `httpx` (ver `requirements-dev.txt`). La suite vive en `tests/` y cubre la API (artistas, perfil, feed, eventos, ranking, actividad) y previews/plataformas.
 
+En CI, `.github/workflows/tests.yml` corre la misma suite en **Python 3.12** en cada push/PR a `main` (sin secretos: usa BD temporal). Es la verificación previa al deploy de Render.
+
 ## Estructura
 
 ```
