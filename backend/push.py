@@ -21,7 +21,6 @@ from lib.repository import PushSubscriptionRepository
 router = APIRouter(prefix="/api/push", tags=["push"])
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
 
 
 class SuscripcionEntrada(BaseModel):
@@ -95,7 +94,7 @@ def aviso_general(
 @router.get("/vapid-config")
 def config_vapid():
     """Devuelve la clave pública VAPID y validez básica (sin exponer la privada)."""
-    clave = VAPID_PUBLIC_KEY.strip()
+    clave = os.getenv("VAPID_PUBLIC_KEY", "").strip()
     valida = False
     if clave:
         try:
