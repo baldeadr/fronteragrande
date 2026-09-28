@@ -12,7 +12,7 @@ on:
           - "20"
           - "5"
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "30 13 * * *"
 
 jobs:
   sincronizar:

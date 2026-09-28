@@ -14,56 +14,13 @@ on:
         required: false
         default: false
   schedule:
-    - cron: "20 */6 * * *"
+    - cron: "0 14 * * *"
 
 jobs:
-  sync-bandcamp:
-    name: Bandcamp
+  sincronizar:
+    name: Lanzamientos (Bandcamp → SoundCloud → Spotify → Actividad)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v4
-
-      - name: Preparar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Instalar dependencias
-        run: pip install -r requirements-prod.txt
-
-      - name: Sincronizar Bandcamp
-        run: python scripts/sync_bandcamp.py
-
-  sync-soundcloud:
-    name: SoundCloud
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v4
-
-      - name: Preparar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Instalar dependencias
-        run: pip install -r requirements-prod.txt
-
-      - name: Sincronizar SoundCloud
-        run: python scripts/sync_soundcloud.py
-
-  sync-spotify:
-    name: Spotify (secuencial con delays)
-    needs: [sync-bandcamp, sync-soundcloud]
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
@@ -80,30 +37,17 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-prod.txt
 
+      - name: Sincronizar Bandcamp
+        run: python scripts/sync_bandcamp.py
+
+      - name: Sincronizar SoundCloud
+        run: python scripts/sync_soundcloud.py
+
       - name: Sincronizar Spotify (secuencial)
         run: |
           # Delay aleatorio inicial para desfasar con otras ejecuciones
           sleep $((RANDOM % 60))
           python scripts/sync_spotify_batch.py --batch 0 --total-batches 1
-
-  recalcular-actividad:
-    name: Recalcular actividad
-    needs: [sync-spotify]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v4
-
-      - name: Preparar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Instalar dependencias
-        run: pip install -r requirements-prod.txt
 
       - name: Recalcular actividad
         run: python scripts/recalcular_actividad.py

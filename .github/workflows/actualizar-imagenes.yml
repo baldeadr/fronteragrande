@@ -3,7 +3,7 @@ name: Actualizar fotos de perfil
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 5 * * 1"
+    - cron: "30 12 * * 1"
 
 jobs:
   actualizar:

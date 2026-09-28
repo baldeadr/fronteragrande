@@ -3,7 +3,7 @@ name: Sincronizar eventos Meta
 on:
   workflow_dispatch:
   schedule:
-    - cron: "40 */6 * * *"
+    - cron: "30 14 * * *"
 
 jobs:
   sincronizar:
