@@ -376,7 +376,10 @@ def _foto_circular_artista(lienzo, draw, artista_nombre, foto_x, foto_y, foto_si
     foto_url = None
     session = SessionLocal()
     try:
-        artista = ArtistRepository(session).por_nombre(artista_nombre)
+        repo = ArtistRepository(session)
+        artista = repo.por_nombre(artista_nombre)
+        if artista is None:
+            artista = repo.por_nombre_insensible(artista_nombre)
         foto_url = artista.imagen_perfil if artista else None
     finally:
         session.close()

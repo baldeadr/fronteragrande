@@ -297,6 +297,7 @@ def seleccionar(canciones_por_artista, artistas_vistos, uris_vistos, tamanio, po
 
     def _tomar(nombre, cancion):
         cancion["artist_id"] = canciones_por_artista[nombre]["artist_id"]
+        cancion["artista"] = nombre
         seleccion.append(cancion)
         usadas.add(cancion["uri"])
         por_artista_elegido[nombre] = por_artista_elegido.get(nombre, 0) + 1
@@ -493,7 +494,7 @@ def _guardar_seleccion_json(seleccion: list[dict], playlist_id: str, output_path
             {
                 "posicion": i + 1,
                 "titulo": c["titulo"],
-                "artista": c["artistas"],
+                "artista": c.get("artista") or c["artistas"],
                 "uri": c["uri"],
                 "artist_id": c.get("artist_id", ""),
             }
@@ -502,8 +503,8 @@ def _guardar_seleccion_json(seleccion: list[dict], playlist_id: str, output_path
         "seleccionados_3": [
             {
                 "titulo": c["titulo"],
-                "artista": c["artistas"],
-                "handle_ig": _handle_ig_artista(c["artistas"]),
+                "artista": c.get("artista") or c["artistas"],
+                "handle_ig": _handle_ig_artista(c.get("artista") or c["artistas"]),
             }
             for c in seleccionados_3
         ],

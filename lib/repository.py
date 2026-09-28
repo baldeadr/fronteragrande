@@ -49,6 +49,11 @@ class ArtistRepository:
             select(Artist).where(Artist.nombre == nombre)
         ).scalar_one_or_none()
 
+    def por_nombre_insensible(self, nombre: str) -> Artist | None:
+        return self.session.execute(
+            select(Artist).where(func.lower(Artist.nombre) == nombre.strip().lower())
+        ).scalar_one_or_none()
+
     def crear(
         self,
         slug: str,
