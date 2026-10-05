@@ -11,7 +11,7 @@ Una **playlist pública de Spotify** curada de forma **automática y semanal** c
 - **ID de la playlist:** `49qIAMVwZCHs5wLo1GLrlz` (secreto `SPOTIFY_PLAYLIST_ID` en GitHub Actions)
 - **Portada:** `web/public/portada-playlist.png` (3000×3000, fuente `portada-playlist.svg`; composición documentada en `docs/identidad.md`)
 - **Owner:** cuenta del artista (Adrián Balderas)
-- **Se actualiza:** cada lunes 06:00 (workflow `sync-playlist.yml` de GitHub Actions, con disparo manual disponible)
+- **Se actualiza:** cada lunes **5:00 AM de la frontera/Chicago en verano** y **4:00 AM en invierno** (workflow `sync-playlist.yml` de GitHub Actions, con disparo manual disponible). El cron es UTC y no sigue el DST: `0 10 * * 1` = lunes 10:00 UTC.
 - **Tamaño:** por defecto 24 canciones (`PLAYLIST_TAMANIO`), 2 por artista (`PLAYLIST_CANCIONES_POR_ARTISTA`), con memoria semanal y canción rotada del catálogo (5 candidatas por artista, `PLAYLIST_CANDIDATOS_POR_ARTISTA`)
 
 ## 2. Cómo se genera
