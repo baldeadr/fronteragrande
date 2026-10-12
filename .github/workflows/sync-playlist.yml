@@ -3,7 +3,8 @@ name: Actualizar playlist semanal
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 10 * * 1"
+    - cron: '40 7 * * 1'
+      timezone: "America/Chicago"
 
 permissions:
   contents: write
